@@ -1,0 +1,17 @@
+{
+  "id": "vyassenthilkumar/arc3-calibrated-submit",
+  "title": "ARC3 Calibrated Submit",
+  "code_file": "kaggle_submit.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "dataset_sources": [],
+  "competition_sources": [
+    "arc-prize-2026-arc-agi-3"
+  ],
+  "kernel_sources": [],
+  "model_sources": []
+}
