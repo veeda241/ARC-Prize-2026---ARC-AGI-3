@@ -1,0 +1,22 @@
+{
+  "id": "vyassenthilkumar/arc3-duck-v12-boost",
+  "title": "ARC3 Duck v12 Boost 2pass",
+  "code_file": "kaggle_duck_v12_boost.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": false,
+  "machine_shape": "NvidiaRtxPro6000",
+  "dataset_sources": [
+    "jakobbrggen/taaf-kaggle-source-anim-20260807-anim",
+    "driessmit1/arc3-vllm-h100-wheelhouse-v3"
+  ],
+  "competition_sources": [
+    "arc-prize-2026-arc-agi-3"
+  ],
+  "kernel_sources": [],
+  "model_sources": [
+    "foysalemonshanto/qwen3-8-27b-fp8-repacked-v1/PyTorch/hf-fp8/1"
+  ]
+}

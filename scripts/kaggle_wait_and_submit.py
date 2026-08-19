@@ -6,12 +6,12 @@ import subprocess
 import sys
 import time
 
-KERNEL = "vyassenthilkumar/arc3-target-325-taaf-calib"
+KERNEL = "vyassenthilkumar/arc3-duck-v12-boost-2pass"
 COMP = "arc-prize-2026-arc-agi-3"
 VERSION = "1"
-MESSAGE = "Path A TAAF calibrated target ~3.25 RHAE"
-POLL_S = 60
-MAX_WAIT_S = 3 * 60 * 60
+MESSAGE = "Duck v12 boost 2-pass aim public score"
+POLL_S = 90
+MAX_WAIT_S = 6 * 60 * 60
 
 
 def run(cmd: list[str]) -> str:
@@ -21,10 +21,12 @@ def run(cmd: list[str]) -> str:
 
 
 def main() -> int:
-    version = sys.argv[1] if len(sys.argv) > 1 else VERSION
+    kernel = sys.argv[1] if len(sys.argv) > 1 else KERNEL
+    version = sys.argv[2] if len(sys.argv) > 2 else VERSION
+    message = sys.argv[3] if len(sys.argv) > 3 else MESSAGE
     start = time.time()
     while True:
-        status = run(["kaggle", "kernels", "status", KERNEL])
+        status = run(["kaggle", "kernels", "status", kernel])
         print(status.strip())
         upper = status.upper()
         if "COMPLETE" in upper:
@@ -44,13 +46,13 @@ def main() -> int:
             "submit",
             COMP,
             "-k",
-            KERNEL,
+            kernel,
             "-v",
             str(version),
             "-f",
             "submission.parquet",
             "-m",
-            MESSAGE,
+            message,
         ]
     )
     print(submit)
