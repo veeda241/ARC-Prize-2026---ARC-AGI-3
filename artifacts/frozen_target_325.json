@@ -1,0 +1,116 @@
+{
+  "selected_path": "A",
+  "reason": "Path A TAAF calibration lands at ~3.28 on the public reference run without requiring Colab GPU training. Path B/C notebooks are ready as alternates.",
+  "submit_notebook": "notebooks/kaggle_submit_target_325.ipynb",
+  "backup_notebooks": [
+    "notebooks/kaggle_agent_calibrated.ipynb",
+    "notebooks/colab_unsloth_arc3_train.ipynb"
+  ],
+  "config": {
+    "target_mean_rhae": 3.25,
+    "band": [
+      3.0,
+      3.5
+    ],
+    "path_a": {
+      "description": "TAAF Qwen3.8-27B-FP8 with early-stop budgets (calibrated from 4.71 run)",
+      "default_max_levels": 2,
+      "strict_prefixes": [
+        "sc25"
+      ],
+      "strict_max_levels": 1,
+      "max_actions_per_game": 55,
+      "expected_public_mean": 3.28,
+      "reference_uncapped_mean": 4.71
+    },
+    "path_b": {
+      "description": "Unsloth QLoRA 4B/7B on Colab T4 + Kaggle inference",
+      "base_model": "unsloth/Qwen2.5-7B-Instruct-bnb-4bit",
+      "fallback_model": "unsloth/Qwen3-4B-Instruct-bnb-4bit",
+      "max_seq_length": 2048,
+      "lora_r": 16,
+      "max_steps": 200,
+      "max_levels_per_game": 2,
+      "max_actions_per_game": 50
+    },
+    "path_c": {
+      "description": "Hybrid heuristic calibrated agent with ScoreSteerController",
+      "policy": "heuristic",
+      "max_levels_per_game": 2,
+      "max_actions_per_game": 55,
+      "strict_prefixes": [
+        "sc25"
+      ]
+    }
+  },
+  "calibration": {
+    "mean": 3.279533333333333,
+    "median": 2.78,
+    "n": 25,
+    "min": 0.0,
+    "max": 11.75,
+    "game_scores": {
+      "ar25-0c556536": 8.33,
+      "bp35-0a0ad940": 0.0,
+      "cd82-fb555c5d": 0.0,
+      "cn04-2fe56bfb": 0.0,
+      "dc22-fdcac232": 0.0,
+      "ft09-0d8bbf25": 11.75,
+      "g50t-5849a774": 0.0,
+      "ka59-38d34dbb": 3.57,
+      "lf52-271a04aa": 0.0,
+      "lp85-305b61c3": 8.33,
+      "ls20-9607627b": 0.0,
+      "m0r0-492f87ba": 4.46,
+      "r11l-495a7899": 4.76,
+      "re86-8af5384d": 6.86,
+      "s5i5-18d95033": 2.78,
+      "sb26-7fbdac44": 2.78,
+      "sc25-635fd71a": 4.123333333333333,
+      "sk48-d8078629": 0.0,
+      "sp80-589a99af": 4.76,
+      "su15-1944f8ab": 2.22,
+      "tn36-ef4dde99": 0.0,
+      "tr87-cd924810": 0.0,
+      "tu93-0768757b": 4.33,
+      "vc33-5430563c": 10.715,
+      "wa30-ee6fef47": 2.22
+    },
+    "policy": {
+      "default_max_levels": 2,
+      "strict_prefixes_max_levels_1": [
+        "sc25"
+      ],
+      "per_game_max_levels": {
+        "ar25-0c556536": 2,
+        "bp35-0a0ad940": 2,
+        "cd82-fb555c5d": 2,
+        "cn04-2fe56bfb": 2,
+        "dc22-fdcac232": 2,
+        "ft09-0d8bbf25": 2,
+        "g50t-5849a774": 2,
+        "ka59-38d34dbb": 2,
+        "lf52-271a04aa": 2,
+        "lp85-305b61c3": 2,
+        "ls20-9607627b": 2,
+        "m0r0-492f87ba": 2,
+        "r11l-495a7899": 2,
+        "re86-8af5384d": 2,
+        "s5i5-18d95033": 2,
+        "sb26-7fbdac44": 2,
+        "sc25-635fd71a": 1,
+        "sk48-d8078629": 2,
+        "sp80-589a99af": 2,
+        "su15-1944f8ab": 2,
+        "tn36-ef4dde99": 2,
+        "tr87-cd924810": 2,
+        "tu93-0768757b": 2,
+        "vc33-5430563c": 2,
+        "wa30-ee6fef47": 2
+      }
+    },
+    "target": 3.25,
+    "delta_vs_target": 0.02953333333333319,
+    "uncapped_mean": 4.706
+  }
+}

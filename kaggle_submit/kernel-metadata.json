@@ -1,0 +1,21 @@
+{
+  "id": "vyassenthilkumar/arc3-target-325-taaf-calib",
+  "title": "ARC3 Target 325 TAAF Calib",
+  "code_file": "kaggle_submit_target_325.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": false,
+  "machine_shape": "NvidiaRtxPro6000",
+  "dataset_sources": [
+    "jakobbrggen/taaf-kaggle-source",
+    "driessmit1/arc3-vllm-h100-wheelhouse-v3",
+    "jakobbrggen/qwen3-8-27b-fp8-hf-snapshot"
+  ],
+  "competition_sources": [
+    "arc-prize-2026-arc-agi-3"
+  ],
+  "kernel_sources": [],
+  "model_sources": []
+}

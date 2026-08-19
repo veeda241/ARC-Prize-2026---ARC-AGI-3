@@ -1,0 +1,30 @@
+{
+  "target_mean_rhae": 3.25,
+  "band": [3.0, 3.5],
+  "path_a": {
+    "description": "TAAF Qwen3.8-27B-FP8 with early-stop budgets (calibrated from 4.71 run)",
+    "default_max_levels": 2,
+    "strict_prefixes": ["sc25"],
+    "strict_max_levels": 1,
+    "max_actions_per_game": 55,
+    "expected_public_mean": 3.28,
+    "reference_uncapped_mean": 4.71
+  },
+  "path_b": {
+    "description": "Unsloth QLoRA 4B/7B on Colab T4 + Kaggle inference",
+    "base_model": "unsloth/Qwen2.5-7B-Instruct-bnb-4bit",
+    "fallback_model": "unsloth/Qwen3-4B-Instruct-bnb-4bit",
+    "max_seq_length": 2048,
+    "lora_r": 16,
+    "max_steps": 200,
+    "max_levels_per_game": 2,
+    "max_actions_per_game": 50
+  },
+  "path_c": {
+    "description": "Hybrid heuristic calibrated agent with ScoreSteerController",
+    "policy": "heuristic",
+    "max_levels_per_game": 2,
+    "max_actions_per_game": 55,
+    "strict_prefixes": ["sc25"]
+  }
+}
