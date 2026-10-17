@@ -133,8 +133,62 @@ Before pushing, confirm in the Kaggle UI that the accelerator is **NvidiaRtxPro6
 internet is **off**, and all four attachments resolve (cell 4 of the notebook prints an
 existence audit — read it, and note the printed `n_passes`).
 
-## 7. What not to do
+## 7. Local no-GPU evaluation (`scripts/local_search_agent.py`)
+
+The 25 public games run **on this laptop** without a GPU, a served model, or Kaggle.
+`data/arc_agi_3_wheels` ships `arcengine` and `arc_agi` as pure-`py3-none-any` wheels, and
+this machine has Python 3.12 (`arcengine` requires >=3.12; the default 3.11 cannot take them):
+
+```powershell
+python3.12 -m venv .venv312
+.\.venv312\Scripts\python.exe -m pip install data\arc_agi_3_wheels\arcengine-0.9.3-py3-none-any.whl data\arc_agi_3_wheels\arc_agi-0.9.8-py3-none-any.whl
+.\.venv312\Scripts\python.exe scripts\local_search_agent.py --policy novelty --budget 10000
+python scripts\eval_rhae.py --results artifacts\local_novelty_10000.json --env-dir data\environment_files
+```
+
+Throughput is ~1,400 env steps/second, so a 25-game x 10,000-step sweep costs about 3 minutes.
+This is the fastest iteration loop in the repo — use it before spending a Kaggle run.
+
+### Measured: search-only baselines are worse than the LLM stack
+
+Same 25 public games, same scorer, mean RHAE on the 0–100 scale:
+
+| Agent | Steps/game | Mean | Games reaching level 1 | Past level 1 |
+|-------|-----------|------|------------------------|--------------|
+| random actions | 2,000 | **0.38** | 2 | 0 |
+| novelty search (state-hash, no LLM) | 2,000 | **0.49** | 5 | 0 |
+| novelty search | 10,000 | **0.70** | 7 | 0 |
+| Qwen3.8-27B TAAF/Duck stack | — | **3.79** | — | — |
+
+The `3.79` is on this same public set, so the served-LLM stack is roughly **5x** the best
+pure-search run. Brute-force exploration does not substitute for the model, which matches the
+published ARC-AGI-3 result that frontier models scored under 1% and that preview-stage
+brute-force agents collapsed once the benchmark hardened.
+
+### The lever that search *does* expose: action efficiency
+
+RHAE rewards finishing a level in fewer actions than the human `baseline_actions`, and
+`metadata.json` carries those per-level baselines locally. The solved levels show the spread:
+
+| Game | Agent actions | Human baseline |
+|------|---------------|----------------|
+| r11l | 7 | 22 |
+| sp80 | 25 | 39 |
+| cd82 | 25 | 55 |
+| m0r0 | 94 | 30 |
+
+Exploration is undirected: it can stumble into a level cheaply (r11l beats the human by 3x) and
+wastefully (m0r0 at 3x the human). Since the score is efficiency-weighted, narrowing that
+variance is worth more than adding raw steps.
+
+## 8. What not to do
 
 - Do not add action/level caps back.
 - Do not report offline 3.79 as a leaderboard score.
 - Do not aim at a target *band*; aim at the highest hidden LB the stack can reach.
+- Do not import ARC-AGI-2 recipes wholesale. ARC-AGI-2 is static input/output grid pairs, so
+  "write a Python transform, run it against the demo pairs, feed the traceback back until every
+  demo matches" has a correctness test to converge on. ARC-AGI-3 has no demo pairs — only frame
+  deltas, `GAME_OVER`, and `levels_completed` — so that self-debugging loop has nothing to check
+  itself against. The widely-cited ~67–70% test-time-training / code-generation results are
+  ARC-AGI-2 (ARC Prize 2025) numbers, not ARC-AGI-3.
