@@ -6,12 +6,14 @@ import subprocess
 import sys
 import time
 
-KERNEL = "vyassenthilkumar/arc3-duck-v12-boost-2pass"
+KERNEL = "vyassenthilkumar/arc3-duck-v12-boost"
 COMP = "arc-prize-2026-arc-agi-3"
 VERSION = "1"
-MESSAGE = "Duck v12 boost 2-pass aim public score"
+MESSAGE = "Duck v12 boost, uncapped actions, RTX Pro 6000"
 POLL_S = 90
-MAX_WAIT_S = 6 * 60 * 60
+# The run itself may use the full 9 h GPU-notebook limit, so the poll window must
+# cover queue time plus a maximum-length run.
+MAX_WAIT_S = 11 * 60 * 60
 
 
 def run(cmd: list[str]) -> str:

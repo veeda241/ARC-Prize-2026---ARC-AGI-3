@@ -69,7 +69,7 @@ Rerun-side behavior worth knowing (cell 9): `ONLY_RESET_LEVELS=true`,
 
 ## 3. Archived path — capped TAAF `target_325`
 
-[`../kaggle_submit_target_325.ipynb`](../kaggle_submit_target_325.ipynb),
+[`../notebooks/kaggle_submit_target_325.ipynb`](../notebooks/kaggle_submit_target_325.ipynb),
 [`../configs/target_325.json`](../configs/target_325.json),
 [`../agents/calibrated_agent.py`](../agents/calibrated_agent.py).
 
@@ -96,7 +96,44 @@ the primary notebook. `artifacts/example_results.json` and
 - [ ] You read the rerun log and recorded the real `n_passes` value
 - [ ] Submit through the Kaggle UI on a committed version, then note the LB delta vs 2.23
 
-## 6. What not to do
+## 6. Commands (run these yourself — they consume GPU quota and use a submission slot)
+
+From the repo root, in PowerShell. Each line is standalone; no continuations.
+
+```powershell
+cd C:\hackathon\Gemini_CLI\ARC-Prize-2026---ARC-AGI-3
+```
+
+Upload the primary notebook as a new kernel version (attach the datasets/model/competition
+in the Kaggle UI first, or trust `kaggle_submit_duck_v12/kernel-metadata.json`):
+
+```powershell
+kaggle kernels push -p .\kaggle_submit_duck_v12
+```
+
+Watch it, then submit to the competition when the status is COMPLETE:
+
+```powershell
+python .\scripts\kaggle_wait_and_submit.py
+```
+
+Or submit manually once the run finishes:
+
+```powershell
+kaggle competitions submissions -c arc-prize-2026-arc-agi-3 -k vyassenthilkumar/arc3-duck-v12-boost -m "uncapped duck v12"
+```
+
+Check the result against the previous best:
+
+```powershell
+kaggle competitions leaderboard -c arc-prize-2026-arc-agi-3 -s
+```
+
+Before pushing, confirm in the Kaggle UI that the accelerator is **NvidiaRtxPro6000**,
+internet is **off**, and all four attachments resolve (cell 4 of the notebook prints an
+existence audit — read it, and note the printed `n_passes`).
+
+## 7. What not to do
 
 - Do not add action/level caps back.
 - Do not report offline 3.79 as a leaderboard score.
