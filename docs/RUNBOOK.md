@@ -1,102 +1,103 @@
-# ARC-AGI-3 — Hit ~3.25 RHAE (band 3.0–3.5)
+# ARC-AGI-3 Runbook — ship the best stack you have
 
-## Score reality
+## 1. Score reality
 
 | Item | Value |
 |------|-------|
-| Official metric | **RHAE** average over games (**0–100%**) |
-| Reference TAAF notebook mean | **4.71** (Qwen3.8-27B-FP8, uncapped) |
-| Target | **3.0–3.5**, aim **3.25** |
-| Path A simulation after caps | **~3.28** (`max_levels=2`, `sc25→1`) |
+| Official metric | RHAE averaged over games, scaled **0–100%** |
+| Your submitted best (Duck v12 base, 1 pass) | **~2.23** hidden LB |
+| Your offline public 25-game mean (Duck v12 boost) | **3.79** |
+| Best public/community open-weight submissions | low single digits |
+| Strongest system on the benchmark | **~62%** (frontier closed model) |
+| Humans | define the baseline; 100% by construction |
 
-Free **Colab T4** cannot run the 27B TAAF + vLLM stack. Use Colab for Unsloth (Path B); use **Kaggle GPU** for Path A submit.
+Implication for planning: the next realistic step is converting 3.79 offline into a
+**better hidden-LB number than 2.23**, i.e. single-digit improvement. Hidden-set tasks are
+unseen by design, so offline public mean is only a weak proxy. Nobody should plan around a
+double-digit jump, and 90% is beyond the state of the art.
 
-## Repo layout
+## 2. Primary path — Duck v12 boost (uncapped)
+
+Canonical file: [`../notebooks/kaggle_duck_v12_boost.ipynb`](../notebooks/kaggle_duck_v12_boost.ipynb)
+Push directory: [`../kaggle_submit_duck_v12/`](../kaggle_submit_duck_v12/)
+Regenerate: `python scripts/build_duck_v12_boost.py` (reads `lb-9-arc3-duck-v12-with-qwen-3-8-27b.ipynb`)
+
+### Attachments (must match `kernel-metadata.json`)
+
+| Type | Reference |
+|------|-----------|
+| Dataset | `jakobbrggen/taaf-kaggle-source-anim-20260807-anim` |
+| Dataset | `driessmit1/arc3-vllm-h100-wheelhouse-v3` |
+| Model | `foysalemonshanto/qwen3-8-27b-fp8-repacked-v1` → PyTorch → `hf-fp8` → Version 1 |
+| Competition | `arc-prize-2026-arc-agi-3` |
+| Accelerator | NVIDIA RTX Pro 6000 |
+| Internet | **off** |
+
+### What the boost hook changes (notebook cell 8)
+
+Applied on **both** debug and real reruns:
 
 ```
-agents/calibrated_agent.py      # Path B/C budgeted agent (+ optional Unsloth)
-configs/target_325.json         # Frozen knobs
-scripts/eval_rhae.py            # Offline RHAE scorer + TAAF calibration
-scripts/build_*.py              # Notebook builders
-notebooks/kaggle_submit_target_325.ipynb   # Path A (primary submit)
-notebooks/colab_unsloth_arc3_train.ipynb   # Path B train
-notebooks/kaggle_agent_calibrated.ipynb    # Path B/C Agents kit
-data/                           # Extracted competition zip
-artifacts/path_a_calibration.json
-docs/RUNBOOK.md                 # this file
+solver.concurrency            = 28
+solver.max_runtime_s_per_game = 7920.0
+solver.max_actions_per_game   = None      # explicitly uncapped
+solver.analyzer_timeout       = 1800.0    # was timing out on vLLM reads
+solver.hard_noop_guard        = True
+solver.animation_awareness    = True
 ```
 
-## Path A — Calibrated TAAF (recommended primary)
+Applied **only when `KAGGLE_IS_COMPETITION_RERUN` is false** (i.e. offline/debug):
 
-1. Open [`notebooks/kaggle_submit_target_325.ipynb`](../notebooks/kaggle_submit_target_325.ipynb) on Kaggle.
-2. Attach datasets (same as original TAAF run):
-   - `jakobbrggen/taaf-kaggle-source`
-   - `driessmit1/arc3-vllm-h100-wheelhouse-v3`
-   - `jakobbrggen/qwen3-8-27b-fp8-hf-snapshot`
-   - competition data `arc-prize-2026-arc-agi-3`
-3. Accelerator: **NVIDIA RTX Pro 6000** (or whatever the TAAF wheelhouse expects).
-4. Internet: **off** for competition-style runs.
-5. Cell 8 already sets:
-   - `MAX_LEVELS_PER_GAME=2`
-   - `STRICT_PREFIXES=["sc25"]` → 1 level
-   - `MAX_ACTIONS_PER_GAME=55`
-   - soft deadline ×0.70 on offline debug
-6. **Save & Run All**, then **Submit to Competition**.
-7. Locally verify calibration anytime:
+- replaces `bm.games` with the 25 known public game ids,
+- sets `bm.n_passes = 2`, `bm.game_weights = None`.
+
+### Known gap — verify before believing any second-pass gain
+
+The 2-pass trick lives inside the `if not true_submission:` branch, so **the scored rerun
+probably still runs 1 pass** (`bm.n_passes` comes from `benchmark_initial.pkl`). The offline
+3.79 therefore is not an estimate of the rerun. Two consequences:
+
+1. Do not claim a 2-pass improvement until you have seen `n_passes` in a real rerun log.
+2. Forcing `bm.n_passes = 2` on the rerun is **not** a safe free win: the hidden set can be
+   larger than 25 games and `7920 s` per game against a 9 h wall can overrun, and an overrun
+   scores zero. If you want to try it, gate it on the actual game count and total budget,
+   and burn a throwaway submission to validate.
+
+Rerun-side behavior worth knowing (cell 9): `ONLY_RESET_LEVELS=true`,
+`TAAF_MINIMAL_DIAGNOSTICS=1` (so no `diagnostics.html` on the scored run), gateway polled at
+`http://gateway:8001/` for up to 600 s before the run aborts.
+
+## 3. Archived path — capped TAAF `target_325`
+
+[`../kaggle_submit_target_325.ipynb`](../kaggle_submit_target_325.ipynb),
+[`../configs/target_325.json`](../configs/target_325.json),
+[`../agents/calibrated_agent.py`](../agents/calibrated_agent.py).
+
+Kept as a **negative result**: `MAX_ACTIONS_PER_GAME=55`, `MAX_LEVELS_PER_GAME=2`,
+`STRICT_PREFIXES=["sc25"]` produced hidden LB **1.76** vs the uncapped stack's 2.23. Budget
+caps cut score; the earlier instruction in this file to land inside a 3.0–3.5 band was
+self-imposed and should not be reinstated. Do not submit this path.
+
+## 4. Local scoring
 
 ```bash
-python scripts/eval_rhae.py --calibrate-taaf
-```
-
-Expected: `capped_mean ≈ 3.28`, `delta_vs_target ≈ 0.03`.
-
-### Dialing the score
-
-| If public mean… | Change |
-|-----------------|--------|
-| &gt; 3.5 | Lower `MAX_ACTIONS_PER_GAME` (e.g. 40) or add prefixes to `STRICT_PREFIXES` |
-| &lt; 3.0 | Raise actions to 70, or remove `sc25` from strict list |
-| near 3.25 | Freeze and submit |
-
-## Path B — Unsloth on free Colab
-
-1. Upload `arc-prize-2026-arc-agi-3.zip` to Colab.
-2. Open [`notebooks/colab_unsloth_arc3_train.ipynb`](../notebooks/colab_unsloth_arc3_train.ipynb).
-3. Runtime → GPU → **T4**.
-4. Run all cells: synth traces → QLoRA (`Qwen2.5-7B-Instruct-bnb-4bit`) → export `arc3_unsloth_lora/`.
-5. Zip the LoRA folder and upload as a **Kaggle dataset**.
-6. Use [`notebooks/kaggle_agent_calibrated.ipynb`](../notebooks/kaggle_agent_calibrated.ipynb) with:
-   - `ARC3_POLICY=unsloth`
-   - `ARC3_UNSLOTH_MODEL_DIR=/kaggle/input/<dataset>/arc3_unsloth_lora`
-   - level/action caps from `configs/target_325.json`
-7. If mean not in **[3.0, 3.5]**, fall back to Path A or Path C.
-
-## Path C — Heuristic calibrated agent (backup)
-
-Same Kaggle agent notebook with `ARC3_POLICY=heuristic` (default). No LoRA required.
-Uses `ScoreSteerController` + hard caps in `agents/calibrated_agent.py`.
-
-```bash
-# After collecting per-game level_actions JSON:
 python scripts/eval_rhae.py --results artifacts/my_run.json --env-dir data/environment_files
 ```
 
-## Selection rule (freeze)
+`--calibrate-taaf` only simulates cap effects on the archived path; it is not a predictor for
+the primary notebook. `artifacts/example_results.json` and
+`artifacts/path_a_calibration.json` belong to that archived experiment.
 
-1. Prefer the config whose **public 25-game mean** is closest to **3.25** inside **[3.0, 3.5]**.
-2. If Path A and Path B both qualify → ship **Path B** as “Unsloth primary”, keep **Path A** notebook as backup submit.
-3. Current freeze without a fresh live GPU run: **Path A** (`kaggle_submit_target_325.ipynb`) — simulation **3.28**.
+## 5. Submission checklist
 
-## Submission checklist
+- [ ] `kernel-metadata.json` in `kaggle_submit_duck_v12/` lists all four attachments above
+- [ ] Model version still `1` and `hf-fp8` variation exists (path is hard-coded in cell 3)
+- [ ] Notebook commits under the 9 h limit with internet disabled
+- [ ] You read the rerun log and recorded the real `n_passes` value
+- [ ] Submit through the Kaggle UI on a committed version, then note the LB delta vs 2.23
 
-- [ ] Notebook finishes under Kaggle time limits
-- [ ] No internet installs on competition rerun (use wheelhouse / attached datasets)
-- [ ] `submission.parquet` produced (platform auto-builds on true rerun)
-- [ ] Budgets match `configs/target_325.json`
-- [ ] Offline mean estimated in band before submit
+## 6. What not to do
 
-## What not to do
-
-- Do not maximize toward 100% RHAE (out of scope).
-- Do not expect free Colab to serve the 27B TAAF harness.
-- Do not treat `taaf-model-... (1).ipynb` as a second model (byte-identical duplicate).
+- Do not add action/level caps back.
+- Do not report offline 3.79 as a leaderboard score.
+- Do not aim at a target *band*; aim at the highest hidden LB the stack can reach.
