@@ -6,10 +6,15 @@ import subprocess
 import sys
 import time
 
-KERNEL = "vyassenthilkumar/arc3-duck-v12-boost"
+# Kaggle derives the slug from the notebook TITLE, not the metadata "id", so these
+# strings must match what `kaggle kernels list --mine` reports.
+KERNEL = "vyassenthilkumar/arc3-milestone2-flashnext-duck"
 COMP = "arc-prize-2026-arc-agi-3"
 VERSION = "1"
-MESSAGE = "Duck v12 boost, uncapped actions, RTX Pro 6000"
+MESSAGE = "Milestone2 flashnext + MTP drafter, RTX Pro 6000"
+# Empty means "whatever version Kaggle has for the kernel now" — the CLI's -v is optional,
+# and pinning it silently submits an old (often failed) version.
+VERSION = ""
 POLL_S = 90
 # The run itself may use the full 9 h GPU-notebook limit, so the poll window must
 # cover queue time plus a maximum-length run.
@@ -41,23 +46,22 @@ def main() -> int:
             return 1
         time.sleep(POLL_S)
 
-    submit = run(
-        [
-            "kaggle",
-            "competitions",
-            "submit",
-            COMP,
-            "-k",
-            kernel,
-            "-v",
-            str(version),
-            "-f",
-            "submission.parquet",
-            "-m",
-            message,
-        ]
-    )
-    print(submit)
+    submit = [
+        "kaggle",
+        "competitions",
+        "submit",
+        COMP,
+        "-k",
+        kernel,
+        "-f",
+        "submission.parquet",
+        "-m",
+        message,
+    ]
+    if version:
+        submit += ["-v", str(version)]
+    print("$", " ".join(submit))
+    print(run(submit))
     print(run(["kaggle", "competitions", "submissions", "-c", COMP]))
     return 0
 

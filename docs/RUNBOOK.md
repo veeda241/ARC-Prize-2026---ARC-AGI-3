@@ -61,7 +61,9 @@ List them yourself with
 ## 1c. Push-ready copy in this repo — `kaggle_submit_milestone2/`
 
 Verbatim pull of `dfranzen/arc-agi-3-milestone-2-solution` (23 cells) plus
-`kernel-metadata.json` with every attachment it hard-codes. Nothing in the notebook is edited.
+`kernel-metadata.json` with every attachment it hard-codes. One line of the launcher cell is
+changed for the Python-3.13 image — see §1d, and `scripts/patch_milestone2_python312.py` is
+that diff in reproducible form. Everything else is byte-for-byte upstream.
 
 | Attachment | Value | Verified 2026-10-19 |
 |---|---|---|
@@ -79,8 +81,51 @@ selected (the notebook's own markdown says to pick it manually), ~185 GB of atta
 storage, and a runtime close to the 9 h ceiling. Model-source strings use the documented
 `<owner>/<slug>/<Framework>/<instance>/<version>` form with `Transformers` capitalised (the API
 reports `MODEL_FRAMEWORK_TRANSFORMERS`; the mount path stays lowercase, which is exactly what
-the notebook hard-codes). Still unverified: whether the harness-patch cell assumes any
-author-local state, and whether the run fits the wall clock.
+the notebook hard-codes). §1d confirmed the patch cell applies and all five mounts resolve. Still unverified: whether
+`machine_shape` in metadata really selects the RTX PRO 6000 without touching the UI, and
+whether the run fits the 9 h wall clock.
+
+## 1d. Attempt 1, 2026-10-19: failed in 17 s and why
+
+Version 1 of `vyassenthilkumar/arc3-milestone2-flashnext-duck` errored before playing a game.
+The log (`kaggle kernels output <slug> -p .\tmp`) shows the good news first: the harness patch
+applied against the bundle, the `taaf_kaggle_sources.pth` was written, and all five §1c
+attachments resolved — so the metadata and the 181 GB model mount are fine.
+
+The failure is a Python ABI mismatch, not a Kaggle config problem:
+
+```
+$ uv venv --python /usr/bin/python3 /tmp/sgl-intel/venv
+error: No solution found when resolving dependencies
+  cause: aiohttp==3.14.3 has no wheels with a matching Python ABI tag (e.g., `cp313`)
+hint: You require CPython 3.13, but we only found wheels for aiohttp (v3.14.3) with ABI tag cp312
+```
+
+Kaggle's notebook image has moved to **Python 3.13**, but `dfranzen/pennyroyal-v253` (SGLang
+fork v2.5.3) ships **cp312-only** wheels. The author's run predates the image change.
+
+Fix applied in this repo: `scripts/patch_milestone2_python312.py` rewrites the one venv line in
+cell 6 to search for a 3.12 interpreter (`/usr/bin/python3.12`, `/usr/local/bin/python3.12`,
+`python3.12` on PATH), prints an `ls /usr/bin` audit, and raises an explicit error if none
+exists. Re-apply after any re-pull with:
+
+```powershell
+python3.12 .\scripts\patch_milestone2_python312.py .\kaggle_submit_milestone2\arc-agi-3-milestone-2-solution.ipynb
+```
+
+**Unverified:** whether the Kaggle image still ships a 3.12 interpreter at all. If version 2
+fails with "No CPython 3.12 on this image", the options are a cp313 SGLang bundle from another
+kernel in this competition's lineage, or accepting that this particular public stack can no
+longer be reproduced from its own wheelhouse.
+
+Two facts read out of the notebook that matter for scoring:
+
+- In a real competition rerun (`KAGGLE_IS_COMPETITION_RERUN`), the script **overrides
+  `bm.n_passes = 1`** and sets `concurrency = 120`, `max_runtime_s_per_game = 532*60`. The
+  4-pass configuration only applies to the offline demo run, so do not expect 4x sampling on
+  the hidden set.
+- `bm.solver.max_actions_per_game = None` in the customization hook — the leaders run uncapped,
+  which is the opposite of the archived `target_325` path in §3.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
@@ -184,32 +229,35 @@ in the Kaggle UI first, or trust `kaggle_submit_duck_v12/kernel-metadata.json`):
 kaggle kernels push -p .\kaggle_submit_duck_v12
 ```
 
-For the §1c target instead (this is the one worth the GPU hours):
+For the §1c target instead (this is the one worth the GPU hours). Note the **slug is derived
+from the notebook `title`, not the metadata `id`**, so it is
+`arc3-milestone2-flashnext-duck`:
 
 ```powershell
 kaggle kernels push -p .\kaggle_submit_milestone2
 ```
 
-Check that Kaggle accepted the attachments before waiting nine hours — push it, then immediately:
-
 ```powershell
-kaggle kernels status vyassenthilkumar/arc3-milestone2-flashnext
+kaggle kernels status vyassenthilkumar/arc3-milestone2-flashnext-duck
 ```
 
-If the run errors within minutes, it is almost certainly an unresolved mount; read the log with
-`kaggle kernels output vyassenthilkumar/arc3-milestone2-flashnext`.
-
-Watch it, then submit to the competition when the status is COMPLETE:
+Poll it, then submit automatically when the status is COMPLETE:
 
 ```powershell
 python .\scripts\kaggle_wait_and_submit.py
 ```
 
-Or submit manually once the run finishes:
+Or submit by hand once the run finishes — the verb is `submit`, **not** `submissions`
+(`submissions` takes no `-k`/`-m` and errors with "unrecognized arguments"):
 
 ```powershell
-kaggle competitions submissions -c arc-prize-2026-arc-agi-3 -k vyassenthilkumar/arc3-duck-v12-boost -m "uncapped duck v12"
+kaggle competitions submit arc-prize-2026-arc-agi-3 -k vyassenthilkumar/arc3-milestone2-flashnext-duck -v 2 -f submission.parquet -m "milestone2 flashnext"
 ```
+
+Same form for the fallback Duck v12 kernel (its real slug ends in `-2pass`):
+
+```powershell
+kaggle competitions submit arc-prize-2026-arc-agi-3 -k vyassenthilkumar/arc3-duck-v12-boost-2pass -v 1 -f submission.parquet -m "duck v12 resubmit"
 
 Check the result against the previous best:
 
