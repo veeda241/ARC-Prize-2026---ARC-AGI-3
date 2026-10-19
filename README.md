@@ -1,7 +1,8 @@
 # ARC Prize 2026 — ARC-AGI-3
 
-Agent that plays the hidden, interactive ARC-AGI-3 games using the TAAF harness plus a
-served Qwen3.8-27B-FP8 model on Kaggle GPUs.
+Agent that plays the hidden, interactive ARC-AGI-3 games on Kaggle GPUs. Current target is the
+Tufa Labs Duck harness serving Qwen3.8-Flash-Next (AutoRound INT4 + MTP draft head); the older
+TAAF / Qwen3.8-27B-FP8 paths in this repo are archived.
 
 ## Where this actually stands
 
@@ -30,6 +31,14 @@ Two conclusions that reverse earlier notes in this repo:
    model (Qwen3.8-Flash-Next, AutoRound INT4, with a speculative-decoding draft model) and
    4-pass scoring. This repo forked an August snapshot of that lineage
    (`foysalemonshanto/lb-9-...`, last run 2026-08-18) and has not tracked it since.
+
+3. **The leader stack now reproduces here.** `kaggle_submit_milestone2/` ran end-to-end on the
+   RTX Pro 6000 on 2026-10-19 and scored **59.82 mean RHAE on the 25 public games**
+   (best-of-4 passes; the author's own run on the same games is 61.89 — see
+   [`artifacts/milestone2_demo_run.json`](artifacts/milestone2_demo_run.json)). That is a demo-set
+   number, not a leaderboard score: the hidden rerun forces `n_passes = 1`, and it has not been
+   submitted yet. One local patch was required — Kaggle's image moved to Python 3.13 and the
+   SGLang wheelhouse is cp312-only (`scripts/patch_milestone2_python312.py`).
 
 See **[docs/RUNBOOK.md](docs/RUNBOOK.md)** for the upgrade path and the measured local baselines.
 

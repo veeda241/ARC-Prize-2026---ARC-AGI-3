@@ -162,6 +162,34 @@ Pass-to-pass spread inside one game is wide (`cd82`: 58.6 → 99.4; `m0r0`: 0 �
 single-pass hidden run is a one-shot draw from that distribution. Expect our submission to land
 below the 61.89 best-of-4 figure, and treat any demo-set mean from a 1-pass run as noisy.
 
+## 1f. Our reproduction of it — first real GPU measurement in this repo
+
+Version 2 of `vyassenthilkumar/arc3-milestone2-flashnext-duck` ran the patched notebook
+end-to-end on the RTX Pro 6000 on 2026-10-19: **COMPLETE** after ~8.4 h, ~9 GPU hours burned.
+
+| Metric | Ours | `dfranzen` reference |
+|---|---|---|
+| mean best-pass RHAE, 25 public games | **59.82** | 61.89 |
+| games at 100.0 | 9 | 9 |
+| games solving ≥1 level | 24 / 25 | 24 / 25 |
+| games won in some pass | 11 | 11 |
+
+Per-game deltas (`artifacts/milestone2_demo_run.json` holds both runs at pass granularity):
+`tn36` 10.7 vs his 100.0 and `g50t` 0.0 vs 15.6 are our losses; `sc25` 96.9 vs 27.9 and
+`ls20` 65.9 vs 37.9 are our wins. The aggregate matches to within one game's swing, which is
+the expected noise level for best-of-4 sampling, and confirms the cp312 wheelhouse plus a 3.12
+venv is a faithful reproduction of the leader stack.
+
+For scale, the same 25 games under this repo's previous paths: **1.76** best-ever leaderboard
+(hidden set), **0.86** best local search-only ensembling, **3.79** the Duck/TAAF offline mean
+this repo used to quote. Reproduction on the demo set is ~34x the best score this repo has ever
+put on the leaderboard — but the leaderboard number is the hidden set, which this run did not
+touch (an offline demo run writes a dummy `submission.parquet`, §1d).
+
+**Not yet done:** a real rerun. Setting it submitting forces `bm.n_passes = 1` (one shot per
+game instead of best-of-four) and plays ~110 hidden games, so expect a materially lower public
+score than 59.82, and expect it to consume close to the full 9 h again.
+
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
 Canonical file: [`../notebooks/kaggle_duck_v12_boost.ipynb`](../notebooks/kaggle_duck_v12_boost.ipynb)

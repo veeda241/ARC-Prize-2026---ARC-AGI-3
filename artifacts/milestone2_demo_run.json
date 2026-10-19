@@ -1,0 +1,1512 @@
+{
+ "run": "vyassenthilkumar/arc3-milestone2-flashnext-duck v2, offline demo (KAGGLE_IS_COMPETITION_RERUN unset), n_passes=4, RTX Pro 6000, 2026-10-19",
+ "note": "mean best-pass RHAE on the 25 PUBLIC games; not a leaderboard score",
+ "gpu_hours_used": "~8.4h of the 9h wall",
+ "python": "venv 3.12 via scripts/patch_milestone2_python312.py",
+ "dfranzen_reference": {
+  "ar25-0c556536": {
+   "best": 100.0,
+   "levels": 8,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 453,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 345,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 292,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 207,
+     "levels": 5,
+     "score": 41.6667
+    }
+   ]
+  },
+  "ft09-0d8bbf25": {
+   "best": 100.0,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 82,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 131,
+     "levels": 4,
+     "score": 47.619
+    },
+    {
+     "outcome": "won",
+     "actions": 87,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 146,
+     "levels": 6,
+     "score": 100.0
+    }
+   ]
+  },
+  "lp85-305b61c3": {
+   "best": 100.0,
+   "levels": 8,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 183,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 144,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 116,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 100,
+     "levels": 8,
+     "score": 100.0
+    }
+   ]
+  },
+  "m0r0-492f87ba": {
+   "best": 100.0,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 150,
+     "levels": 2,
+     "score": 14.2593
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 318,
+     "levels": 5,
+     "score": 71.4286
+    },
+    {
+     "outcome": "won",
+     "actions": 262,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 123,
+     "levels": 0,
+     "score": 0.0
+    }
+   ]
+  },
+  "r11l-495a7899": {
+   "best": 100.0,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 120,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 92,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 92,
+     "levels": 3,
+     "score": 28.5714
+    },
+    {
+     "outcome": "won",
+     "actions": 104,
+     "levels": 6,
+     "score": 100.0
+    }
+   ]
+  },
+  "sb26-7fbdac44": {
+   "best": 100.0,
+   "levels": 8,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 146,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 215,
+     "levels": 8,
+     "score": 79.3887
+    },
+    {
+     "outcome": "won",
+     "actions": 153,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 158,
+     "levels": 8,
+     "score": 93.5261
+    }
+   ]
+  },
+  "tn36-ef4dde99": {
+   "best": 100.0,
+   "levels": 7,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 222,
+     "levels": 7,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 155,
+     "levels": 2,
+     "score": 10.5
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 56,
+     "levels": 1,
+     "score": 3.5714
+    },
+    {
+     "outcome": "won",
+     "actions": 280,
+     "levels": 7,
+     "score": 100.0
+    }
+   ]
+  },
+  "tr87-cd924810": {
+   "best": 100.0,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 273,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 232,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 270,
+     "levels": 5,
+     "score": 71.4286
+    },
+    {
+     "outcome": "won",
+     "actions": 342,
+     "levels": 6,
+     "score": 97.7935
+    }
+   ]
+  },
+  "vc33-5430563c": {
+   "best": 100.0,
+   "levels": 7,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 147,
+     "levels": 3,
+     "score": 21.4286
+    },
+    {
+     "outcome": "won",
+     "actions": 231,
+     "levels": 7,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 302,
+     "levels": 7,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 288,
+     "levels": 7,
+     "score": 100.0
+    }
+   ]
+  },
+  "cd82-fb555c5d": {
+   "best": 99.4167,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 185,
+     "levels": 6,
+     "score": 78.3482
+    },
+    {
+     "outcome": "won",
+     "actions": 237,
+     "levels": 6,
+     "score": 88.4266
+    },
+    {
+     "outcome": "won",
+     "actions": 157,
+     "levels": 6,
+     "score": 99.4167
+    },
+    {
+     "outcome": "won",
+     "actions": 197,
+     "levels": 6,
+     "score": 58.6212
+    }
+   ]
+  },
+  "tu93-0768757b": {
+   "best": 93.5614,
+   "levels": 9,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 274,
+     "levels": 9,
+     "score": 84.6311
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 233,
+     "levels": 8,
+     "score": 68.7705
+    },
+    {
+     "outcome": "won",
+     "actions": 272,
+     "levels": 9,
+     "score": 93.5614
+    },
+    {
+     "outcome": "won",
+     "actions": 355,
+     "levels": 9,
+     "score": 88.0073
+    }
+   ]
+  },
+  "re86-8af5384d": {
+   "best": 77.7778,
+   "levels": 7,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 478,
+     "levels": 6,
+     "score": 58.3333
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 582,
+     "levels": 6,
+     "score": 57.2138
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 473,
+     "levels": 6,
+     "score": 58.3333
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 579,
+     "levels": 7,
+     "score": 77.7778
+    }
+   ]
+  },
+  "su15-1944f8ab": {
+   "best": 62.2222,
+   "levels": 7,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 129,
+     "levels": 3,
+     "score": 13.3333
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 212,
+     "levels": 4,
+     "score": 22.2222
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 150,
+     "levels": 7,
+     "score": 62.2222
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 202,
+     "levels": 3,
+     "score": 13.3333
+    }
+   ]
+  },
+  "s5i5-18d95033": {
+   "best": 58.3333,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 56,
+     "levels": 1,
+     "score": 1.4172
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 224,
+     "levels": 4,
+     "score": 27.7778
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 99,
+     "levels": 2,
+     "score": 7.913
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 417,
+     "levels": 6,
+     "score": 58.3333
+    }
+   ]
+  },
+  "cn04-2fe56bfb": {
+   "best": 47.619,
+   "levels": 4,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 231,
+     "levels": 4,
+     "score": 47.619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 71,
+     "levels": 1,
+     "score": 4.7619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 52,
+     "levels": 1,
+     "score": 4.7619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 211,
+     "levels": 4,
+     "score": 47.619
+    }
+   ]
+  },
+  "dc22-fdcac232": {
+   "best": 47.619,
+   "levels": 4,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 367,
+     "levels": 4,
+     "score": 47.619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 334,
+     "levels": 4,
+     "score": 47.619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 334,
+     "levels": 4,
+     "score": 46.2504
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 279,
+     "levels": 3,
+     "score": 28.5714
+    }
+   ]
+  },
+  "ka59-38d34dbb": {
+   "best": 40.1189,
+   "levels": 5,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 99,
+     "levels": 1,
+     "score": 3.5714
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 324,
+     "levels": 5,
+     "score": 40.1189
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 319,
+     "levels": 3,
+     "score": 21.4286
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 158,
+     "levels": 2,
+     "score": 10.0552
+    }
+   ]
+  },
+  "ls20-9607627b": {
+   "best": 37.9159,
+   "levels": 5,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 367,
+     "levels": 3,
+     "score": 16.3436
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 383,
+     "levels": 4,
+     "score": 27.9172
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 412,
+     "levels": 4,
+     "score": 25.3557
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 543,
+     "levels": 5,
+     "score": 37.9159
+    }
+   ]
+  },
+  "sp80-589a99af": {
+   "best": 28.5714,
+   "levels": 3,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 105,
+     "levels": 2,
+     "score": 14.2857
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 61,
+     "levels": 1,
+     "score": 4.7619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 118,
+     "levels": 3,
+     "score": 28.5714
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 75,
+     "levels": 1,
+     "score": 4.7619
+    }
+   ]
+  },
+  "sc25-635fd71a": {
+   "best": 27.9037,
+   "levels": 4,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 423,
+     "levels": 4,
+     "score": 27.9037
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 430,
+     "levels": 4,
+     "score": 26.148
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 183,
+     "levels": 3,
+     "score": 24.3402
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 99,
+     "levels": 0,
+     "score": 0.0
+    }
+   ]
+  },
+  "g50t-5849a774": {
+   "best": 15.5517,
+   "levels": 3,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 164,
+     "levels": 2,
+     "score": 10.7143
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 151,
+     "levels": 2,
+     "score": 10.7143
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 51,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 607,
+     "levels": 3,
+     "score": 15.5517
+    }
+   ]
+  },
+  "wa30-ee6fef47": {
+   "best": 6.6667,
+   "levels": 2,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 110,
+     "levels": 1,
+     "score": 2.2222
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 250,
+     "levels": 1,
+     "score": 1.7503
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 275,
+     "levels": 2,
+     "score": 6.6667
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 232,
+     "levels": 1,
+     "score": 2.2222
+    }
+   ]
+  },
+  "bp35-0a0ad940": {
+   "best": 2.2222,
+   "levels": 1,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 66,
+     "levels": 1,
+     "score": 1.25
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 72,
+     "levels": 1,
+     "score": 0.7562
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 54,
+     "levels": 1,
+     "score": 2.2222
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 92,
+     "levels": 1,
+     "score": 0.484
+    }
+   ]
+  },
+  "lf52-271a04aa": {
+   "best": 1.8182,
+   "levels": 1,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 101,
+     "levels": 1,
+     "score": 1.8182
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 54,
+     "levels": 1,
+     "score": 1.8182
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 90,
+     "levels": 1,
+     "score": 1.8182
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 95,
+     "levels": 1,
+     "score": 1.8182
+    }
+   ]
+  },
+  "sk48-d8078629": {
+   "best": 0.0,
+   "levels": 0,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 129,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 37,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 39,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 70,
+     "levels": 0,
+     "score": 0.0
+    }
+   ]
+  }
+ },
+ "dfranzen_reference_mean": 61.8927,
+ "ours_v2": {
+  "ar25-0c556536": {
+   "best": 100.0,
+   "levels": 8,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 307,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 291,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 313,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 366,
+     "levels": 7,
+     "score": 77.7778
+    }
+   ]
+  },
+  "cd82-fb555c5d": {
+   "best": 100.0,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 162,
+     "levels": 6,
+     "score": 97.8942
+    },
+    {
+     "outcome": "won",
+     "actions": 133,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 201,
+     "levels": 6,
+     "score": 83.7633
+    },
+    {
+     "outcome": "won",
+     "actions": 155,
+     "levels": 6,
+     "score": 87.6446
+    }
+   ]
+  },
+  "ft09-0d8bbf25": {
+   "best": 100.0,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 101,
+     "levels": 4,
+     "score": 47.619
+    },
+    {
+     "outcome": "won",
+     "actions": 104,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 97,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 108,
+     "levels": 4,
+     "score": 47.619
+    }
+   ]
+  },
+  "lp85-305b61c3": {
+   "best": 100.0,
+   "levels": 8,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 161,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 121,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 127,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 149,
+     "levels": 8,
+     "score": 100.0
+    }
+   ]
+  },
+  "m0r0-492f87ba": {
+   "best": 100.0,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 270,
+     "levels": 5,
+     "score": 71.4286
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 81,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 287,
+     "levels": 5,
+     "score": 71.4286
+    },
+    {
+     "outcome": "won",
+     "actions": 358,
+     "levels": 6,
+     "score": 100.0
+    }
+   ]
+  },
+  "r11l-495a7899": {
+   "best": 100.0,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 115,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 104,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 107,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 152,
+     "levels": 6,
+     "score": 93.1347
+    }
+   ]
+  },
+  "sb26-7fbdac44": {
+   "best": 100.0,
+   "levels": 8,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 193,
+     "levels": 8,
+     "score": 90.7776
+    },
+    {
+     "outcome": "won",
+     "actions": 163,
+     "levels": 8,
+     "score": 92.0879
+    },
+    {
+     "outcome": "won",
+     "actions": 134,
+     "levels": 8,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 161,
+     "levels": 6,
+     "score": 58.3333
+    }
+   ]
+  },
+  "tr87-cd924810": {
+   "best": 100.0,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 149,
+     "levels": 1,
+     "score": 4.7619
+    },
+    {
+     "outcome": "won",
+     "actions": 432,
+     "levels": 6,
+     "score": 93.9556
+    },
+    {
+     "outcome": "won",
+     "actions": 295,
+     "levels": 6,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 150,
+     "levels": 1,
+     "score": 4.7619
+    }
+   ]
+  },
+  "vc33-5430563c": {
+   "best": 100.0,
+   "levels": 7,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 281,
+     "levels": 7,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 275,
+     "levels": 7,
+     "score": 100.0
+    },
+    {
+     "outcome": "won",
+     "actions": 228,
+     "levels": 7,
+     "score": 100.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 114,
+     "levels": 3,
+     "score": 21.1413
+    }
+   ]
+  },
+  "sc25-635fd71a": {
+   "best": 96.8542,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "won",
+     "actions": 489,
+     "levels": 6,
+     "score": 69.6251
+    },
+    {
+     "outcome": "won",
+     "actions": 258,
+     "levels": 6,
+     "score": 95.7437
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 345,
+     "levels": 4,
+     "score": 18.4422
+    },
+    {
+     "outcome": "won",
+     "actions": 333,
+     "levels": 6,
+     "score": 96.8542
+    }
+   ]
+  },
+  "tu93-0768757b": {
+   "best": 93.2552,
+   "levels": 9,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 277,
+     "levels": 8,
+     "score": 80.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 315,
+     "levels": 8,
+     "score": 78.4987
+    },
+    {
+     "outcome": "won",
+     "actions": 277,
+     "levels": 9,
+     "score": 93.2552
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 247,
+     "levels": 8,
+     "score": 66.5065
+    }
+   ]
+  },
+  "ls20-9607627b": {
+   "best": 65.9168,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 602,
+     "levels": 4,
+     "score": 27.3825
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 655,
+     "levels": 6,
+     "score": 65.9168
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 395,
+     "levels": 4,
+     "score": 35.7143
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 425,
+     "levels": 4,
+     "score": 33.0792
+    }
+   ]
+  },
+  "re86-8af5384d": {
+   "best": 58.3333,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 464,
+     "levels": 6,
+     "score": 58.3333
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 330,
+     "levels": 5,
+     "score": 41.6667
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 590,
+     "levels": 6,
+     "score": 58.3333
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 516,
+     "levels": 6,
+     "score": 58.3333
+    }
+   ]
+  },
+  "s5i5-18d95033": {
+   "best": 58.3333,
+   "levels": 6,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 235,
+     "levels": 6,
+     "score": 58.3333
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 247,
+     "levels": 6,
+     "score": 58.3333
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 63,
+     "levels": 2,
+     "score": 8.3333
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 87,
+     "levels": 2,
+     "score": 8.3333
+    }
+   ]
+  },
+  "ka59-38d34dbb": {
+   "best": 52.3462,
+   "levels": 5,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 303,
+     "levels": 5,
+     "score": 52.3462
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 302,
+     "levels": 3,
+     "score": 11.7062
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 404,
+     "levels": 5,
+     "score": 40.5907
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 405,
+     "levels": 5,
+     "score": 37.7513
+    }
+   ]
+  },
+  "cn04-2fe56bfb": {
+   "best": 47.619,
+   "levels": 4,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 44,
+     "levels": 1,
+     "score": 4.7619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 88,
+     "levels": 2,
+     "score": 14.2857
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 173,
+     "levels": 4,
+     "score": 47.619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 221,
+     "levels": 4,
+     "score": 47.619
+    }
+   ]
+  },
+  "dc22-fdcac232": {
+   "best": 47.619,
+   "levels": 4,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 305,
+     "levels": 4,
+     "score": 47.619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 76,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 202,
+     "levels": 2,
+     "score": 14.2857
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 273,
+     "levels": 3,
+     "score": 24.2831
+    }
+   ]
+  },
+  "su15-1944f8ab": {
+   "best": 22.2222,
+   "levels": 4,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 115,
+     "levels": 4,
+     "score": 22.2222
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 120,
+     "levels": 4,
+     "score": 22.2222
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 87,
+     "levels": 3,
+     "score": 13.3333
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 137,
+     "levels": 3,
+     "score": 13.3333
+    }
+   ]
+  },
+  "wa30-ee6fef47": {
+   "best": 22.2222,
+   "levels": 4,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 500,
+     "levels": 3,
+     "score": 13.3333
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 177,
+     "levels": 1,
+     "score": 2.2222
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 405,
+     "levels": 4,
+     "score": 22.2222
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 120,
+     "levels": 1,
+     "score": 2.2222
+    }
+   ]
+  },
+  "tn36-ef4dde99": {
+   "best": 10.7143,
+   "levels": 2,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 128,
+     "levels": 1,
+     "score": 3.3583
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 128,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 72,
+     "levels": 1,
+     "score": 3.5714
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 159,
+     "levels": 2,
+     "score": 10.7143
+    }
+   ]
+  },
+  "lf52-271a04aa": {
+   "best": 10.2987,
+   "levels": 3,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 153,
+     "levels": 2,
+     "score": 5.1029
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 108,
+     "levels": 2,
+     "score": 5.4545
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 238,
+     "levels": 3,
+     "score": 10.2987
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 165,
+     "levels": 2,
+     "score": 5.4545
+    }
+   ]
+  },
+  "sp80-589a99af": {
+   "best": 4.7619,
+   "levels": 1,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 49,
+     "levels": 1,
+     "score": 4.7619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 73,
+     "levels": 1,
+     "score": 4.7619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 29,
+     "levels": 1,
+     "score": 4.7619
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 44,
+     "levels": 1,
+     "score": 4.7619
+    }
+   ]
+  },
+  "sk48-d8078629": {
+   "best": 2.7778,
+   "levels": 1,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 213,
+     "levels": 1,
+     "score": 1.9396
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 70,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 127,
+     "levels": 1,
+     "score": 2.7778
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 110,
+     "levels": 1,
+     "score": 2.4464
+    }
+   ]
+  },
+  "bp35-0a0ad940": {
+   "best": 2.2222,
+   "levels": 1,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 72,
+     "levels": 1,
+     "score": 2.2222
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 70,
+     "levels": 1,
+     "score": 0.8
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 69,
+     "levels": 1,
+     "score": 1.0198
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 61,
+     "levels": 1,
+     "score": 1.4497
+    }
+   ]
+  },
+  "g50t-5849a774": {
+   "best": 0.0,
+   "levels": 0,
+   "passes": [
+    {
+     "outcome": "gave_up",
+     "actions": 41,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 43,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 88,
+     "levels": 0,
+     "score": 0.0
+    },
+    {
+     "outcome": "gave_up",
+     "actions": 54,
+     "levels": 0,
+     "score": 0.0
+    }
+   ]
+  }
+ },
+ "ours_v2_mean": 59.8199
+}
