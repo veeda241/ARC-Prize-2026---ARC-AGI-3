@@ -2,21 +2,62 @@
 
 ## 1. Score reality
 
+Verified 2026-10-19 with `kaggle competitions leaderboard --show` and
+`kaggle competitions submissions` (not from notebook markdown).
+
 | Item | Value |
 |------|-------|
 | Official metric | RHAE averaged over games, scaled **0–100%** |
-| Your submitted best (Duck v12 base, 1 pass) | **~2.23** hidden LB |
-| Your offline public 25-game mean (Duck v12 boost) | **3.79** |
-| Best public/community open-weight submissions | low single digits |
-| Strongest system on the benchmark | **~62%** (frontier closed model) |
-| Humans | define the baseline; 100% by construction |
+| Leaderboard #1 (Tufa Labs) | **68.91** |
+| Leaderboard #2 (Yi-Chia Chen) | **67.49** |
+| Leaderboard rank 20 | ~**38** |
+| **Best score this account has achieved** | **1.76** (capped Path A, 2026-08-17) |
+| Uncapped TAAF v3 | 1.10 (2026-08-18) |
+| Duck v12 Boost | 1.13 (2026-08-20) |
+| Heuristic MyAgent | 0.01 (2026-08-19) |
+| Local search-only baselines (this repo) | 0.41–0.86 |
 
-Implication for planning: the next realistic step is converting 3.79 offline into a
-**better hidden-LB number than 2.23**, i.e. single-digit improvement. Hidden-set tasks are
-unseen by design, so offline public mean is only a weak proxy. Nobody should plan around a
-double-digit jump, and 90% is beyond the state of the art.
+Corrections to what this file used to claim:
 
-## 2. Primary path — Duck v12 boost (uncapped)
+- **Uncapping did not raise the score.** The capped run (1.76) beat both uncapped runs
+  (1.10, 1.13). Do not treat "remove the caps" as a free win; it was measured and it lost.
+- The `~2.23` and `3.79` numbers embedded in the notebooks are not in the submission log and
+  should be treated as unverified self-reporting, not as results.
+- Scores of 40–68 on this competition are real and are held by open, readable public kernels.
+  The gap to them is a harness-and-model gap, not a ceiling.
+
+## 1b. What the leaders actually run
+
+Pulled and inspected 2026-10-19 from `dfranzen/arc-agi-3-milestone-2-solution` (949 votes,
+the most-upvoted public kernel in the competition):
+
+- Base: **Tufa Labs Duck harness** — <https://github.com/Tufalabs/duck-harness>, pinned at
+  commit `7652836`, applied as an in-notebook patch rather than a forked bundle.
+- Model: **Qwen3.8-Flash-Next**, Intel AutoRound **INT4** quantised, asserted in-code
+  (`quant_method == "auto-round"`, `bits == 4`).
+- **Speculative decoding** via a separate draft model
+  (`dfranzen/albucino-qwen3-8-flash-next-drafter`, `mtp-int4-g32`) — this is how they buy
+  throughput inside the 9 h wall, rather than by cutting actions.
+- **`n_passes = 4`** over the 25 demo games, with per-game runtime scaled to the competition.
+- Explicit score-formula engineering: the notebook reasons about `min(1, (human/used)^2)`
+  per level, the 0.25 endgame floor, and that level 1 is worth only `1/N` of a game — i.e.
+  budget is allocated across levels by score value, which is the opposite of a global cap.
+- Write-up: <https://www.kaggle.com/writeups/dfranzen/arc-agi-3-milestone-2>
+
+Read it locally before doing anything else:
+
+```powershell
+kaggle kernels pull dfranzen/arc-agi-3-milestone-2-solution -p .\upstream
+```
+
+Other high-vote public kernels in the same lineage, worth comparing:
+`jeroencottaar/tufa-labs-duck-harness-june-30-milestone-winner`,
+`wuliao0/duck-qwen3-8-anim-base`, `chiakazirim/duck-qwen3-8-tuned`,
+`keithtyser/duck-qwen3-8-flash-next-nvfp4-mtp`, `scottlegrand/taaf-flashnext-sheetu12b-0922`.
+List them yourself with
+`kaggle kernels list --competition arc-prize-2026-arc-agi-3 --sort-by voteCount`.
+
+## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
 Canonical file: [`../notebooks/kaggle_duck_v12_boost.ipynb`](../notebooks/kaggle_duck_v12_boost.ipynb)
 Push directory: [`../kaggle_submit_duck_v12/`](../kaggle_submit_duck_v12/)
@@ -67,16 +108,21 @@ Rerun-side behavior worth knowing (cell 9): `ONLY_RESET_LEVELS=true`,
 `TAAF_MINIMAL_DIAGNOSTICS=1` (so no `diagnostics.html` on the scored run), gateway polled at
 `http://gateway:8001/` for up to 600 s before the run aborts.
 
-## 3. Archived path — capped TAAF `target_325`
+## 3. Best-scoring path so far — capped TAAF `target_325` (1.76)
 
 [`../notebooks/kaggle_submit_target_325.ipynb`](../notebooks/kaggle_submit_target_325.ipynb),
 [`../configs/target_325.json`](../configs/target_325.json),
 [`../agents/calibrated_agent.py`](../agents/calibrated_agent.py).
 
-Kept as a **negative result**: `MAX_ACTIONS_PER_GAME=55`, `MAX_LEVELS_PER_GAME=2`,
-`STRICT_PREFIXES=["sc25"]` produced hidden LB **1.76** vs the uncapped stack's 2.23. Budget
-caps cut score; the earlier instruction in this file to land inside a 3.0–3.5 band was
-self-imposed and should not be reinstated. Do not submit this path.
+Correction: an earlier version of this file called this path a **negative result** and claimed
+the uncapped stack scored 2.23 against its 1.76. The submission log says the opposite — the
+capped run is this account's **best score, 1.76**, and the uncapped runs scored 1.10 and 1.13.
+The 2.23 figure appears only inside notebook markdown and was never verified.
+
+Do not read this as "caps are good" either. Both numbers are single-digit and the leaderboard
+top is 68.91, so capping versus uncapping is a fight over noise between two submissions that
+are both roughly 40 points behind the leaders for structural reasons (see §1b). Keep this path
+only as the fallback that reliably completes; the upgrade in §1b is the real target.
 
 ## 4. Local scoring
 
@@ -216,12 +262,20 @@ variance is worth more than adding raw steps.
 
 ## 8. What not to do
 
-- Do not add action/level caps back.
-- Do not report offline 3.79 as a leaderboard score.
+- Do not report a public/offline mean as a leaderboard score. Public 25-game means and hidden
+  LB numbers have diverged by 1.5x+ in this repo's own history.
 - Do not aim at a target *band*; aim at the highest hidden LB the stack can reach.
-- Do not import ARC-AGI-2 recipes wholesale. ARC-AGI-2 is static input/output grid pairs, so
-  "write a Python transform, run it against the demo pairs, feed the traceback back until every
-  demo matches" has a correctness test to converge on. ARC-AGI-3 has no demo pairs — only frame
-  deltas, `GAME_OVER`, and `levels_completed` — so that self-debugging loop has nothing to check
-  itself against. The widely-cited ~67–70% test-time-training / code-generation results are
-  ARC-AGI-2 (ARC Prize 2025) numbers, not ARC-AGI-3.
+- Do not trust a score quoted in notebook markdown. Verify with
+  `kaggle competitions submissions -c arc-prize-2026-arc-agi-3` and
+  `kaggle competitions leaderboard -c arc-prize-2026-arc-agi-3 --show` before writing a claim
+  into this file. Two earlier claims here — "uncapping is a free win", and "67–70% belongs to
+  ARC-AGI-2" — were both checked against the live leaderboard on 2026-10-19 and were wrong.
+- Do not treat caps versus uncaps as the decisive lever. Both are single-digit; the leaders are
+  40–60 points away because of harness, model and budget allocation, not because of one flag.
+- ARC-AGI-3 differs from ARC-AGI-2 in format: it is interactive (frame deltas, `GAME_OVER`,
+  `levels_completed`) rather than static input/output grid pairs, so a "write a transform, test
+  it on the demos, feed the traceback back" self-debugging loop has no demo set to converge on.
+  Search-only policies were measured here and did not work (§7) — but that is a result about
+  *this* search implementation, not proof the interactive format defeats code-generation agents;
+  the leaderboard leaders pair an LLM harness with score-aware budget allocation.
+

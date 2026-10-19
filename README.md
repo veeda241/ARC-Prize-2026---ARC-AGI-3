@@ -5,30 +5,33 @@ served Qwen3.8-27B-FP8 model on Kaggle GPUs.
 
 ## Where this actually stands
 
-| Stack | Public 25 games | Hidden leaderboard |
-|-------|-----------------|--------------------|
-| **Duck v12 boost (primary, uncapped)** — [`notebooks/kaggle_duck_v12_boost.ipynb`](notebooks/kaggle_duck_v12_boost.ipynb) | **3.79** | not yet run |
-| Duck v12 base (1-pass, as submitted) | — | **~2.23** |
-| Capped TAAF (`target_325`, actions limited to 55) | 3.28 by construction | **1.76** |
+Verified against the live Kaggle leaderboard and this account's submission log on 2026-10-19.
 
-Scores are the official 0–100% RHAE scale. Numbers above are measured, not projected.
+| Leaderboard position | Team | Score |
+|----------------------|------|-------|
+| 1 | Tufa Labs | **68.91** |
+| 2 | Yi-Chia Chen | **67.49** |
+| 3 | Team Turducken | 52.82 |
+| 20 | (cut) | ~38 |
 
-For calibration, the strongest system on this benchmark anywhere in the world is about
-**62%**, and the 100% grand prize remains unclaimed. A double-digit leaderboard score is a
-good outcome for an open-weight submission; anything near 90% is not currently reachable.
+| This account's submissions (public score) | Date | Score |
+|-------------------------------------------|------|-------|
+| Path A TAAF, capped at 2 levels / 55 actions | 2026-08-17 | **1.76** ← still the best here |
+| Uncapped TAAF v3 | 2026-08-18 | 1.10 |
+| Calibrated heuristic MyAgent | 2026-08-19 | 0.01 |
+| Duck v12 Boost | 2026-08-20 | 1.13 |
 
-## Primary path
+Two conclusions that reverse earlier notes in this repo:
 
-[`notebooks/kaggle_duck_v12_boost.ipynb`](notebooks/kaggle_duck_v12_boost.ipynb)
-(mirrored in [`kaggle_submit_duck_v12/`](kaggle_submit_duck_v12/) for `kaggle kernels push`).
-Regenerate it from source with `python scripts/build_duck_v12_boost.py`.
+1. **Uncapping did not help.** 1.76 capped beat 1.10 and 1.13 uncapped. The "2.23 vs 1.76"
+   figures inside the notebooks are not supported by the submission log.
+2. **The gap to the top is roughly 40–60 points, and it is closable.** The leading solutions
+   are open: Tufa Labs' [Duck harness](https://github.com/Tufalabs/duck-harness) plus a newer
+   model (Qwen3.8-Flash-Next, AutoRound INT4, with a speculative-decoding draft model) and
+   4-pass scoring. This repo forked an August snapshot of that lineage
+   (`foysalemonshanto/lb-9-...`, last run 2026-08-18) and has not tracked it since.
 
-It deliberately **does not cap actions**. Capping was tried and cost real score: 1.76 vs 2.23.
-The old `target_325` notebook and [`configs/target_325.json`](configs/target_325.json) are kept
-only as that negative result — do not submit them.
-
-Full procedure, attached datasets/models, and risk notes:
-**[docs/RUNBOOK.md](docs/RUNBOOK.md)**
+See **[docs/RUNBOOK.md](docs/RUNBOOK.md)** for the upgrade path and the measured local baselines.
 
 ## Repo layout
 
