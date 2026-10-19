@@ -118,6 +118,12 @@ fails with "No CPython 3.12 on this image", the options are a cp313 SGLang bundl
 kernel in this competition's lineage, or accepting that this particular public stack can no
 longer be reproduced from its own wheelhouse.
 
+- A plain (non-rerun) kernel run is **not scored and not self-reporting**: the notebook writes a
+  hard-coded one-row `submission.parquet` (`[["1_0","1",True,1]]`) whenever
+  `KAGGLE_IS_COMPETITION_RERUN` is unset. The real per-game results only exist in
+  `.per_game_cards.pkl` and `diagnostics.html` under `/kaggle/working`, so after any run pull
+  the outputs and decode them with `scripts/parse_milestone2_cards.py` (§1e).
+
 Two facts read out of the notebook that matter for scoring:
 
 - In a real competition rerun (`KAGGLE_IS_COMPETITION_RERUN`), the script **overrides
@@ -126,6 +132,35 @@ Two facts read out of the notebook that matter for scoring:
   the hidden set.
 - `bm.solver.max_actions_per_game = None` in the customization hook — the leaders run uncapped,
   which is the opposite of the archived `target_325` path in §3.
+
+## 1e. Reference measurement: the author's own decoded run
+
+`dfranzen` publishes `.per_game_cards.pkl` as kernel output, and it records one card per game
+in the form `won|gave_up:<actions>:<levels_completed>:<game_RHAE_0-100>` — one segment per
+pass. Decoding his 4-pass run on the 25 **public** games
+(`python3.12 scripts/parse_milestone2_cards.py <file>`, pulled 2026-10-19):
+
+| Metric | Value |
+|---|---|
+| mean best-pass RHAE over 25 public games | **61.89** |
+| games scoring 100.0 | 9 |
+| games solving ≥1 level | 24 / 25 |
+| games fully won in at least one pass | 11 |
+| worst game | `sk48` at 0.00 (4 passes, 0 levels) |
+| typical actions/game on a won game | 100–300 |
+
+This is the number to compare our own runs against, because it is computed on the same 25
+games by the same scorer. It is **not** a leaderboard score: the hidden rerun plays ~110 games
+and the notebook forces `bm.n_passes = 1` when `KAGGLE_IS_COMPETITION_RERUN` is set.
+
+It also puts §7's local search numbers in perspective: best-of-5 ensembled novelty search on
+those same 25 games reached **0.86**, never clearing level 1. The served-LLM harness is ~70x
+that on the identical set. The gap is the model and its action proposals, not the search
+strategy, which is why the local search loop is no longer where effort should go.
+
+Pass-to-pass spread inside one game is wide (`cd82`: 58.6 → 99.4; `m0r0`: 0 → 100), so a
+single-pass hidden run is a one-shot draw from that distribution. Expect our submission to land
+below the 61.89 best-of-4 figure, and treat any demo-set mean from a 1-pass run as noisy.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
