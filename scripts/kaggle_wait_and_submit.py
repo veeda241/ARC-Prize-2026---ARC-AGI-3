@@ -2,6 +2,7 @@
 """Wait for the Kaggle kernel to finish, then submit it to ARC-AGI-3."""
 from __future__ import annotations
 
+import re
 import subprocess
 import sys
 import time
@@ -35,12 +36,17 @@ def main() -> int:
     while True:
         status = run(["kaggle", "kernels", "status", kernel])
         print(status.strip())
-        upper = status.upper()
-        if "COMPLETE" in upper:
-            break
-        if any(x in upper for x in ("ERROR", "CANCELLED", "FAILED")):
-            print("Kernel did not complete successfully; not submitting.")
-            return 1
+        # Only trust the status token. The CLI prints API exceptions to the same stream, and
+        # a connection blip reads like "ConnectTimeoutError" - which contains "ERROR", so a
+        # substring scan used to abort the wait and skip the submission entirely.
+        match = re.search(r"KernelWorkerStatus\.([A-Z_]+)", status)
+        if match:
+            token = match.group(1)
+            if token == "COMPLETE":
+                break
+            if token in {"ERROR", "CANCELLED", "FAILED"}:
+                print(f"Kernel ended as {token}; not submitting.")
+                return 1
         if time.time() - start > MAX_WAIT_S:
             print("Timed out waiting for kernel.")
             return 1
