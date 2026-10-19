@@ -151,19 +151,52 @@ This is the fastest iteration loop in the repo — use it before spending a Kagg
 
 ### Measured: search-only baselines are worse than the LLM stack
 
-Same 25 public games, same scorer, mean RHAE on the 0–100 scale:
+Same 25 public games, same scorer, mean RHAE on the 0–100 scale. Upper rows are single runs;
+the three lower policies are the same 25 games run 5 times with different RNG seeds.
 
-| Agent | Steps/game | Mean | Games reaching level 1 | Past level 1 |
-|-------|-----------|------|------------------------|--------------|
-| random actions | 2,000 | **0.38** | 2 | 0 |
-| novelty search (state-hash, no LLM) | 2,000 | **0.49** | 5 | 0 |
-| novelty search | 10,000 | **0.70** | 7 | 0 |
+| Agent | Steps/game | Mean RHAE | Games reaching level 1 | Past level 1 |
+|-------|-----------|-----------|------------------------|--------------|
+| random actions | 2,000 | 0.38 | 2 | 0 |
+| state-hash novelty | 2,000 | 0.49 | 5 | 0 |
+| state-hash novelty | 10,000 | 0.70 | 7 | 0 |
+| **random**, 5 seeds | 2,000 | **0.60** (0.49–0.71) | 6–7 | 0 |
+| **novelty**, 5 seeds | 2,000 | **0.55** (0.38–0.73) | 5–7 | 0 |
+| **frontier prior**, 5 seeds | 2,000 | **0.41** (0.31–0.55) | 5 | 0 |
 | Qwen3.8-27B TAAF/Duck stack | — | **3.79** | — | — |
 
-The `3.79` is on this same public set, so the served-LLM stack is roughly **5x** the best
-pure-search run. Brute-force exploration does not substitute for the model, which matches the
-published ARC-AGI-3 result that frontier models scored under 1% and that preview-stage
-brute-force agents collapsed once the benchmark hardened.
+Three honest takeaways:
+
+1. **No search policy ever cleared level 1**, in any seed, at any budget. The served-LLM stack
+   is ~4–6x ahead of the best search run, so exploration does not substitute for the model.
+2. **Seed variance is bigger than the policy differences.** Random alone swings 0.49–0.71. Any
+   A/B test in this harness needs several seeds; single-run deltas under ~0.15 are noise.
+3. **The frontier-prior policy is a negative result.** `--policy prior` learns each action's
+   screen displacement and walks toward the nearest never-seen salient pixel — and it loses to
+   plain random (0.41 vs 0.60, all five seeds lower). The likely cause is the perception layer:
+   estimating the player as "centre of changed pixels" is polluted by animation, explosions and
+   particles, so the learned action model points the wrong way. Treat the idea as unproven, not
+   as validated.
+
+### Ensembling: measured, and it is sublinear
+
+`--seeds N` re-runs every game and keeps the best result per game (the same rule Kaggle's
+scorecard applies across passes):
+
+| Policy | Single run | Best of 5 | Gain |
+|--------|-----------|-----------|------|
+| random | 0.60 | **0.86** | +43% |
+| novelty | 0.55 | **0.82** | +51% |
+| frontier prior | 0.41 | **0.70** | +71% |
+
+5x compute buys roughly 1.4–1.7x score, and restarting beats lengthening one run
+(novelty: 5 seeds at 2k = 0.83 vs one run at 10k = 0.70). Sample-keep-the-best is real but
+modest — it does not close the 4x gap to the LLM stack.
+
+Reproduce with:
+
+```powershell
+.\.venv312\Scripts\python.exe scripts\local_search_agent.py --policy prior --budget 2000 --seeds 5
+```
 
 ### The lever that search *does* expose: action efficiency
 
