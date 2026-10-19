@@ -44,7 +44,8 @@ the most-upvoted public kernel in the competition):
   budget is allocated across levels by score value, which is the opposite of a global cap.
 - Write-up: <https://www.kaggle.com/writeups/dfranzen/arc-agi-3-milestone-2>
 
-Read it locally before doing anything else:
+It is committed at `kaggle_submit_milestone2/arc-agi-3-milestone-2-solution.ipynb` (see §1c);
+pull a fresh copy any time with:
 
 ```powershell
 kaggle kernels pull dfranzen/arc-agi-3-milestone-2-solution -p .\upstream
@@ -56,6 +57,30 @@ Other high-vote public kernels in the same lineage, worth comparing:
 `keithtyser/duck-qwen3-8-flash-next-nvfp4-mtp`, `scottlegrand/taaf-flashnext-sheetu12b-0922`.
 List them yourself with
 `kaggle kernels list --competition arc-prize-2026-arc-agi-3 --sort-by voteCount`.
+
+## 1c. Push-ready copy in this repo — `kaggle_submit_milestone2/`
+
+Verbatim pull of `dfranzen/arc-agi-3-milestone-2-solution` (23 cells) plus
+`kernel-metadata.json` with every attachment it hard-codes. Nothing in the notebook is edited.
+
+| Attachment | Value | Verified 2026-10-19 |
+|---|---|---|
+| model | `dfranzen/intel-qwen3.8-flash-next-w4a16-autoround/Transformers/default/1` | public, v1 READY, **181 GB** |
+| model | `dfranzen/albucino-qwen3-8-flash-next-drafter/Transformers/default/1` | public, v1 READY, 4.2 GB |
+| dataset | `dfranzen/pennyroyal-v253` | exists (SGLang RTX-Pro-6000 fork: lockfiles + `hot_tokens_64k.pt`) |
+| dataset | `dfranzen/taaf-kaggle-source-bundle-copy` | exists (`benchmark_initial.pkl`, `deploy_target.pkl`) |
+| competition | `arc-prize-2026-arc-agi-3` | supplies `arc_agi_3_wheels` |
+
+All remote URLs in the notebook are `127.0.0.1` (the local vLLM/SGLang server) or markdown
+links, and there is no `pip install`/`git clone`, so `enable_internet: false` is safe.
+
+**This has never been run from this account.** Expect it to need: the RTX PRO 6000 accelerator
+selected (the notebook's own markdown says to pick it manually), ~185 GB of attached model
+storage, and a runtime close to the 9 h ceiling. Model-source strings use the documented
+`<owner>/<slug>/<Framework>/<instance>/<version>` form with `Transformers` capitalised (the API
+reports `MODEL_FRAMEWORK_TRANSFORMERS`; the mount path stays lowercase, which is exactly what
+the notebook hard-codes). Still unverified: whether the harness-patch cell assumes any
+author-local state, and whether the run fits the wall clock.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
@@ -137,6 +162,8 @@ the primary notebook. `artifacts/example_results.json` and
 ## 5. Submission checklist
 
 - [ ] `kernel-metadata.json` in `kaggle_submit_duck_v12/` lists all four attachments above
+- [ ] For `kaggle_submit_milestone2/`: all five §1c attachments resolve, and the first minutes of
+      the log show the model directories found before the server launches
 - [ ] Model version still `1` and `hf-fp8` variation exists (path is hard-coded in cell 3)
 - [ ] Notebook commits under the 9 h limit with internet disabled
 - [ ] You read the rerun log and recorded the real `n_passes` value
@@ -156,6 +183,21 @@ in the Kaggle UI first, or trust `kaggle_submit_duck_v12/kernel-metadata.json`):
 ```powershell
 kaggle kernels push -p .\kaggle_submit_duck_v12
 ```
+
+For the §1c target instead (this is the one worth the GPU hours):
+
+```powershell
+kaggle kernels push -p .\kaggle_submit_milestone2
+```
+
+Check that Kaggle accepted the attachments before waiting nine hours — push it, then immediately:
+
+```powershell
+kaggle kernels status vyassenthilkumar/arc3-milestone2-flashnext
+```
+
+If the run errors within minutes, it is almost certainly an unresolved mount; read the log with
+`kaggle kernels output vyassenthilkumar/arc3-milestone2-flashnext`.
 
 Watch it, then submit to the competition when the status is COMPLETE:
 

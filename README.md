@@ -37,7 +37,8 @@ See **[docs/RUNBOOK.md](docs/RUNBOOK.md)** for the upgrade path and the measured
 
 ```
 notebooks/                     canonical notebooks (regenerable via scripts/build_*.py)
-kaggle_submit_duck_v12/        push-ready notebook + kernel-metadata.json  <- PRIMARY
+kaggle_submit_milestone2/      push-ready copy of the top public kernel   <- PRIMARY TARGET
+kaggle_submit_duck_v12/        push-ready notebook + kernel-metadata.json (scored 1.13)
 kaggle_submit/                 archived capped TAAF submit
 kaggle_submit_calibrated/      archived heuristic/Unsloth agent submit
 agents/, agent/                budgeted agent used by the archived paths
