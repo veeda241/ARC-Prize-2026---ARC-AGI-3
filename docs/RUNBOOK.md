@@ -2,7 +2,7 @@
 
 ## 1. Score reality
 
-Verified 2026-10-19 with `kaggle competitions leaderboard --show` and
+Verified 2026-10-20 with `kaggle competitions leaderboard --show` and
 `kaggle competitions submissions` (not from notebook markdown).
 
 | Item | Value |
@@ -11,20 +11,22 @@ Verified 2026-10-19 with `kaggle competitions leaderboard --show` and
 | Leaderboard #1 (Tufa Labs) | **68.91** |
 | Leaderboard #2 (Yi-Chia Chen) | **67.49** |
 | Leaderboard rank 20 | ~**38** |
-| **Best score this account has achieved** | **1.76** (capped Path A, 2026-08-17) |
-| Uncapped TAAF v3 | 1.10 (2026-08-18) |
-| Duck v12 Boost | 1.13 (2026-08-20) |
-| Heuristic MyAgent | 0.01 (2026-08-19) |
+| **Best score this account has achieved** | **30.55** (Milestone 2 Flash-Next, 2026-10-19, ~rank 510) |
+| Previous best, archived TAAF/Duck paths | 1.76 (2026-08-17), 1.13, 1.10, 0.01 |
+| Same stack on the 25 public games, best of 4 passes | **59.82** (author's own run: 61.89) |
 | Local search-only baselines (this repo) | 0.41–0.86 |
 
 Corrections to what this file used to claim:
 
-- **Uncapping did not raise the score.** The capped run (1.76) beat both uncapped runs
-  (1.10, 1.13). Do not treat "remove the caps" as a free win; it was measured and it lost.
+- **Uncapping did not raise the score** — on the old stack. The capped run (1.76) beat both
+  uncapped runs (1.10, 1.13). Do not treat "remove the caps" as a free win; it was measured and
+  it lost. The new stack runs with `max_actions_per_game = None` and scores 30.55, but that
+  changes harness, model and caps together, so it says nothing about the flag on its own.
 - The `~2.23` and `3.79` numbers embedded in the notebooks are not in the submission log and
   should be treated as unverified self-reporting, not as results.
 - Scores of 40–68 on this competition are real and are held by open, readable public kernels.
-  The gap to them is a harness-and-model gap, not a ceiling.
+  The gap to them is a harness-and-model gap, not a ceiling — and porting that harness moved
+  this account from 1.76 to 30.55 in one run (§1f).
 
 ## 1b. What the leaders actually run
 
@@ -180,15 +182,32 @@ Per-game deltas (`artifacts/milestone2_demo_run.json` holds both runs at pass gr
 the expected noise level for best-of-4 sampling, and confirms the cp312 wheelhouse plus a 3.12
 venv is a faithful reproduction of the leader stack.
 
-For scale, the same 25 games under this repo's previous paths: **1.76** best-ever leaderboard
-(hidden set), **0.86** best local search-only ensembling, **3.79** the Duck/TAAF offline mean
-this repo used to quote. Reproduction on the demo set is ~34x the best score this repo has ever
-put on the leaderboard — but the leaderboard number is the hidden set, which this run did not
-touch (an offline demo run writes a dummy `submission.parquet`, §1d).
+For scale on the same 25 public games: this repo's local search-only ensembling reached **0.86**,
+and the archived Duck/TAAF offline mean this repo used to quote was **3.79** (never verified on
+the leaderboard). The demo-set reproduction is ~34x the account's then-best hidden score of 1.76
+— but a demo mean is not a leaderboard score, since an offline run writes a dummy
+`submission.parquet` (§1d) and plays only the public games.
 
-**Not yet done:** a real rerun. Setting it submitting forces `bm.n_passes = 1` (one shot per
-game instead of best-of-four) and plays ~110 hidden games, so expect a materially lower public
-score than 59.82, and expect it to consume close to the full 9 h again.
+**Hidden-set rerun, submitted 2026-10-19 16:43 UTC → public 30.55** (ref `57402922`, team row
+"Hendric Nazarius", ~rank 510). That is 17x this repo's previous best of 1.76, and 29 points
+below the 59.82 the same code produced on the 25 public games. The difference is structural, not
+bad luck: the rerun forces `bm.n_passes = 1`, so the hidden set gets one draw per game where the
+demo set kept the best of four, and the demo cards show how wide that distribution is
+(`tn36` 10.7 vs the author's 100.0; `sc25` 96.9 vs his 27.9).
+
+Two operational facts measured by that submission:
+
+- A rerun took **9 h 14 min** from submit to score (16:43 UTC → 01:57 UTC). Budget for that
+  latency; the CLI only reports `PENDING` the whole time, and `kaggle kernels status` keeps
+  reporting the *interactive* session, so there is no progress signal until the score appears.
+- The rerun did **not** draw on the account's GPU quota: 9.00 h used / 21.00 remaining before it
+  and unchanged after. Only interactive runs cost session hours, so a submission is free in
+  quota terms and costs only one of the daily (team-shared) slots.
+
+Where that leaves the score: raising `n_passes` is not available on the hidden set — the
+notebook's own submission branch sets it to 1, and the 9 h wall is what forces that choice. So
+the remaining levers are per-game efficiency (fewer actions per level, since RHAE is
+`(human/used)^2`) and the ~110-game breadth the single pass has to cover, not sampling.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
@@ -241,7 +260,7 @@ Rerun-side behavior worth knowing (cell 9): `ONLY_RESET_LEVELS=true`,
 `TAAF_MINIMAL_DIAGNOSTICS=1` (so no `diagnostics.html` on the scored run), gateway polled at
 `http://gateway:8001/` for up to 600 s before the run aborts.
 
-## 3. Best-scoring path so far — capped TAAF `target_325` (1.76)
+## 3. Archived path — capped TAAF `target_325` (1.76, superseded by §1f)
 
 [`../notebooks/kaggle_submit_target_325.ipynb`](../notebooks/kaggle_submit_target_325.ipynb),
 [`../configs/target_325.json`](../configs/target_325.json),
@@ -249,7 +268,8 @@ Rerun-side behavior worth knowing (cell 9): `ONLY_RESET_LEVELS=true`,
 
 Correction: an earlier version of this file called this path a **negative result** and claimed
 the uncapped stack scored 2.23 against its 1.76. The submission log says the opposite — the
-capped run is this account's **best score, 1.76**, and the uncapped runs scored 1.10 and 1.13.
+capped run scored **1.76** and the uncapped runs 1.10 and 1.13, so 1.76 was this account's best
+until the Milestone 2 port reached **30.55** on 2026-10-19 (§1f).
 The 2.23 figure appears only inside notebook markdown and was never verified.
 
 Do not read this as "caps are good" either. Both numbers are single-digit and the leaderboard
@@ -275,9 +295,9 @@ the primary notebook. `artifacts/example_results.json` and
 - [ ] Model version still `1` and `hf-fp8` variation exists (path is hard-coded in cell 3)
 - [ ] Notebook commits under the 9 h limit with internet disabled
 - [ ] You read the rerun log and recorded the real `n_passes` value
-- [ ] Submit through the Kaggle UI on a committed version, then note the LB delta vs 2.23
+- [ ] Submit through the Kaggle UI on a committed version, then note the LB delta vs **30.55** (§1f)
 
-## 6. Commands (run these yourself — they consume GPU quota and use a submission slot)
+## 6. Commands (interactive runs cost GPU quota; a submission costs only a daily team slot)
 
 From the repo root, in PowerShell. Each line is standalone; no continuations.
 
