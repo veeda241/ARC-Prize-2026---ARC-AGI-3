@@ -26,20 +26,25 @@ NOTEBOOK = Path(__file__).resolve().parent.parent / "kaggle_submit_milestone2" /
 
 # The config cell stores its source as one JSON string, so these fragments are matched
 # against the raw file bytes: "\n" here is a backslash plus n, not a newline.
-PASSES = (
-    r"else:\n    if USE_PRIORITY_SCHEDULING:\n"
-    r"        bm.solver.concurrency = (25 - len(demo_excluded_games)) * bm.n_passes\n"
-)
+PASSES = r"else:\n    if USE_PRIORITY_SCHEDULING:\n"
 PASSES_PROXY = (
     r"else:\n"
     r"    bm.n_passes = 1  # FAST_PROXY: one draw per game, like the hidden rerun\n"
     r"    if USE_PRIORITY_SCHEDULING:\n"
-    r"        bm.solver.concurrency = (25 - len(demo_excluded_games)) * bm.n_passes\n"
 )
 RUNTIME = r"        bm.solver.max_runtime_s_per_game = 532*60 * bm.solver.concurrency // 110\n"
 RUNTIME_PROXY = (
     r"        bm.solver.max_runtime_s_per_game = 25*60  # FAST_PROXY: ~1 h for the whole demo set\n"
 )
+
+CONCURRENCY = r"        bm.solver.concurrency = (25 - len(demo_excluded_games)) * bm.n_passes\n"
+
+
+def concurrency_proxy(value: int) -> str:
+    # One server, one GPU: the derived 25-way fan-out left 8 of 25 games with 0 actions and
+    # 0 tokens in version 5 because they were never scheduled before the deadline.
+    return f"        bm.solver.concurrency = {value}  # FAST_PROXY: fixed, not game-count derived\n"
+
 
 # The health gate is a fixed 12 min measured from notebook start, and the 185 GB model
 # precache alone took 2157 s (36 min) in version 4, so the benchmark was released against a
@@ -51,6 +56,35 @@ STARTUP_PROXY = "SERVER_STARTUP_TIMEOUT = 60 * 60  # FAST_PROXY: precache took 2
 # than in the `if USE_PRIORITY_SCHEDULING:` update so they are set in both branches.
 ENV_TAIL = r"    'EXPOSE_UNDO': 'on',\n}"
 ARMS_MARKER = "# FAST_ARMS"
+
+
+def _is_proxy_concurrency(line: str) -> bool:
+    st = line.strip()
+    return st.startswith("bm.solver.concurrency =") and (
+        "(25 - len(demo_excluded_games))" in st or "FAST_PROXY: fixed" in st
+    )
+
+
+def set_concurrency(text: str, value: int | None) -> str:
+    """Rewrite the offline branch's concurrency line, or restore the derived form."""
+    sep = "\\n"
+    derived = CONCURRENCY[: -len(sep)]
+    lines = text.split(sep)
+    hits = [i for i, line in enumerate(lines) if _is_proxy_concurrency(line)]
+    if not hits:
+        if value:
+            raise SystemExit("abort: no offline-branch concurrency line found")
+        return text
+    if len(hits) > 1:
+        raise SystemExit(f"abort: concurrency line matched {len(hits)} times")
+    i = hits[0]
+    indent = lines[i][: len(lines[i]) - len(lines[i].lstrip())]
+    lines[i] = (
+        f"{indent}bm.solver.concurrency = {value}  # FAST_PROXY: fixed, not game-count derived"
+        if value
+        else derived
+    )
+    return sep.join(lines)
 
 
 def parse_arm(spec: str) -> tuple[str, str]:
@@ -107,19 +141,23 @@ def main() -> int:
     parser.add_argument("--restore", action="store_true", help="put the 4-pass demo config back, arms included")
     parser.add_argument("--arm", action="append", default=[], metavar="KEY=VALUE",
                         help="set a harness env knob the kernel never sets (repeatable)")
+    parser.add_argument("--concurrency", type=int, metavar="N",
+                        help="fixed offline concurrency instead of game-count derived")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
     arms = [parse_arm(spec) for spec in args.arm]
     if len({key for key, _ in arms}) != len(arms):
         raise SystemExit("abort: duplicate --arm keys")
+    if args.concurrency is not None and args.concurrency < 1:
+        raise SystemExit("abort: --concurrency must be at least 1")
 
     raw = NOTEBOOK.read_text(encoding="utf-8")
     text = raw
 
     if args.restore:
-        if args.arm:
-            raise SystemExit("abort: --restore takes no --arm")
+        if args.arm or args.concurrency:
+            raise SystemExit("abort: --restore takes no --arm or --concurrency")
         for new, old, label in (
             (PASSES_PROXY, PASSES, "passes"),
             (RUNTIME_PROXY, RUNTIME, "runtime"),
@@ -128,6 +166,7 @@ def main() -> int:
             if new in text:
                 text = apply(text, new, old, label)
         text = strip_arms(text)
+        text = set_concurrency(text, None)
     else:
         # Each pair is applied independently so a notebook patched by an older copy of this
         # script still picks up the anchors it missed.
@@ -139,6 +178,7 @@ def main() -> int:
             if new in text:
                 continue
             text = apply(text, old, new, label)
+        text = set_concurrency(text, args.concurrency)
         if arms:
             text = strip_arms(text)
             text = apply(text, ENV_TAIL, arms_block(arms), "arms")
