@@ -441,9 +441,11 @@ kaggle kernels status vyassenthilkumar/arc3-milestone2-flashnext-duck
 python .\scripts\patch_milestone2_fast_proxy.py ; kaggle kernels push -p .\kaggle_submit_milestone2
 ```
 
-Then poll with `kaggle kernels status` and **do not use `kaggle_wait_and_submit.py` here** — that
-script submits to the competition the moment the run completes, and an offline proxy run has no
-real `submission.parquet`. When the status is COMPLETE:
+Then poll with `kaggle kernels status`. `kaggle_wait_and_submit.py` polls and submits the **latest**
+version the moment the run is COMPLETE, which spends the daily slot on whatever the notebook's
+`TRUE_SUBMISSION` branch does — for a proxy-patched notebook that is identical to ref `57402922`, so
+the 2026-10-20 run uses it to combine the proxy traces and a score re-roll in one GPU run. Use
+plain `kaggle kernels status` instead when the run is only a diagnosis and no slot should be spent.
 
 ```powershell
 kaggle kernels output vyassenthilkumar/arc3-milestone2-flashnext-duck -p .\artifacts\proxy_run --file-pattern "(_requests\.jsonl|\.per_game_cards\.pkl|run_config\.json)$"

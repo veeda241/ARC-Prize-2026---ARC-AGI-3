@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
-"""Wait for the Kaggle kernel to finish, then submit it to ARC-AGI-3."""
+"""Wait for the Kaggle kernel to finish, then submit it to ARC-AGI-3.
+
+Submission text comes from KAGGLE_SUBMIT_MESSAGE so a detached run can be labelled without
+passing an empty positional version argument (Start-Process rejects those).
+"""
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import sys
@@ -11,8 +16,9 @@ import time
 # strings must match what `kaggle kernels list --mine` reports.
 KERNEL = "vyassenthilkumar/arc3-milestone2-flashnext-duck"
 COMP = "arc-prize-2026-arc-agi-3"
-VERSION = "1"
-MESSAGE = "Milestone2 flashnext + MTP drafter, RTX Pro 6000"
+MESSAGE = os.environ.get(
+    "KAGGLE_SUBMIT_MESSAGE", "Milestone2 flashnext + MTP drafter, RTX Pro 6000"
+)
 # Empty means "whatever version Kaggle has for the kernel now" — the CLI's -v is optional,
 # and pinning it silently submits an old (often failed) version.
 VERSION = ""
