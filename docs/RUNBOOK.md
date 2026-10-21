@@ -205,9 +205,120 @@ Two operational facts measured by that submission:
   quota terms and costs only one of the daily (team-shared) slots.
 
 Where that leaves the score: raising `n_passes` is not available on the hidden set — the
-notebook's own submission branch sets it to 1, and the 9 h wall is what forces that choice. So
-the remaining levers are per-game efficiency (fewer actions per level, since RHAE is
-`(human/used)^2`) and the ~110-game breadth the single pass has to cover, not sampling.
+notebook's own submission branch sets it to 1, and the 9 h wall is what forces that choice.
+
+## 1g. Pass anatomy: what the 30.55 is actually made of
+
+`artifacts/milestone2_demo_run.json` holds 100 passes (25 games x 4) for both runs, so the
+single-draw distribution is measurable rather than guessed.
+
+| Quantity | Ours | Author's reference |
+|---|---|---|
+| mean **best-of-4** (what a demo run shows) | 59.82 | 61.89 |
+| mean **expected single draw** (what a rerun scores) | **45.85** | 46.49 |
+| loss to the pass lottery | 13.97 | 15.40 |
+| mean per-game spread across its 4 passes | 32.2 | 35.7 |
+
+- **The private set is 110 games, 55 scored to the public leaderboard and 55 to the private one**
+  (competition `Evaluation`/`data-description` pages). Our visible 30.55 is therefore the public
+  half, and comparing it to the 45.85 public-development expectation mixes two different sets.
+- **The reference kernel's author is at 38.85** on the same hidden set with code I diffed as
+  identical (same 498,799-char harness patch, same analyzer env). So ~8 points of our deficit is
+  single-draw noise, not a porting error.
+- **Nothing newer is public to port**: `Tufalabs/duck-harness` is frozen at `7652836` (2026-07-01).
+  The 68.91 / 67.49 rows are the harness authors' private work. The 106-vote "Try merging it" (V6)
+  kernel is byte-for-byte the same patch and env as ours, and differs only in offline config —
+  which is where the proxy below comes from.
+- **The loss is completion, not efficiency.** Of our 100 passes: **70 ended with levels
+  unfinished**, only **11 lost points to action cost**, 19 were clean 100s. On `ar25` we spend
+  ~300 actions where the human baseline totals 648, i.e. already past the `(human/used)^2` cap.
+  So cutting actions buys nothing on games we already finish; the score lives in levels reached.
+- **A hard wall, not the lottery**: ~8 of 25 public games stall at level 1-3 in *every* pass —
+  `sk48` 0/8, `bp35` 1/9, `g50t` 0/7, `sp80` 1/6, `lf52` 2/10. Identical across passes means the
+  solver is blind to those levels, and they contribute ~2 points of the 45.85.
+- **Re-roll arithmetic** (Monte-Carlo over the real pass data, 4000 sims): best-of-2 = 52.7,
+  best-of-3 = 55.6, best-of-5 = 58.1 on public. Scaled to our observed hidden/public ratio that is
+  ~**37 hidden after 3 submissions** — free points, but it does not reach 50. Reaching 50 needs
+  the wall broken, not the lottery harvested.
+
+## 1h. Fast proxy: a hidden-like measurement for ~1 h of GPU and no slot
+
+`scripts/patch_milestone2_fast_proxy.py` rewrites only the notebook's **offline** branch to
+`bm.n_passes = 1` and `bm.solver.max_runtime_s_per_game = 25*60` (from 4 passes at ~8 h each,
+which is why §1f took 8.4 h). One draw per game, 25 games at concurrency 25, so the run is
+model-load plus ~25 minutes. The `if TRUE_SUBMISSION:` branch is untouched, so a patched kernel
+still submits exactly what ref `57402922` submitted. `--restore` puts the file back byte-identically.
+
+Why it matters: the offline branch already sets `bm.solver.save_request_logs = True`, and the
+harness then writes `<game_id>_requests.jsonl` per game (one JSON object per model call:
+`messages`, `tools`, `event` request/response, `finish_reason`, `analysis_step`, `action`, `usage`)
+plus `.per_game_cards.pkl`. Downloading the kernel output and running
+`scripts/analyze_proxy_traces.py <dir>` sorts games by proxy score and reports, per stalled game,
+how many model calls it spent, how many distinct actions it ever tried, its longest identical-action
+streak (a no-op loop), truncation/`finish_reason` counts, and the last assistant turn with its tool
+calls and tool results. That distinguishes "the model never found the right action" from "it looped
+on a no-op" from "it timed out mid-level" — which have different fixes.
+
+It costs ~1 h of interactive GPU quota (21.00 h remain, pool refreshes 2026-10-24) and **no**
+submission slot: an offline run writes a dummy `submission.parquet` (§1d) and is never submitted
+unless we run `kaggle competitions submit` against it.
+
+## 1i. Three proposed optimizations, checked against the harness
+
+Checked because each was pitched as a large score multiplier. Two are already in the served
+stack, one rests on a premise we measured the other way.
+
+**1. "Retain reasoning history — 6x fewer repetitive tokens, 3x score (13.3 -> 38.3)."**
+Already on, three ways: the kernel sets `ARC3_REASONING_HISTORY_KEY = reasoning_content` (the
+harness defaults it to `""`, i.e. off, so this is ours/the author's change, not a default),
+`LOCAL_ANALYZER_ENABLE_THINKING = true`, and the server is launched with
+`--default-chat-template-kwargs {"preserve_thinking":true}`. `ARC3_PRESERVE_THINKING` defaults to
+`1` in the harness, so it is on even where unset. There is no Responses API to migrate to: the
+analyzer talks to `/v1/chat/completions` on a local SGLang server, and the harness's reasoning
+arms (`ARC3_STUB_DEAD_REASONING`, `ARC3_REASONING_EFFORT_LADDER`, `ARC3_SUMMARY_*`) are the
+equivalent lever. Expect ~0 points, not 3x.
+
+**2. "Safe-exit prompt for hard games, because `(human/used)^2` punishes wasted actions."**
+The arithmetic is inverted. A level left unfinished scores 0 no matter how few actions were spent,
+so exiting early can only lose points, never gain them. Of 100 recorded passes 70 ended with levels
+unfinished and only 11 lost points to inefficiency, and on ar25 we already spend ~300 actions where
+the human baseline is 648, i.e. past the cap anyway. The scarce resource is wall-clock per game,
+which is a scheduler concern (`ARC3_PRIORITY_*`, partly set), not a politeness concern.
+
+**3. "Replace the raw grid with a `(0,0)[Blue] ...` coordinate overlay."**
+The premise is false: the harness never sends the raw matrix. `prompts.py` states "The raw numeric
+grid is intentionally not exposed. Use `current_frame.segmentation` as your primary view", and the
+tool already returns objects with `boundary` `[row, col]`, `pixels`, cross-frame position-invariant
+hashes and an adjacency list, plus `current_frame.ascii` for small regions and a multimodal grid
+image (`ARC3_DIFF_IMAGE`, `ARC3_GAMEOVER_DIFF_IMAGE` are set). Adding a per-cell text overlay would
+reintroduce the token cost the segmentation view exists to avoid.
+
+## 1j. The free search space: 85 harness knobs we never set
+
+The kernel's `setup_env` assigns 36 entries plus ~7 in the priority-scheduling update; counting the
+`ARC3_*` / `LOCAL_ANALYZER_*` names that appear in the harness source and the embedded patch gives
+~130, so **~85 run at their default**, and the defaults are mostly off
+(counted by grep, not audited one by one — the point is the order of magnitude):
+
+```
+ARC3_NOOP_REPEAT_GUARD  ARC3_REPEAT_STATE_GUARD  ARC3_DEATH_REPEAT_GUARD  ARC3_DEATH_LEDGER
+ARC3_DEATH_GUARD_LOOKAHEAD  ARC3_NOOP_GUARD_BORDER  ARC3_PREFER_TOOL_CALLS
+ARC3_STUB_DEAD_REASONING  ARC3_OPENER_COMMIT_HINT  ARC3_STEP_VERIFICATION_HINT
+ARC3_AUTO_FRAME_DIFF(_BUDGET)  ARC3_LEVEL_INVENTORY  ARC3_RESUME_DIFF_IMAGE
+ARC3_REPORT_GAMEPLAY_CHANGED  ARC3_BOARD_DUMP_GUARD  ARC3_CONTEXT_DRAIN_FLOOR
+ARC3_WM_*  ARC3_SUMMARY_*  ARC3_PRUNE_*  extra ARC3_PRIORITY_*
+LOCAL_ANALYZER_SEED  LOCAL_ANALYZER_TOOL_CHOICE  MULTIMODAL_UPSCALE/RESAMPLE
+```
+
+This is the only part of the public stack that has not been tried: the upstream repo is frozen at
+`7652836` (2026-07-01), the author's kernel and `jingshuifu/arc3-m2-solution` (2026-10-11) carry a
+byte-identical 498,799-char patch with the same env set, so there is no newer code to port. The
+proxy run (§1h) is the cheap way to test them: `--arm` writes them into `setup_env`, one flag per
+knob, and `--restore` returns the notebook byte-identical to git HEAD (verified).
+
+Set `LOCAL_ANALYZER_SEED` (harness default `-1`) whenever comparing two arm sets, otherwise a
+better-looking number may be the same sampling lottery that moved one game between 10.7 and 100.0
+across passes of identical code.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
@@ -322,6 +433,34 @@ kaggle kernels push -p .\kaggle_submit_milestone2
 
 ```powershell
 kaggle kernels status vyassenthilkumar/arc3-milestone2-flashnext-duck
+```
+
+### Fast proxy (§1h) — patch, run, pull the traces back
+
+```powershell
+python .\scripts\patch_milestone2_fast_proxy.py ; kaggle kernels push -p .\kaggle_submit_milestone2
+```
+
+Then poll with `kaggle kernels status` and **do not use `kaggle_wait_and_submit.py` here** — that
+script submits to the competition the moment the run completes, and an offline proxy run has no
+real `submission.parquet`. When the status is COMPLETE:
+
+```powershell
+kaggle kernels output vyassenthilkumar/arc3-milestone2-flashnext-duck -p .\artifacts\proxy_run --file-pattern "(_requests\.jsonl|\.per_game_cards\.pkl|run_config\.json)$"
+```
+
+```powershell
+python .\scripts\analyze_proxy_traces.py .\artifacts\proxy_run --games sk48 bp35 g50t
+```
+
+Restore the 4-pass demo config before any submission you want scored like §1f (`--restore` is
+byte-exact), or leave it patched — the submission branch is untouched either way.
+
+To A/B a knob set (§1j) in the same ~1 h, add `--arm` flags before the push; re-running with a new
+set replaces the previous one:
+
+```powershell
+python .\scripts\patch_milestone2_fast_proxy.py --arm ARC3_NOOP_REPEAT_GUARD=1 --arm ARC3_DEATH_LEDGER=1 --arm LOCAL_ANALYZER_SEED=7 ; kaggle kernels push -p .\kaggle_submit_milestone2
 ```
 
 Poll it, then submit automatically when the status is COMPLETE:
