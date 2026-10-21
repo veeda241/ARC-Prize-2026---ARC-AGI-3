@@ -263,6 +263,21 @@ It costs ~1 h of interactive GPU quota (21.00 h remain, pool refreshes 2026-10-2
 submission slot: an offline run writes a dummy `submission.parquet` (§1d) and is never submitted
 unless we run `kaggle competitions submit` against it.
 
+**Version 4 (2026-10-20) played nothing, and the reason was not the proxy config.** The notebook
+gates the benchmark on `SERVER_STARTUP_TIMEOUT = 12 * 60` measured from *notebook start*, while the
+185 GB model precache alone took **2157 s**. So the log's `DEADLINE at 721s from notebook start;
+releasing the benchmark with the server still loading` was followed by `ConnectionError` on port
+8001 for every game, `analyzer failed 11 times in a row; giving up`, and a summary of
+`mean score: 0.00` with **0 actions and 0 tokens** on all 25 games. Patching `n_passes` and the
+per-game runtime was never the problem: the startup gate is fixed and independent of them, and §1f
+only worked because that machine had the model warm. The proxy patch now raises the gate to 60 min
+as well (`startup` anchor); with a cold cache expect ~40 min of load before the first token, so a
+proxy run is ~1.5-2 h, not 1 h.
+
+A run that scores 0.00 everywhere is distinguishable from a genuinely weak config by exactly those
+two fields — `actions=0, tokens=0` means it never talked to the model, whereas stalled games still
+show hundreds of actions. Check that before drawing any conclusion from a proxy mean.
+
 ## 1i. Three proposed optimizations, checked against the harness
 
 Checked because each was pitched as a large score multiplier. Two are already in the served
@@ -441,11 +456,12 @@ kaggle kernels status vyassenthilkumar/arc3-milestone2-flashnext-duck
 python .\scripts\patch_milestone2_fast_proxy.py ; kaggle kernels push -p .\kaggle_submit_milestone2
 ```
 
-Then poll with `kaggle kernels status`. `kaggle_wait_and_submit.py` polls and submits the **latest**
-version the moment the run is COMPLETE, which spends the daily slot on whatever the notebook's
-`TRUE_SUBMISSION` branch does — for a proxy-patched notebook that is identical to ref `57402922`, so
-the 2026-10-20 run uses it to combine the proxy traces and a score re-roll in one GPU run. Use
-plain `kaggle kernels status` instead when the run is only a diagnosis and no slot should be spent.
+Then poll with `kaggle kernels status`. `kaggle_wait_and_submit.py` polls and submits the version
+**you pass as argv[2]** — this competition rejects a version-less submit with "Code competition
+submissions require both the output file name and the version number", so the script now refuses to
+run without it. Submitting a proxy-patched notebook is safe: the `TRUE_SUBMISSION` branch is
+untouched, so the scored rerun is the same code path as ref `57402922`, which is why the 2026-10-21
+re-roll (v4) was filed against a proxy-mode kernel.
 
 ```powershell
 kaggle kernels output vyassenthilkumar/arc3-milestone2-flashnext-duck -p .\artifacts\proxy_run --file-pattern "(_requests\.jsonl|\.per_game_cards\.pkl|run_config\.json)$"

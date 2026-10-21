@@ -19,8 +19,10 @@ COMP = "arc-prize-2026-arc-agi-3"
 MESSAGE = os.environ.get(
     "KAGGLE_SUBMIT_MESSAGE", "Milestone2 flashnext + MTP drafter, RTX Pro 6000"
 )
-# Empty means "whatever version Kaggle has for the kernel now" — the CLI's -v is optional,
-# and pinning it silently submits an old (often failed) version.
+# Empty means "omit -v", which this competition rejects: "Code competition submissions
+# require both the output file name and the version number". Pass the version the push
+# printed; it is only empty so that a stale caller fails loudly instead of silently
+# submitting an old version.
 VERSION = ""
 POLL_S = 90
 # The run itself may use the full 9 h GPU-notebook limit, so the poll window must
@@ -38,6 +40,9 @@ def main() -> int:
     kernel = sys.argv[1] if len(sys.argv) > 1 else KERNEL
     version = sys.argv[2] if len(sys.argv) > 2 else VERSION
     message = sys.argv[3] if len(sys.argv) > 3 else MESSAGE
+    if not version:
+        print("No kernel version: this competition rejects a version-less submit. Pass it as argv[2].")
+        return 1
     start = time.time()
     while True:
         status = run(["kaggle", "kernels", "status", kernel])

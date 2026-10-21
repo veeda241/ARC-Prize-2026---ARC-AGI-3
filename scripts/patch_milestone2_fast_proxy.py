@@ -41,6 +41,12 @@ RUNTIME_PROXY = (
     r"        bm.solver.max_runtime_s_per_game = 25*60  # FAST_PROXY: ~1 h for the whole demo set\n"
 )
 
+# The health gate is a fixed 12 min measured from notebook start, and the 185 GB model
+# precache alone took 2157 s (36 min) in version 4, so the benchmark was released against a
+# port that nothing was listening on: all 25 games scored 0 with 0 actions and 0 tokens.
+STARTUP = "SERVER_STARTUP_TIMEOUT = 12 * 60"
+STARTUP_PROXY = "SERVER_STARTUP_TIMEOUT = 60 * 60  # FAST_PROXY: precache took 2157s on v4"
+
 # Last entry of setup_env, followed by the closing brace. Arms are inserted here rather
 # than in the `if USE_PRIORITY_SCHEDULING:` update so they are set in both branches.
 ENV_TAIL = r"    'EXPOSE_UNDO': 'on',\n}"
@@ -114,17 +120,25 @@ def main() -> int:
     if args.restore:
         if args.arm:
             raise SystemExit("abort: --restore takes no --arm")
-        if "FAST_PROXY" in text:
-            text = apply(text, PASSES_PROXY, PASSES, "passes")
-            text = apply(text, RUNTIME_PROXY, RUNTIME, "runtime")
+        for new, old, label in (
+            (PASSES_PROXY, PASSES, "passes"),
+            (RUNTIME_PROXY, RUNTIME, "runtime"),
+            (STARTUP_PROXY, STARTUP, "startup"),
+        ):
+            if new in text:
+                text = apply(text, new, old, label)
         text = strip_arms(text)
     else:
-        if "FAST_PROXY" not in text:
-            text = apply(text, PASSES, PASSES_PROXY, "passes")
-            text = apply(text, RUNTIME, RUNTIME_PROXY, "runtime")
-        elif not arms:
-            print("already patched")
-            return 0
+        # Each pair is applied independently so a notebook patched by an older copy of this
+        # script still picks up the anchors it missed.
+        for old, new, label in (
+            (PASSES, PASSES_PROXY, "passes"),
+            (RUNTIME, RUNTIME_PROXY, "runtime"),
+            (STARTUP, STARTUP_PROXY, "startup"),
+        ):
+            if new in text:
+                continue
+            text = apply(text, old, new, label)
         if arms:
             text = strip_arms(text)
             text = apply(text, ENV_TAIL, arms_block(arms), "arms")
