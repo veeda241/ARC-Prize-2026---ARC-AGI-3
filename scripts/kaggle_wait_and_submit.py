@@ -25,6 +25,11 @@ MESSAGE = os.environ.get(
 # submitting an old version.
 VERSION = ""
 POLL_S = 90
+# Kaggle only accepts a code submission once that kernel version has produced an output, and
+# a push starts a session immediately, so "COMPLETE" can still be a version behind. The submit
+# itself is the authoritative check and a rejected submit costs no slot, so retry it.
+SUBMIT_RETRY_S = 120
+SUBMIT_RETRIES = 15
 # The run itself may use the full 9 h GPU-notebook limit, so the poll window must
 # cover queue time plus a maximum-length run.
 MAX_WAIT_S = 11 * 60 * 60
@@ -71,14 +76,19 @@ def main() -> int:
         "-k",
         kernel,
         "-f",
-        "submission.parquet",
+        os.environ.get("SUBMISSION_PARQUET", "submission.parquet"),
         "-m",
         message,
     ]
-    if version:
-        submit += ["-v", str(version)]
-    print("$", " ".join(submit))
-    print(run(submit))
+    submit += ["-v", str(version)]
+    for attempt in range(1, SUBMIT_RETRIES + 1):
+        print("$", " ".join(submit))
+        out = run(submit)
+        print(out.strip())
+        if "remaining" in out or "Successfully" in out:
+            break
+        print(f"attempt {attempt} of {SUBMIT_RETRIES} not accepted; waiting {SUBMIT_RETRY_S}s")
+        time.sleep(SUBMIT_RETRY_S)
     print(run(["kaggle", "competitions", "submissions", "-c", COMP]))
     return 0
 

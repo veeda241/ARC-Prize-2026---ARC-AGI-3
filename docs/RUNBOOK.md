@@ -329,11 +329,52 @@ This is the only part of the public stack that has not been tried: the upstream 
 `7652836` (2026-07-01), the author's kernel and `jingshuifu/arc3-m2-solution` (2026-10-11) carry a
 byte-identical 498,799-char patch with the same env set, so there is no newer code to port. The
 proxy run (§1h) is the cheap way to test them: `--arm` writes them into `setup_env`, one flag per
-knob, and `--restore` returns the notebook byte-identical to git HEAD (verified).
+knob, and `--restore` returns the notebook byte-identical to the unpatched config state
+(verified against commit `d0bf2b7`, which is the last commit whose notebook has no proxy edits).
 
 Set `LOCAL_ANALYZER_SEED` (harness default `-1`) whenever comparing two arm sets, otherwise a
 better-looking number may be the same sampling lottery that moved one game between 10.7 and 100.0
 across passes of identical code.
+
+## 1k. The scored branch is the only thing a submission can test
+
+The two branches of the config cell are disjoint: `if TRUE_SUBMISSION:` runs on the hidden rerun and
+`else:` runs in every interactive session. A patch that only touches `else:` (the §1h proxy, the
+arms in `setup_env` are visible in both but their effect is measured offline) decides **nothing**
+about what Kaggle scores — the rerun ignores it. Conversely a scored-branch change cannot be tested
+in the proxy at all, because the proxy is by definition the other branch.
+
+`--scored-concurrency N` therefore rewrites only the `TRUE_SUBMISSION` pair, and version 8 is the
+first submission this repo makes on that evidence:
+
+```
+bm.solver.concurrency = 28                    # was 120, "game count should be 110"
+bm.solver.max_runtime_s_per_game = 7920       # was 532*60 = 31920
+```
+
+7920 s is derived, not copied: the session is 32400 s, ~720 s of it goes to model load, and a game
+that never finishes holds its slot until its cap, so the worst case is `ceil(110 / 28) = 4` waves and
+`(32400 - 720) // 4 = 7920`. It lands on the same number ranks 3/7/8 publish, which is reassuring
+about the arithmetic rather than evidence the value ports — they run vLLM + FP8, we run SGLang +
+W4A16 181 GB.
+
+Why 120 is suspect: it is one stream per game, so no game is ever *unserved* (the failure §1h hit at
+derived-25), but every one of the 110 games competes for the same GPU for the whole session. The
+author's own comment `# game count should be 110` admits the number was never tuned for this set.
+Trading guaranteed-shallow coverage of 110 games for deep coverage of ~28 at a time is the bet, and
+the scoring formula rewards it: a game earns credit per level completed, and level 2+ is unreachable
+at ~250 actions per game.
+
+The risk in the other direction is real and is what the number must be read against: with 28 slots
+and 110 games, the tail games only get played if earlier ones finish before their cap. If the
+submission comes back far below 30.55 with several games at 0 levels, the tail was starved and 28
+was too aggressive, not too conservative.
+
+Two changes ride along with it, both defensive rather than experimental: the health gate stays at the
+60-minute `SERVER_STARTUP_TIMEOUT` (with the author's 12 minutes the version-4 session released the
+benchmark against a port nothing was listening on, because the 185 GB precache alone took 36 min, and
+all 25 games came back `actions=0, tokens=0` for a mean of 0.00 — §1h), and `n_passes` stays 1.
+No `setup_env` arms are set, so the analyzer sees exactly the configuration that scored 30.55.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
@@ -481,10 +522,28 @@ set replaces the previous one:
 python .\scripts\patch_milestone2_fast_proxy.py --arm ARC3_NOOP_REPEAT_GUARD=1 --arm ARC3_DEATH_LEDGER=1 --arm LOCAL_ANALYZER_SEED=7 ; kaggle kernels push -p .\kaggle_submit_milestone2
 ```
 
+To change what the hidden rerun actually executes (§1k), add `--scored-concurrency`. Combine it with
+a short offline branch, because `kaggle kernels push` **also starts a session** and a code submission
+is rejected until that version has produced output:
+
+```powershell
+python .\scripts\patch_milestone2_fast_proxy.py --scored-concurrency 28 --concurrency 10 --runtime-minutes 5 ; kaggle kernels push -p .\kaggle_submit_milestone2
+```
+
+```powershell
+kaggle competitions submit arc-prize-2026-arc-agi-3 -k vyassenthilkumar/arc3-milestone2-flashnext-duck -v 8 -f submission.parquet -m "scored branch: concurrency 28, per-game cap 7920s"
+```
+
+The rejection reads `Submission not allowed: Notebook is still running. Did not find provided
+Notebook Output File.` (HTTP 400) and costs no slot, so `kaggle_wait_and_submit.py` retries the
+submit for `SUBMIT_RETRIES` rounds instead of trusting the COMPLETE token alone. Run the push from the
+directory holding `submission.parquet`, or set `SUBMISSION_PARQUET` to its absolute path — the file's
+content is ignored by a code competition, it only has to exist locally for `-f`.
+
 Poll it, then submit automatically when the status is COMPLETE:
 
 ```powershell
-python .\scripts\kaggle_wait_and_submit.py
+python .\scripts\kaggle_wait_and_submit.py vyassenthilkumar/arc3-milestone2-flashnext-duck 8 "scored branch: concurrency 28"
 ```
 
 Or submit by hand once the run finishes — the verb is `submit`, **not** `submissions`

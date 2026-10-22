@@ -14,6 +14,7 @@ Usage:
     python scripts/patch_milestone2_fast_proxy.py            # patch
     python scripts/patch_milestone2_fast_proxy.py --restore  # back to 4 passes, no arms
     python scripts/patch_milestone2_fast_proxy.py --arm ARC3_NOOP_REPEAT_GUARD=1 --arm ARC3_DEATH_LEDGER=1
+    python scripts/patch_milestone2_fast_proxy.py --scored-concurrency 28  # only the hidden branch
 """
 from __future__ import annotations
 
@@ -33,9 +34,13 @@ PASSES_PROXY = (
     r"    if USE_PRIORITY_SCHEDULING:\n"
 )
 RUNTIME = r"        bm.solver.max_runtime_s_per_game = 532*60 * bm.solver.concurrency // 110\n"
-RUNTIME_PROXY = (
-    r"        bm.solver.max_runtime_s_per_game = 25*60  # FAST_PROXY: ~1 h for the whole demo set\n"
-)
+
+
+def runtime_proxy(minutes: int) -> str:
+    return (
+        f"        bm.solver.max_runtime_s_per_game = {minutes}*60"
+        "  # FAST_PROXY: sized for the demo set, not the hidden rerun\\n"
+    )
 
 CONCURRENCY = r"        bm.solver.concurrency = (25 - len(demo_excluded_games)) * bm.n_passes\n"
 
@@ -52,6 +57,63 @@ def concurrency_proxy(value: int) -> str:
 STARTUP = "SERVER_STARTUP_TIMEOUT = 12 * 60"
 STARTUP_PROXY = "SERVER_STARTUP_TIMEOUT = 60 * 60  # FAST_PROXY: precache took 2157s on v4"
 
+# The scored branch is the only part of the notebook that the hidden rerun executes, so a
+# change here is the one kind of edit a submission slot can actually measure. The author's
+# 120 streams one-request-per-game over the whole 110-game set on a single GPU.
+GAMES = 110
+SESSION_S = 32400
+LOAD_S = 720
+PRISTINE_SCORED = (
+    r"        bm.solver.concurrency = 120  # game count should be 110\n"
+    r"        bm.solver.max_runtime_s_per_game = 532*60\n"
+)
+SCORED_MARK = "# SCORED:"
+
+
+def scored_block(value: int) -> str:
+    # A game that never finishes holds its slot until its cap, so the worst case is
+    # ceil(GAMES / concurrency) waves and every cap has to fit inside the session.
+    waves = -(-GAMES // value)
+    cap = (SESSION_S - LOAD_S) // waves
+    return (
+        f"        bm.solver.concurrency = {value}  {SCORED_MARK} one GPU cannot feed 120 streams\\n"
+        f"        bm.solver.max_runtime_s_per_game = {cap}  {SCORED_MARK} {waves} waves of {value} games in {SESSION_S}s\\n"
+    )
+
+
+def set_scored_concurrency(text: str, value: int | None) -> str:
+    """Rewrite the scored branch's concurrency/cap pair, or put the author's pair back."""
+    sep = "\\n"
+    lines = text.split(sep)
+
+    def is_conc(line: str) -> bool:
+        st = line.strip()
+        return st.startswith("bm.solver.concurrency =") and (
+            "game count should be 110" in st or SCORED_MARK in st
+        )
+
+    def is_runtime(line: str) -> bool:
+        st = line.strip()
+        if st.startswith("bm.solver.max_runtime_s_per_game ="):
+            return SCORED_MARK in st or st == "bm.solver.max_runtime_s_per_game = 532*60"
+        return False
+
+    hits = [i for i, line in enumerate(lines) if is_conc(line)]
+    if not hits:
+        if value:
+            raise SystemExit("abort: no scored-branch concurrency line found")
+        return text
+    if len(hits) > 1:
+        raise SystemExit(f"abort: scored concurrency line matched {len(hits)} times")
+    i = hits[0]
+    if not is_runtime(lines[i + 1]):
+        raise SystemExit(f"abort: line after scored concurrency is not the runtime cap: {lines[i + 1]!r}")
+    if lines[i][: len(lines[i]) - len(lines[i].lstrip())] != "        ":
+        raise SystemExit("abort: scored concurrency is not at the depth the block assumes")
+    block = (scored_block(value) if value else PRISTINE_SCORED).removesuffix(sep)
+    lines[i : i + 2] = block.split(sep)
+    return sep.join(lines)
+
 # Last entry of setup_env, followed by the closing brace. Arms are inserted here rather
 # than in the `if USE_PRIORITY_SCHEDULING:` update so they are set in both branches.
 ENV_TAIL = r"    'EXPOSE_UNDO': 'on',\n}"
@@ -63,6 +125,30 @@ def _is_proxy_concurrency(line: str) -> bool:
     return st.startswith("bm.solver.concurrency =") and (
         "(25 - len(demo_excluded_games))" in st or "FAST_PROXY: fixed" in st
     )
+
+
+def set_runtime(text: str, minutes: int | None) -> str:
+    """Rewrite the offline branch's per-game cap, or restore the derived form."""
+    sep = "\\n"
+    lines = text.split(sep)
+
+    def is_offline_runtime(line: str) -> bool:
+        st = line.strip()
+        if not st.startswith("bm.solver.max_runtime_s_per_game ="):
+            return False
+        return "concurrency // 110" in st or "FAST_PROXY" in st
+
+    hits = [i for i, line in enumerate(lines) if is_offline_runtime(line)]
+    if not hits:
+        if minutes:
+            raise SystemExit("abort: no offline-branch runtime line found")
+        return text
+    if len(hits) > 1:
+        raise SystemExit(f"abort: offline runtime line matched {len(hits)} times")
+    lines[hits[0]] = (
+        runtime_proxy(minutes).removesuffix(sep) if minutes else RUNTIME.removesuffix(sep)
+    )
+    return sep.join(lines)
 
 
 def set_concurrency(text: str, value: int | None) -> str:
@@ -136,6 +222,20 @@ def apply(text: str, old: str, new: str, label: str) -> str:
     return text.replace(old, new, 1)
 
 
+def restore(text: str) -> str:
+    """Undo every patch this script can make, offline branch and scored branch alike."""
+    for new, old, label in (
+        (PASSES_PROXY, PASSES, "passes"),
+        (STARTUP_PROXY, STARTUP, "startup"),
+    ):
+        if new in text:
+            text = apply(text, new, old, label)
+    text = strip_arms(text)
+    text = set_runtime(text, None)
+    text = set_concurrency(text, None)
+    return set_scored_concurrency(text, None)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--restore", action="store_true", help="put the 4-pass demo config back, arms included")
@@ -143,6 +243,10 @@ def main() -> int:
                         help="set a harness env knob the kernel never sets (repeatable)")
     parser.add_argument("--concurrency", type=int, metavar="N",
                         help="fixed offline concurrency instead of game-count derived")
+    parser.add_argument("--runtime-minutes", type=int, default=25, metavar="N",
+                        help="offline per-game cap, minutes (default 25)")
+    parser.add_argument("--scored-concurrency", type=int, metavar="N",
+                        help="concurrency for the TRUE_SUBMISSION branch, cap re-derived from the session")
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
 
@@ -151,37 +255,36 @@ def main() -> int:
         raise SystemExit("abort: duplicate --arm keys")
     if args.concurrency is not None and args.concurrency < 1:
         raise SystemExit("abort: --concurrency must be at least 1")
+    if not 1 <= args.runtime_minutes <= 532:
+        raise SystemExit("abort: --runtime-minutes must be between 1 and 532")
+    scored = args.scored_concurrency
+    if scored is not None and not 1 <= scored <= GAMES:
+        raise SystemExit(f"abort: --scored-concurrency must be between 1 and {GAMES}")
 
     raw = NOTEBOOK.read_text(encoding="utf-8")
     text = raw
 
     if args.restore:
-        if args.arm or args.concurrency:
-            raise SystemExit("abort: --restore takes no --arm or --concurrency")
-        for new, old, label in (
-            (PASSES_PROXY, PASSES, "passes"),
-            (RUNTIME_PROXY, RUNTIME, "runtime"),
-            (STARTUP_PROXY, STARTUP, "startup"),
-        ):
-            if new in text:
-                text = apply(text, new, old, label)
-        text = strip_arms(text)
-        text = set_concurrency(text, None)
+        if args.arm or args.concurrency or scored or args.runtime_minutes != 25:
+            raise SystemExit("abort: --restore takes no other patch flags")
+        text = restore(text)
     else:
         # Each pair is applied independently so a notebook patched by an older copy of this
         # script still picks up the anchors it missed.
         for old, new, label in (
             (PASSES, PASSES_PROXY, "passes"),
-            (RUNTIME, RUNTIME_PROXY, "runtime"),
             (STARTUP, STARTUP_PROXY, "startup"),
         ):
             if new in text:
                 continue
             text = apply(text, old, new, label)
+        text = set_runtime(text, args.runtime_minutes)
         text = set_concurrency(text, args.concurrency)
         if arms:
             text = strip_arms(text)
             text = apply(text, ENV_TAIL, arms_block(arms), "arms")
+        if scored:
+            text = set_scored_concurrency(text, scored)
 
     if text == raw:
         print("no change")
