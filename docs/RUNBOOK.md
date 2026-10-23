@@ -474,10 +474,11 @@ out of that run's logs:
 | Max concurrency at full 147,072-token requests | 9.64× |
 | Occupancy with 6 streams | 35-40 % of the pool → **~90 k tokens resident per stream** → ~15 streams is the physical wall, which is why the bundle pins `max_num_seqs 14` |
 | Generation throughput | 345-651 tok/s aggregate at 6 streams (~570 mean), prefix-cache hit 93-96 % |
-| Cost of play | 468,961 tokens / 402 actions = **1,166 tokens per action** |
+| Request latency at 6 streams | 273 requests, median **11.4 s**, p90 38.9 s, max 185.6 s, 1.8 requests per turn → engine capacity ≈ **0.31 requests/s** |
+| Cost of play, per action | **33,747 prompt tokens** (93 % cache-hit, so ~2.4 k actually prefilled) and **1,172 completion tokens** — the run is prefill/step-budget bound, not decode bound |
 | Score on 6 public games × 900 s | mean 4.97, levels 1.0-3.0 of 6-10 |
 
-Two consequences for the schedule, both of which correct earlier notes here:
+Three consequences for the schedule, the last two of which correct earlier notes here:
 
 - The wave arithmetic is not the same argument as the leader's. Raising the *harness* fan-out does
   not raise the *server's* concurrency — vLLM still admits `max_num_seqs` requests and the rest
@@ -487,20 +488,130 @@ Two consequences for the schedule, both of which correct earlier notes here:
   `[1,2,4,8,16,24,32,40,44,48,52,56]` = `max_num_seqs × (1 + mtp_tokens)` topped at 56, and the KV
   pool only holds 15 streams at the observed 90 k tokens each. Widening the server needs the
   per-request context cut first, not the other way round.
+- The "1,166 tokens per action" number that `summary.txt` prints is **completion tokens only**
+  (468,961 / 402). The real per-action cost is ~29× that, and it lands on the engine's
+  token-per-step budget (`VLLM_MAX_NUM_BATCHED_TOKENS = 2048`). So the quantity that caps the score
+  is requests/s, and the levers that can raise it are a bigger step budget or a smaller context —
+  not more streams, and not a faster decoder.
 
-**Current port version to submit: 3** — `--scored-concurrency 110 --scored-load-s 1500`, which
-publishes 110 streams × 30,900 s (boot 582 s + play + ~1,500 s teardown margin = inside 32,400 s),
-stock server budget, and the strategy audit left at the bundle default.
+**v3 failed to prove anything, and the reason is a schedule bug (`artifacts/vllm_port3/`).** The
+run's `summary.txt` is 1 s long, zero actions, every game `state=cancelled`. The log gives it away:
+`deploy.kaggle: soft_end_time = 2026-10-23 05:02:14` while the server only became ready at
+t=**1,974.5 s**. Two facts collide:
+
+- The model mount is not a fixed cost. v2 booted in 582 s on a warm node; v3 paid 1,975 s on a cold
+  one. Budget the *cold* number.
+- Cell 7 computes `soft_end = _soft_end_time(target.max_runtime_s, run_as_submission)`, and
+  `_soft_end_time` returns `None` under a rerun. Offline, it returns the deploy target's own
+  interactive budget (~2,000 s), so `taaf/benchmark.py:169` installs `_cancel_at(soft_end, ...)` and
+  cancels every game the instant the run starts. A validation run on a cold node therefore looks
+  identical to a working stack that never got to play.
+
+**Current port version to submit: 4** — `--scored-concurrency 110 --scored-load-s 3600
+--offline-games 25 --offline-cap-s 600`. The scored branch fans out 110 streams × 28,800 s against
+the cold-boot budget, keeps the stock server config, and re-arms a session soft end at
+`t0 + 31,200 s`; the offline branch rehearses all 25 bundled games at 25-deep queueing with a soft
+end at `t0 + 10,800 s`, so a cold mount no longer fakes a failure.
 
 ```powershell
-kaggle competitions submit arc-prize-2026-arc-agi-3 -k vyassenthilkumar/arc3-milestone2-vllm-port -v 3 -f submission.parquet -m "vLLM port: 110 streams x 30900s one-wave"
+kaggle competitions submit arc-prize-2026-arc-agi-3 -k vyassenthilkumar/arc3-milestone2-vllm-port -v 4 -f submission.parquet -m "vLLM port: 110 streams x 28800s one-wave, cold-boot-safe"
 ```
 
-The audit-interval patch (`--audit-interval-s`) is deliberately **off** in version 3. The audit timer
+Run it from this repo root: `-f submission.parquet` must resolve to a file that exists locally, and a
+missing one fails the CLI before the API is called. The committed content is irrelevant to a code
+competition -- the notebook writes its own columns -- so `submission.parquet` at the root is a 1-row
+placeholder, gitignored because it is a submit prop and not data.
+
+Rebuilding with the flags above produces a file that is not byte-identical to the pushed version 4:
+the stager gained `import re` and an `--env` block (both no-ops when no `--env` is passed), plus an
+extra `port: offline schedule = …` print in the `else:` branch. Verified against `kaggle kernels pull`
+of the pushed notebook, the only fork-cell difference is that unused `import re` line and the scored
+branch is character-for-character what version 4 runs — so version 4 stays the version to submit, and
+pushing the local file would only create a version 5 that scores the same thing while costing another
+42-minute rehearsal.
+
+Version 4 is its own rehearsal: push it, read the offline log for turn latency at queue depth 25,
+and only then let the scored branch run. The scored rerun executes the `if run_as_submission:`
+branch only, so validating the offline branch does not change what gets scored — but it does expose
+whether a deep client queue starves a game past `analyzer_timeout = 900 s`, which is the one way
+110-stream fan-out can fail on a server that still admits 14 sequences.
+
+**v4 rehearsal result (2026-10-23, `artifacts/vllm_port4/`, 42 min wall, 25 games × 600 s at depth
+25).** It played, so the schedule is sound. Read out of that run:
+
+| Quantity | Measured at depth 25 |
+|---|---|
+| Fork + interpreter | `port: child interpreter verified 3.12` at **t=9.8 s** — the pin survives container start |
+| Cold boot, session start → server ready | **1,865 s** (image runtime at 754.9 s, engine KV + warmup to 1,864.9 s). v2's 582 s was a warm node |
+| Hook actually applied | cell 10 printed `soft_end_time = 2026-10-23 08:26:16` = t0 + 10,800 s (the re-armed value), and play ran 605 s against the 600 s cap |
+| Server occupancy | `Running: 14`, `Waiting: up to 23` — the client queue keeps every admitted slot full, KV usage median 28.6 %, max 43.5 %, **zero preemptions** |
+| Aggregate decode | **967 tok/s** median (max 1,121) vs 538 at 6 streams — fanning out wide is what fills the 14 slots |
+| Request latency | median **30.4 s**, p90 58.0, p99 116.1, max **158.7 s** |
+| Request errors | 25, all `Read timed out` with `timeout =` the game's *remaining budget* (103, 91, 90, 75, 61 … 2 s) — end-of-cap bookkeeping, not queue starvation |
+| Cost per action | 896 completion tokens (96 % of them reasoning) and **12,579 newly-prefilled** prompt tokens (88 % of the prompt was cache-hit) |
+
+Two decisions this closes, both by arithmetic rather than taste:
+
+- **110-deep is safe.** Extrapolating the queue 25 → 110 multiplies the wait by 4.4: median ~134 s,
+  worst observed 158.7 s → ~700 s, inside the 900 s ceiling with ~1.3× margin. Each game will still
+  execute its first request per turn, because `LOCAL_ANALYZER_YIELD_SECONDS` is only checked *between*
+  requests (`tool_agent.py:1484`), and the per-request timeout is already `min(900, budget left)` — a
+  game at the end of its budget times out early by design instead of hanging.
+- **Do not widen the server, and do not cut the context.** At depth 25 the engine served 1.01
+  actions/s, which over the scored session's 28,800 s across 110 games is **~264 actions per game** —
+  already sitting on the measured score-vs-actions peak (~300 → 75.6, 405-655 → 51.6). Raising
+  `max_num_seqs` to 28 with `LOCAL_ANALYZER_TARGET_CONTEXT=40960`, or trimming prefill to buy more
+  actions, pushes past the peak, where the extra actions cost efficiency on levels already reached and
+  buy no new levels. `min(human/agent, 1)²` is capped at 1.0, so throughput only pays when it clears
+  levels — and clearing levels is the capability wall this stack does not move.
+
+**So the remaining slots are: submit version 4 on Oct 24, then re-roll the same version on Oct 25 and
+Oct 26.** A re-roll of an already-submitted kernel version is upside-only (the leaderboard keeps the
+team's best row) and is worth more than an unproven arm, given the two bullets above.
+
+What "re-roll, don't experiment" is worth in absolute terms, measured off the public leaderboard at
+full pagination on 2026-10-23 (1,543 scored teams): 4 teams are above 50 (68.91, 67.77, 52.82, one
+more in 50-55), 9 above 40, 48 above 35, and our current best row of 30.55 sits at rank 531 -- 625
+teams are packed into 30-35 and 871 into 25-30. So 50 is not a scheduling target, it is the top 0.3 %
+of the field and a different capability tier than this port reaches; the honest win condition for the
+three remaining slots is to convert 30.55 into the best roll of version 4 the field can see, which the
+spread of our own identical-code rolls (30.55 / 26.74 / 24.65) says is worth several points.
+
+The audit-interval patch (`--audit-interval-s`) is deliberately **off** in version 4. The audit timer
 is wall-clock (`time.monotonic() - _strategy_audit_started_at`, `inference/framework/solver.py:244`)
 and a one-wave game spends most of its life queued behind the server's 14 slots, so a 300 s cap would
-stamp `STRATEGY_AUDIT_PROMPT` onto nearly every turn. At the default 25 % of a 30,900 s cap each game
+stamp `STRATEGY_AUDIT_PROMPT` onto nearly every turn. At the default 25 % of a 28,800 s cap each game
 gets ~4 audits, which is the audit density the author's own 38.85 run had per game.
+
+### Which flag moves which knob
+
+The bundle ships exactly **one** setup command, a 72,864-char heredoc that defines every constant and
+then writes `taaf_setup_env.json`. Reading it is the only way to know which lever is real:
+
+| Wants to change | Flag | Why |
+|---|---|---|
+| `VLLM_MAX_NUM_SEQS = 14`, `VLLM_MAX_NUM_BATCHED_TOKENS = 2048`, `VLLM_MTP_TOKENS = 3`, `ANALYZER_CONTEXT_WINDOW = 127488` | `--server NAME=VALUE` | unquoted integer assignments; the fork rewrites the line and raises if the name is absent |
+| `LOCAL_ANALYZER_TARGET_CONTEXT`, `_TOOL_OUTPUT_TOKENS`, `_TEMPERATURE`, `_YIELD_SECONDS`, … | `--env NAME=VALUE` | they are *quoted dict values* in the `setup_env` block near the end of the heredoc |
+| anything else the child processes read | `--arm NAME=VALUE` | exported into the notebook's `os.environ` before setup |
+
+`--arm` does **not** work for the analyzer knobs: cell 5 re-merges `taaf_setup_env.json` over
+`os.environ` after the setup command runs (`env.update(_load_setup_env())`), and the heredoc rewrites
+that file, so the bundle's value always wins. That is the trap the `--env` flag exists to avoid.
+`VLLM_GPU_MEMORY_UTILIZATION = '0.98'` is quoted, so `--server` will refuse it — which is correct,
+since the profiler already shows the KV pool has +3.8 % left to take.
+
+Two runtime facts that bound any deep fan-out, both read out of the bundle:
+
+- Each request's timeout is `min(analyzer_timeout, per-game budget left, soft-deadline left)`
+  (`_HarnessGameSession.request_timeout_seconds`, `inference/framework/solver.py:358`), so at
+  `analyzer_timeout = 900` a queue that makes a single request wait longer than 900 s produces
+  `Read timed out` + `analyzer_retry` for every game at once. At the measured ~0.31 requests/s and
+  110 streams the expected wait is ~355 s, i.e. ~2.5× headroom — real but not huge, and it is what
+  the 25-deep rehearsal measures directly.
+- The cooperative yield is safe: `LOCAL_ANALYZER_YIELD_SECONDS = 150` is only checked *between*
+  requests inside a turn (`tool_agent.py:1484`), with a budget of
+  `150 × min(1 + consecutive_yielded_turns, 3)`, so a queued game still executes the actions of its
+  first request instead of discarding a generation.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 

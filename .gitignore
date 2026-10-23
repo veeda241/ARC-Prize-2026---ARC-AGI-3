@@ -12,3 +12,6 @@ upstream/
 
 # Raw kernel outputs downloaded from Kaggle for a single run; local evidence only.
 artifacts/vllm_port*/
+
+# Kaggle code-competition submit needs the -f file to exist locally; its content is ignored.
+submission.parquet

@@ -59,12 +59,19 @@ def audit_replacement(seconds: int) -> str:
 
 
 
-def fork_cell(server: dict[str, int], arms: dict[str, str], audit_s: int = 0) -> str:
+def fork_cell(
+    server: dict[str, int],
+    arms: dict[str, str],
+    audit_s: int = 0,
+    env_overrides: dict[str, str] | None = None,
+) -> str:
+    env_overrides = env_overrides or {}
     lines = [
         "# Fork of the read-only bundle, inserted by scripts/build_vllm_port.py.",
         "# The bundle's setup script bakes its vLLM server arguments at dataset-build time, so the",
         "# serving budget cannot be changed from the notebook unless the setup commands themselves",
         "# are edited -- which needs a writable copy, because /kaggle/input is read-only.",
+        "import re",
         "import shutil",
         "",
         "_upstream_bundle = BUNDLE_DIR",
@@ -138,6 +145,34 @@ def fork_cell(server: dict[str, int], arms: dict[str, str], audit_s: int = 0) ->
             "os.environ.update(_arms)",
             "print('port: armed env ->', json.dumps(_arms, sort_keys=True), flush=True)",
         ]
+    if env_overrides:
+        lines += [
+            "# The analyzer's sampling and context knobs are not exported by the launcher: they live",
+            "# as string values in the `setup_env` dict that the setup heredoc writes into",
+            # taaf_setup_env.json, and that file is re-merged over the notebook's environment after
+            # every setup command, so os.environ arms (see --arm) are silently ignored for them.
+            # They can only be changed at the source.
+            "_env_overrides = " + repr(env_overrides),
+            "_env_changed = []",
+            "for _name, _value in _env_overrides.items():",
+            "    _pattern = re.compile(",
+            "        r\"^[ \\t]*'\" + re.escape(_name) + r\"':[ \\t]*.*?[ \\t]*,?[ \\t]*$\", re.MULTILINE",
+            "    )",
+            "    for _index, _command in enumerate(_commands):",
+            "        _found = _pattern.search(_command)",
+            "        if not _found:",
+            "            continue",
+            "        _line = f\"    '{_name}': {_value!r},\"",
+            "        if _found.group(0).rstrip() != _line.rstrip():",
+            "            _commands[_index] = _command[: _found.start()] + _line + _command[_found.end() :]",
+            "            _env_changed.append(",
+            "                f\"{_name}: {_found.group(0).split(':', 1)[1].strip().rstrip(',')} -> {_value}\"",
+            "            )",
+            "        break",
+            "    if not any(_pattern.search(_c) for _c in _commands):",
+            "        raise RuntimeError(f\"port: {_name} not found in setup_commands.json\")",
+            "print(\"port: analyzer env ->\", _env_changed or \"none\", flush=True)",
+        ]
     lines += [
         "_setup_path.write_text(json.dumps(_commands), encoding='utf-8')",
         "",
@@ -169,7 +204,12 @@ def fork_cell(server: dict[str, int], arms: dict[str, str], audit_s: int = 0) ->
     return "\n".join(lines) + "\n"
 
 
-def hook_cell(scored: tuple[int, int] | None, offline: tuple[int, int, int]) -> str:
+def hook_cell(
+    scored: tuple[int, int] | None,
+    offline: tuple[int, int, int],
+    scored_soft_s: int = 0,
+    offline_soft_s: int = 0,
+) -> str:
     lines = [
         "# Inline customization hook (rewritten by scripts/build_vllm_port.py).",
     ]
@@ -183,19 +223,39 @@ def hook_cell(scored: tuple[int, int] | None, offline: tuple[int, int, int]) -> 
             "    bm.n_passes = 1",
             "    print(f'port: scored schedule = {bm.solver.concurrency} streams x "
             "{bm.solver.max_runtime_s_per_game:.0f}s', flush=True)",
-            "else:",
         ]
+        if scored_soft_s:
+            lines += [
+                "    # The bundle disables its own soft deadline under a competition rerun, which leaves",
+                "    # only Kaggle's hard stop. Re-arm it: the runner cancels the solver task gracefully,",
+                "    # so results reach submission.parquet instead of dying mid-write with the session.",
+                f"    soft_end = datetime.fromtimestamp(NOTEBOOK_START_EPOCH) + timedelta(seconds={scored_soft_s})",
+                "    print(f'port: session soft end = {soft_end}', flush=True)",
+            ]
+        lines += ["else:"]
     games, cap, passes = offline
     indent = "    " if scored else ""
     lines += [
-        f"{indent}# Offline branch: every interactive session. Trimmed so a test costs model load plus",
-        f"{indent}# a few games instead of a full demo run.",
+        f"{indent}# Offline branch: every interactive session. It is the rehearsal for the scored",
+        f"{indent}# schedule -- same server, deep client queue, bounded wall time -- so a test costs",
+        f"{indent}# model load plus one wave instead of a nine-hour run.",
         f"{indent}bm.label = bm.label + '-trimmed'",
         f"{indent}bm.n_passes = {passes}",
         f"{indent}bm.solver.concurrency = {games}",
         f"{indent}bm.solver.max_runtime_s_per_game = {cap}.0",
         f"{indent}bm.games = list(bm.games)[:{games}]",
+        f"{indent}# The bundle prints its own pickled solver during setup, before this cell runs, so",
+        f"{indent}# print the live one too: without this line a log cannot show whether the hook",
+        f"{indent}# actually moved the schedule or the run used the baked 14 x 3918.",
+        f"{indent}print(f'port: offline schedule = {{bm.solver.concurrency}} streams x "
+        f"{{bm.solver.max_runtime_s_per_game:.0f}}s on {{len(bm.games)}} games', flush=True)",
     ]
+    if offline_soft_s:
+        lines += [
+            f"{indent}# Cold nodes pay ~2000s to mount the model; the deploy target's own budget would",
+            f"{indent}# cancel every game on arrival, so widen it or a validation run proves nothing.",
+            f"{indent}soft_end = datetime.fromtimestamp(NOTEBOOK_START_EPOCH) + timedelta(seconds={offline_soft_s})",
+        ]
     return "\n".join(lines) + "\n"
 
 
@@ -228,6 +288,10 @@ def staged_notebook(args: argparse.Namespace) -> dict:
     for item in args.arm or []:
         name, _, value = item.partition("=")
         arms[name.strip()] = value
+    env_overrides = {}
+    for item in args.env or []:
+        name, _, value = item.partition("=")
+        env_overrides[name.strip()] = value
 
     scored = None
     if args.scored_concurrency:
@@ -241,12 +305,18 @@ def staged_notebook(args: argparse.Namespace) -> dict:
         return [f"{line}\n" for line in text.rstrip("\n").split("\n")]
 
     cells[hook]["source"] = as_lines(
-        hook_cell(scored, (args.offline_games, args.offline_cap_s, args.offline_passes))
+        hook_cell(
+            scored,
+            (args.offline_games, args.offline_cap_s, args.offline_passes),
+            args.scored_soft_end_s,
+            args.offline_soft_end_s,
+        )
     )
     cells[hook]["outputs"] = []
     cells[hook]["execution_count"] = None
     cells.insert(setup, {"cell_type": "code", "metadata": {}, "execution_count": None,
-                         "outputs": [], "source": as_lines(fork_cell(server, arms, args.audit_interval_s))})
+                         "outputs": [], "source": as_lines(
+                             fork_cell(server, arms, args.audit_interval_s, env_overrides))})
     return nb
 
 
@@ -278,6 +348,12 @@ def main() -> int:
     ap.add_argument("--server", action="append", help="override a baked constant, NAME=VALUE")
     ap.add_argument("--arm", action="append", help="export env NAME=VALUE before the server starts")
     ap.add_argument(
+        "--env",
+        action="append",
+        metavar="NAME=VALUE",
+        help="rewrite the quoted setup_env entry NAME (analyzer knobs the launcher re-merges last)",
+    )
+    ap.add_argument(
         "--audit-interval-s",
         type=int,
         default=0,
@@ -286,6 +362,18 @@ def main() -> int:
     ap.add_argument("--scored-concurrency", type=int, default=0)
     ap.add_argument("--scored-cap", type=int, default=0, help="default: derived from --scored-load-s")
     ap.add_argument("--scored-load-s", type=int, default=1500, help="setup+serve time measured on Kaggle")
+    ap.add_argument(
+        "--scored-soft-end-s",
+        type=int,
+        default=31200,
+        help="graceful session cancel for the scored branch; 0 keeps the bundle's none",
+    )
+    ap.add_argument(
+        "--offline-soft-end-s",
+        type=int,
+        default=10800,
+        help="session cancel for offline runs; must clear the cold model mount or every game cancels on arrival",
+    )
     ap.add_argument("--offline-games", type=int, default=6)
     ap.add_argument("--offline-cap-s", type=int, default=900)
     ap.add_argument("--offline-passes", type=int, default=1)
@@ -294,6 +382,12 @@ def main() -> int:
 
     if args.scored_concurrency and not 1 <= args.scored_concurrency <= GAMES:
         ap.error(f"--scored-concurrency must be within 1..{GAMES}")
+    # A soft end at or past the hard stop is not a safety net, it is the same wall the run is
+    # trying to stay inside of -- the parquet write needs the difference.
+    for name in ("scored_soft_end_s", "offline_soft_end_s"):
+        value = getattr(args, name)
+        if value and value >= SESSION_S:
+            ap.error(f"--{name.replace('_', '-')} must be below the {SESSION_S}s session limit")
 
     nb = staged_notebook(args)
     text = json.dumps(nb, ensure_ascii=False, indent=1)
