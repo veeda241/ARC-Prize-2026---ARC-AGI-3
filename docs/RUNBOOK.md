@@ -577,11 +577,49 @@ of the field and a different capability tier than this port reaches; the honest 
 three remaining slots is to convert 30.55 into the best roll of version 4 the field can see, which the
 spread of our own identical-code rolls (30.55 / 26.74 / 24.65) says is worth several points.
 
+The fourth draw arrived the same day: ref `57547459` -- the 120-stream baseline config, re-rolled with
+nothing changed -- scored **28.18** at 17:47 UTC. Excluding the deliberate `concurrency 28` experiment
+that lost at 24.65, the same code has now rolled 30.55, 26.74 and 28.18, i.e. mean 28.5 and spread ±2.
+That is the true size of a re-roll: version 4's *mean*, not its luck, is what has to clear the field, so
+if version 4 lands near the baseline's 28 rather than the 35-40 the throughput arithmetic predicts, the
+remaining slots are worth more spent on a different arm than on more draws.
+
 The audit-interval patch (`--audit-interval-s`) is deliberately **off** in version 4. The audit timer
 is wall-clock (`time.monotonic() - _strategy_audit_started_at`, `inference/framework/solver.py:244`)
 and a one-wave game spends most of its life queued behind the server's 14 slots, so a 300 s cap would
 stamp `STRATEGY_AUDIT_PROMPT` onto nearly every turn. At the default 25 % of a 28,800 s cap each game
 gets ~4 audits, which is the audit density the author's own 38.85 run had per game.
+
+### Version 5 is staged locally as the one experiment arm worth a slot
+
+Because the baseline's own re-roll has now landed at 28.18, more draws of a config that merely matches
+it cannot reach 50, so the working tree holds a second candidate: version 4 plus **one** variable, the
+analyzer's sampling temperature.
+
+```powershell
+python .\scripts\build_vllm_port.py --scored-concurrency 110 --scored-load-s 3600 --offline-games 25 --offline-cap-s 600 --env LOCAL_ANALYZER_TEMPERATURE=0.9
+```
+
+`git diff` of the staged notebook against the committed version 4 is 22 added lines and **zero deleted
+ones**: the schedule, the soft ends and the fork's server-override logic are character-identical, and the
+only new behaviour is the `setup_env` rewrite block. Verified against `upstream/lord_bundle/setup_commands
+.json` before pushing anything: exactly one line matches, `'LOCAL_ANALYZER_TEMPERATURE': '0.6',` →
+`'0.9',`, and the patched 72,822-char setup heredoc still parses as Python. Temperature is the arm to
+spend a slot on because it costs *nothing* in the throughput arithmetic -- same token budget, same KV
+occupancy, same 28,800 s wave -- and it targets the one failure the traces actually show: single-action
+monotony (tn36 pressed one action 73 times in a row) while the audit prompt explicitly forbids abandoning
+a plan. The schedule arms (`max_num_seqs`, target context) and the audit cadence are all closed above.
+
+**Kaggle still has version 4 as its latest push.** Version 5 exists only as this staged file until it is
+pushed, which happens on Oct 24 *after* version 4's scored rerun has finished, so no push ever overlaps
+a rerun of the same kernel. The plan the scheduled tasks now implement:
+
+| Slot | Action | Decided by |
+|---|---|---|
+| Oct 24 03:40 UTC | submit `-v 4` | first read of the port's real hidden-set mean |
+| Oct 24 ~13:30 UTC | `kaggle kernels push` (no submit) | version 5's ~42-min offline rehearsal proves the fork prints `port: analyzer env -> …'0.6' -> 0.9` |
+| Oct 25 03:40 UTC | `-v 4` if version 4 scored ≥ 35, else `-v 5` | ≥ 35 means the port beats the baseline's best roll and another draw of it is the better bet; below that a draw of 28.5-mean code is not, so the slot goes to the experiment |
+| Oct 26 03:40 UTC | re-roll whichever of 4/5 scored best | last slot before the entry deadline |
 
 ### Which flag moves which knob
 
