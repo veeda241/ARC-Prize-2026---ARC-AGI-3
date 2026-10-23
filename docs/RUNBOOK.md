@@ -460,6 +460,48 @@ config) or widen it — at `max_num_seqs 14` a 110-wide fan-out only queues behi
 **Never submit the feasibility version.** Its offline branch writes a dummy one-row
 `submission.parquet` (`row_id=1_0`, `score=1`); that scores ~0 and burns the day's slot.
 
+**v2 measured on the real stack (2026-10-23, `artifacts/vllm_port2_full/`).** The `/usr/bin/python3.12`
+fork works — the port printed `setup interpreter -> /usr/bin/python3.12` at t=26 s, the overlay
+installed, the server became ready, and 6 trimmed games were played against it. Numbers, all read
+out of that run's logs:
+
+| Quantity | Measured |
+|---|---|
+| Boot, session start → first game | **582 s** (overlay extraction 159 s, weights 295 s, engine profile+KV+warmup 67 s, graphs 17 s) |
+| Model resident | 71.94 GiB weights + 0.81 GiB activation + 0.46 GiB graphs, of 94.43 GiB free |
+| KV pool | **1,417,100 tokens** = 19.69 GiB at `fp8_e4m3` |
+| KV pool ceiling | `--kv-cache-memory=21,939,971,584` (20.43 GiB) is the most the card can give it: **+3.8 %**, so `gpu_memory_utilization` (already 0.98) is not a lever |
+| Max concurrency at full 147,072-token requests | 9.64× |
+| Occupancy with 6 streams | 35-40 % of the pool → **~90 k tokens resident per stream** → ~15 streams is the physical wall, which is why the bundle pins `max_num_seqs 14` |
+| Generation throughput | 345-651 tok/s aggregate at 6 streams (~570 mean), prefix-cache hit 93-96 % |
+| Cost of play | 468,961 tokens / 402 actions = **1,166 tokens per action** |
+| Score on 6 public games × 900 s | mean 4.97, levels 1.0-3.0 of 6-10 |
+
+Two consequences for the schedule, both of which correct earlier notes here:
+
+- The wave arithmetic is not the same argument as the leader's. Raising the *harness* fan-out does
+  not raise the *server's* concurrency — vLLM still admits `max_num_seqs` requests and the rest
+  queue. It only makes every game eligible from the first second, which is what our own SGLang data
+  says wins (120 streams = 30.55, 28 streams = 24.65), so the scored branch fans out to 110.
+- `VLLM_MAX_NUM_SEQS` cannot be pushed to the fan-out. The captured graph ladder is
+  `[1,2,4,8,16,24,32,40,44,48,52,56]` = `max_num_seqs × (1 + mtp_tokens)` topped at 56, and the KV
+  pool only holds 15 streams at the observed 90 k tokens each. Widening the server needs the
+  per-request context cut first, not the other way round.
+
+**Current port version to submit: 3** — `--scored-concurrency 110 --scored-load-s 1500`, which
+publishes 110 streams × 30,900 s (boot 582 s + play + ~1,500 s teardown margin = inside 32,400 s),
+stock server budget, and the strategy audit left at the bundle default.
+
+```powershell
+kaggle competitions submit arc-prize-2026-arc-agi-3 -k vyassenthilkumar/arc3-milestone2-vllm-port -v 3 -f submission.parquet -m "vLLM port: 110 streams x 30900s one-wave"
+```
+
+The audit-interval patch (`--audit-interval-s`) is deliberately **off** in version 3. The audit timer
+is wall-clock (`time.monotonic() - _strategy_audit_started_at`, `inference/framework/solver.py:244`)
+and a one-wave game spends most of its life queued behind the server's 14 slots, so a 300 s cap would
+stamp `STRATEGY_AUDIT_PROMPT` onto nearly every turn. At the default 25 % of a 30,900 s cap each game
+gets ~4 audits, which is the audit density the author's own 38.85 run had per game.
+
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
 Canonical file: [`../notebooks/kaggle_duck_v12_boost.ipynb`](../notebooks/kaggle_duck_v12_boost.ipynb)
