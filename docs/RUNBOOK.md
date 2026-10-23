@@ -370,11 +370,41 @@ and 110 games, the tail games only get played if earlier ones finish before thei
 submission comes back far below 30.55 with several games at 0 levels, the tail was starved and 28
 was too aggressive, not too conservative.
 
+**Verdict (ref `57508879`, scored 2026-10-22): 24.65.** That is 5.9 below the 30.55 the same code
+scores at concurrency 120, and larger than the pure-noise roll we measured (26.74, same config). So
+the starved-tail branch of the prediction is the one that happened: on this set, breadth beats depth,
+and 120 streams — one per game, however shallow each one stays — is the right end of that axis. The
+axis is now closed: any `concurrency < 110` gives up coverage of games that all contribute to the
+mean, so do not spend another slot between 28 and 120. Version 9 reverts the scored branch to
+`120` / `532*60` exactly and is the config every later slot should start from.
+
 Two changes ride along with it, both defensive rather than experimental: the health gate stays at the
 60-minute `SERVER_STARTUP_TIMEOUT` (with the author's 12 minutes the version-4 session released the
 benchmark against a port nothing was listening on, because the 185 GB precache alone took 36 min, and
 all 25 games came back `actions=0, tokens=0` for a mean of 0.00 — §1h), and `n_passes` stays 1.
 No `setup_env` arms are set, so the analyzer sees exactly the configuration that scored 30.55.
+
+## 1l. What is actually left, in expected-value order
+
+The two measured negative results bound the search: the concurrency axis is closed (§1k, 24.65 at
+28 vs 30.55 at 120) and the leaders' analyzer env is closed (§1j's v6 probe, served-subset
+14.03 → 11.62). What remains, cheapest first:
+
+1. **Re-roll the baseline.** The leaderboard keeps the team's best, so each roll of ref `57402922`'s
+   config is upside-only. Observed rolls of (nearly) identical code: 30.55, 26.74, and the noise is
+   roughly ±3. With ~9 slots left before 2026-11-02 this is worth a few points, not twenty.
+2. **Raise throughput per stream, not the number of streams.** At 120 streams every game is served
+   but each one gets ~1/110 of the GPU, which is why level 2+ stays out of reach. The only lever that
+   changes that product is serving a smaller/faster model on the same card — the leaders' vLLM +
+   Qwen3.6-27B-FP8 (35.9 GB against our 181 GB W4A16) at `--tool-call-parser qwen3_coder
+   --reasoning-parser qwen3 --enable-prefix-caching`, plus their restart watchdog. That is a real
+   port, not a knob: the attached wheelhouse is cp312 and the Kaggle image is 3.13, which §1c already
+   works around with a py312 venv.
+3. **Semantic harness arms** (`ARC3_DEATH_LEDGER`, `ARC3_REPEAT_STATE_GUARD`,
+   `ARC3_LEVEL_INVENTORY`, `ARC3_STEP_VERIFICATION_HINT`, `EXPOSE_RESET=on`). They can be proxied for
+   free-ish, but the proxy runs at offline concurrency and only measures *semantics* — v6 showed a
+   proxy win/loss does not transfer to the scored branch's throughput regime. Treat a proxy gain here
+   as permission to spend one slot, not as a prediction.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 

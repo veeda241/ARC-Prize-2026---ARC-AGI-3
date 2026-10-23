@@ -28,8 +28,8 @@ POLL_S = 90
 # Kaggle only accepts a code submission once that kernel version has produced an output, and
 # a push starts a session immediately, so "COMPLETE" can still be a version behind. The submit
 # itself is the authoritative check and a rejected submit costs no slot, so retry it.
-SUBMIT_RETRY_S = 120
-SUBMIT_RETRIES = 15
+SUBMIT_RETRY_S = int(os.environ.get("KAGGLE_SUBMIT_RETRY_S", "120"))
+SUBMIT_RETRIES = int(os.environ.get("KAGGLE_SUBMIT_RETRIES", "15"))
 # The run itself may use the full 9 h GPU-notebook limit, so the poll window must
 # cover queue time plus a maximum-length run.
 MAX_WAIT_S = 11 * 60 * 60
@@ -45,6 +45,9 @@ def main() -> int:
     kernel = sys.argv[1] if len(sys.argv) > 1 else KERNEL
     version = sys.argv[2] if len(sys.argv) > 2 else VERSION
     message = sys.argv[3] if len(sys.argv) > 3 else MESSAGE
+    # Pass e.g. `90` when the submit has to wait out the daily allowance: the slot resets at
+    # 00:00 UTC and the default 15 x 120 s only covers a lagging status token.
+    retries = int(sys.argv[4]) if len(sys.argv) > 4 else SUBMIT_RETRIES
     if not version:
         print("No kernel version: this competition rejects a version-less submit. Pass it as argv[2].")
         return 1
@@ -81,13 +84,13 @@ def main() -> int:
         message,
     ]
     submit += ["-v", str(version)]
-    for attempt in range(1, SUBMIT_RETRIES + 1):
+    for attempt in range(1, retries + 1):
         print("$", " ".join(submit))
         out = run(submit)
         print(out.strip())
         if "remaining" in out or "Successfully" in out:
             break
-        print(f"attempt {attempt} of {SUBMIT_RETRIES} not accepted; waiting {SUBMIT_RETRY_S}s")
+        print(f"attempt {attempt} of {retries} not accepted; waiting {SUBMIT_RETRY_S}s")
         time.sleep(SUBMIT_RETRY_S)
     print(run(["kaggle", "competitions", "submissions", "-c", COMP]))
     return 0

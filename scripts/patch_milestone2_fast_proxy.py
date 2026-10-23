@@ -283,8 +283,9 @@ def main() -> int:
         if arms:
             text = strip_arms(text)
             text = apply(text, ENV_TAIL, arms_block(arms), "arms")
-        if scored:
-            text = set_scored_concurrency(text, scored)
+        # Unconditional, so a proxy run can never silently inherit the scored branch of the
+        # version before it: with no --scored-concurrency the pair goes back to the author's.
+        text = set_scored_concurrency(text, scored)
 
     if text == raw:
         print("no change")
