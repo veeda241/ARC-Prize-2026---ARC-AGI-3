@@ -9,3 +9,6 @@ Thumbs.db
 
 # Reference notebooks pulled from Kaggle for comparison; not repo source.
 upstream/
+
+# Raw kernel outputs downloaded from Kaggle for a single run; local evidence only.
+artifacts/vllm_port*/
