@@ -1,0 +1,22 @@
+{
+  "id": "vyassenthilkumar/arc3-milestone2-vllm-port",
+  "title": "ARC3 Milestone2 Vllm Port",
+  "code_file": "arc3-milestone2-vllm-port.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": true,
+  "enable_gpu": true,
+  "enable_internet": false,
+  "machine_shape": "NvidiaRtxPro6000",
+  "dataset_sources": [
+    "lordhansolo/taaf-kaggle-source",
+    "lordhansolo/vllm-main-e975732-arc3"
+  ],
+  "competition_sources": [
+    "arc-prize-2026-arc-agi-3"
+  ],
+  "kernel_sources": [],
+  "model_sources": [
+    "lordhansolo/qwen3-8-flash-next-mixed-nvfp4-fp8/PyTorch/hf-mixed-mtp-nvfp4/1"
+  ]
+}

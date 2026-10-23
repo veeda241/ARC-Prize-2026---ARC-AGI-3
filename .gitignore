@@ -6,3 +6,6 @@ artifacts/recordings/
 *.recording.jsonl
 .DS_Store
 Thumbs.db
+
+# Reference notebooks pulled from Kaggle for comparison; not repo source.
+upstream/
