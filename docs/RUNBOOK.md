@@ -395,16 +395,70 @@ The two measured negative results bound the search: the concurrency axis is clos
    roughly ±3. With ~9 slots left before 2026-11-02 this is worth a few points, not twenty.
 2. **Raise throughput per stream, not the number of streams.** At 120 streams every game is served
    but each one gets ~1/110 of the GPU, which is why level 2+ stays out of reach. The only lever that
-   changes that product is serving a smaller/faster model on the same card — the leaders' vLLM +
-   Qwen3.6-27B-FP8 (35.9 GB against our 181 GB W4A16) at `--tool-call-parser qwen3_coder
-   --reasoning-parser qwen3 --enable-prefix-caching`, plus their restart watchdog. That is a real
-   port, not a knob: the attached wheelhouse is cp312 and the Kaggle image is 3.13, which §1c already
-   works around with a py312 venv.
+   changes that product is a different serving stack on the same card. Ported — see §1m.
 3. **Semantic harness arms** (`ARC3_DEATH_LEDGER`, `ARC3_REPEAT_STATE_GUARD`,
    `ARC3_LEVEL_INVENTORY`, `ARC3_STEP_VERIFICATION_HINT`, `EXPOSE_RESET=on`). They can be proxied for
    free-ish, but the proxy runs at offline concurrency and only measures *semantics* — v6 showed a
    proxy win/loss does not transfer to the scored branch's throughput regime. Treat a proxy gain here
    as permission to spend one slot, not as a prediction.
+
+## 1m. The throughput port — `kaggle_submit_milestone2_vllm/`
+
+Item 2 above is a serving-stack replacement, so it is a second kernel, not a patch of the first:
+[`kaggle_submit_milestone2_vllm/`](../kaggle_submit_milestone2_vllm/) stages
+`vyassenthilkumar/arc3-milestone2-vllm-port` from the generic TAAF launcher
+`lordhansolo/built-on-tufa-labs-duck-harness-milestone-2` (10 cells, 15.7k chars — it contains no
+model code at all; everything lives in its attachments).
+
+What the attachments actually are, verified against the Kaggle API on 2026-10-23:
+
+- `lordhansolo/taaf-kaggle-source` — the harness bundle (`benchmark_initial.pkl`, `deploy_target.pkl`,
+  `setup_commands.json`, `preamble.txt`, `inference.json`).
+- `lordhansolo/vllm-main-e975732-arc3` — 7,934,814,402 B. **A patched vLLM build shipped as a data
+  set**, applied as an overlay tar into `/tmp/vllm-image-runtime`, because internet is off and the
+  upstream image `vllm/vllm-openai:nightly-e9757321527…` cannot be pulled. Commit `e97573215`,
+  version `0.29.1rc1.dev573+ge97573215`, patched in the KV-cache coordinator and the mamba/GDN
+  hybrid model-runner paths.
+- `lordhansolo/qwen3-8-flash-next-mixed-nvfp4-fp8/PyTorch/hf-mixed-mtp-nvfp4/1` — 180,166,090,115 B
+  on disk, status READY. **Not** 180 GB in VRAM: the files are `carry-model-bf16-*.safetensors` plus
+  one `ct-experts-layerNN.safetensors` per MoE layer, and setup runs a shard-prefetch step that
+  reports into `vllm-shard-prefetch.json`. Experts stream from disk, the rest stays resident — that
+  is how a bigger checkpoint earns the same card.
+
+Server block (from the bundle's `inference.json`): port 1234, `max_model_len 147072`,
+`kv_cache_dtype fp8_e4m3`, `max_num_seqs 14`, `max_num_batched_tokens 2048`, `mtp_tokens 3` with
+`configs/draft_vocab_32k.json`, `enable_prefix_caching true`, `tool_call_parser qwen3_coder`,
+`reasoning_parser qwen3`, `preserve_thinking true`, `reasoning_effort xhigh`,
+`gpu_memory_utilization 0.98`, plus a restart watchdog.
+
+Solver block (from `preamble.txt`): `n_passes=1`, `concurrency=14`,
+`max_runtime_s_per_game=3918.0`, `analyzer_timeout=900.0`, 25 offline games.
+
+Do the wave arithmetic before believing any scored run of it: `ceil(110/14) = 8` waves × 3,918 s =
+31,344 s against a 32,400 s session, which leaves ~1,050 s for pip, the overlay and the model mount.
+The final wave is at risk of the hard stop; it only bites if enough games actually run to the cap,
+since a finished game releases its slot early.
+
+Staging is reproducible and touches exactly one cell — the upstream's empty "Inline customization
+hook" (cell 8), which is where its authors intended per-run edits:
+
+```powershell
+kaggle kernels pull lordhansolo/built-on-tufa-labs-duck-harness-milestone-2 -p .\upstream ; python .\scripts\build_vllm_port.py ; kaggle kernels push -p .\kaggle_submit_milestone2_vllm
+```
+
+`enable_internet` stays **off**; the model and runtime arrive through `model_sources` /
+`dataset_sources`, and `machine_shape` is the same `NvidiaRtxPro6000`.
+
+**Feasibility gate (v1, 2026-10-23).** The hook trims offline play to 4 games × 600 s behind
+`if not run_as_submission:` — cell 7 defines that flag and cell 9 never lets a competition rerun
+enter the branch, so the hidden set keeps the bundle's own 14/3918 config. Read the log for, in
+order: the overlay applying, `vllm-openai-server.ready`, the bundled Qwen smoke test, then actions
+and turn latency per game. Two questions decide the next slot: does the per-stream turn rate beat
+our SGLang 120-stream number, and if so whether to keep `concurrency = 14` (the leader's own scored
+config) or widen it — at `max_num_seqs 14` a 110-wide fan-out only queues behind the server.
+
+**Never submit the feasibility version.** Its offline branch writes a dummy one-row
+`submission.parquet` (`row_id=1_0`, `score=1`); that scores ~0 and burns the day's slot.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
