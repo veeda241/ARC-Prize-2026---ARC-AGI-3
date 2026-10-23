@@ -37,14 +37,29 @@ TITLE = "ARC3 Milestone2 Vllm Port"
 GAMES = 110
 SESSION_S = 32400
 
-# The bundle ships one giant heredoc whose constants are comments-free assignments. Anchoring on
-# the assignment text means a missing knob fails at staging time rather than as a silent
-# server-default at 2048 tokens. Default is the leader's own stock budget, so a run measures the
-# published configuration; pass --server NAME=VALUE to move off it.
+# Default is the leader's own stock budget, so a run measures the published configuration; pass
+# --server NAME=VALUE to move off it.
 DEFAULT_SERVER_OVERRIDES: dict[str, int] = {}
 
+# The strategy audit is the harness's only stuck-breaker and its interval is a *fraction of the
+# per-game runtime cap*, so a one-wave schedule (cap ~29,000 s) makes it fire about once per game.
+# Capping the interval in absolute seconds is what keeps it firing on a long budget.
+AUDIT_FILE = "src/ARC3-Inference/inference/framework/solver.py"
+AUDIT_ANCHOR = (
+    "initial_runtime_limit * 0.25 if initial_runtime_limit is not None "
+    "and initial_runtime_limit > 0 else None"
+)
 
-def fork_cell(server: dict[str, int], arms: dict[str, str]) -> str:
+
+def audit_replacement(seconds: int) -> str:
+    return (
+        f"min(initial_runtime_limit * 0.25, {float(seconds)!r}) if initial_runtime_limit is not None "
+        f"and initial_runtime_limit > 0 else None"
+    )
+
+
+
+def fork_cell(server: dict[str, int], arms: dict[str, str], audit_s: int = 0) -> str:
     lines = [
         "# Fork of the read-only bundle, inserted by scripts/build_vllm_port.py.",
         "# The bundle's setup script bakes its vLLM server arguments at dataset-build time, so the",
@@ -114,6 +129,23 @@ def fork_cell(server: dict[str, int], arms: dict[str, str]) -> str:
     lines += [
         "_setup_path.write_text(json.dumps(_commands), encoding='utf-8')",
         "",
+        "# Patch the harness source in the fork. This is why the fork exists as much as the",
+        "# server budget is: the .pth the launcher writes points Python at BUNDLE_DIR/src, so a",
+        "# patched file here is the file the run actually imports.",
+    ]
+    if audit_s:
+        lines += [
+            f"_audit = BUNDLE_DIR / {AUDIT_FILE!r}",
+            "_audit_text = _audit.read_text(encoding='utf-8')",
+            f"_audit_old = {AUDIT_ANCHOR!r}",
+            f"_audit_new = {audit_replacement(audit_s)!r}",
+            "if _audit_old not in _audit_text:",
+            "    raise RuntimeError('port: strategy-audit anchor missing from this bundle')",
+            "_audit.write_text(_audit_text.replace(_audit_old, _audit_new, 1), encoding='utf-8')",
+            f"print(f'port: strategy audit interval capped at {audit_s}s', flush=True)",
+            "",
+        ]
+    lines += [
         "os.environ['TAAF_KAGGLE_BUNDLE_DIR'] = str(BUNDLE_DIR)",
         "",
         "# Re-render the paths the launcher published before the fork existed.",
@@ -202,7 +234,7 @@ def staged_notebook(args: argparse.Namespace) -> dict:
     cells[hook]["outputs"] = []
     cells[hook]["execution_count"] = None
     cells.insert(setup, {"cell_type": "code", "metadata": {}, "execution_count": None,
-                         "outputs": [], "source": as_lines(fork_cell(server, arms))})
+                         "outputs": [], "source": as_lines(fork_cell(server, arms, args.audit_interval_s))})
     return nb
 
 
@@ -233,6 +265,12 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--server", action="append", help="override a baked constant, NAME=VALUE")
     ap.add_argument("--arm", action="append", help="export env NAME=VALUE before the server starts")
+    ap.add_argument(
+        "--audit-interval-s",
+        type=int,
+        default=0,
+        help="cap the harness strategy-audit interval in seconds (0 leaves it at 25%% of the game cap)",
+    )
     ap.add_argument("--scored-concurrency", type=int, default=0)
     ap.add_argument("--scored-cap", type=int, default=0, help="default: derived from --scored-load-s")
     ap.add_argument("--scored-load-s", type=int, default=1500, help="setup+serve time measured on Kaggle")
