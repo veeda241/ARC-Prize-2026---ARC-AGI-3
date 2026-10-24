@@ -610,16 +610,19 @@ occupancy, same 28,800 s wave -- and it targets the one failure the traces actua
 monotony (tn36 pressed one action 73 times in a row) while the audit prompt explicitly forbids abandoning
 a plan. The schedule arms (`max_num_seqs`, target context) and the audit cadence are all closed above.
 
-**Kaggle still has version 4 as its latest push.** Version 5 exists only as this staged file until it is
-pushed, which happens on Oct 24 *after* version 4's scored rerun has finished, so no push ever overlaps
-a rerun of the same kernel. The plan the scheduled tasks now implement:
+**Kaggle still had version 4 as its latest push until 2026-10-24 17:07 UTC**, when version 4 was finally
+submitted by hand (ref `57601341`). The two automations scheduled for that day at 03:40 and 13:30 UTC
+never produced anything: the allowance had not rolled over at 03:40, the submit task exhausted its 4-hour
+retry window, and the push task -- gated on a submission row that therefore did not exist -- skipped
+itself. Both then deleted themselves as `deleteAfterRun` one-shots, which is why the schedule below moved
+to the afternoon UTC and widened the slot retries to 8 hours.
 
 | Slot | Action | Decided by |
 |---|---|---|
-| Oct 24 03:40 UTC | submit `-v 4` | first read of the port's real hidden-set mean |
-| Oct 24 ~13:30 UTC | `kaggle kernels push` (no submit) | version 5's ~42-min offline rehearsal proves the fork prints `port: analyzer env -> …'0.6' -> 0.9` |
-| Oct 25 03:40 UTC | `-v 4` if version 4 scored ≥ 35, else `-v 5` | ≥ 35 means the port beats the baseline's best roll and another draw of it is the better bet; below that a draw of 28.5-mean code is not, so the slot goes to the experiment |
-| Oct 26 03:40 UTC | re-roll whichever of 4/5 scored best | last slot before the entry deadline |
+| Oct 24 17:07 UTC | `-v 4` submitted (ref `57601341`) | first read of the port's real hidden-set mean, due ~02:00-04:00 UTC Oct 25 |
+| Oct 25 04:00 UTC | `kaggle kernels push` (no submit) | version 5's ~42-min offline rehearsal must show `port: analyzer env -> …'0.6' -> '0.9'` and nonzero actions; it waits out the version-4 rerun rather than overlapping it |
+| Oct 25 09:00 UTC | `-v 4` if version 4 scored ≥ 35, else `-v 5` | ≥ 35 means the port beats the baseline's best roll, so another draw of it is the better bet; below that a draw of 28.5-mean code is not, and the slot goes to the experiment |
+| Oct 26 10:00 UTC | the untried arm if version 5 never scored and rehearsed clean, else a re-roll of the higher-scoring arm | last slot before the entry deadline; nothing is submitted if the port scored below 20 |
 
 ### Which flag moves which knob
 
@@ -650,6 +653,27 @@ Two runtime facts that bound any deep fan-out, both read out of the bundle:
   requests inside a turn (`tool_agent.py:1484`), with a budget of
   `150 × min(1 + consecutive_yielded_turns, 3)`, so a queued game still executes the actions of its
   first request instead of discarding a generation.
+
+## 1n. Daily arm loop — improve-only, every day until 2026-11-02
+
+From 2026-10-27 a local automation (`Daily Kaggle arm loop`, `0 15 * * *` UTC) owns the daily slot and
+runs one cycle per day: pick a lever that is **not** on the closed list in §1m, build it against the
+version-4 schedule, prove the notebook diff touches nothing but that one variable, push it so the offline
+branch rehearses, and submit it only if the rehearsal shows the arm's own log line, the verified 3.12
+child interpreter, server-ready inside 3,600 s, and a nonzero action count. Each row below is one day of
+that loop; it is written here because the leaderboard keeps only the team's best row, so what matters
+is which arm the field's ceiling was last probed with.
+
+| Date (UTC) | Version | Arm | Rehearsal verdict | Submitted ref | Score |
+|---|---|---|---|---|---|
+| 2026-10-24 | 4 | v4 schedule, stock server, `LOCAL_ANALYZER_TEMPERATURE 0.6` | played 25 games at depth 25 in 42 min | `57601341` | pending |
+| 2026-10-25 | 5 | v4 + `LOCAL_ANALYZER_TEMPERATURE 0.9` (one variable) | to be read from `artifacts/vllm_port5/` | one-shot task at 09:00 UTC | — |
+
+Queued levers, cheapest first, all single-variable and none on the closed list:
+`--env LOCAL_ANALYZER_TOOL_OUTPUT_TOKENS=3072`, `--env LOCAL_ANALYZER_YIELD_SECONDS=60`,
+`--env LOCAL_ANALYZER_TOP_P=0.85`, `--env MULTIMODAL_UPSCALE=6`, `--audit-interval-s 3600`,
+`--env LOCAL_ANALYZER_TOOL_OUTPUT_TOKENS=512`. When they are exhausted the loop falls back to re-rolls of
+the best arm rather than inventing knobs.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
