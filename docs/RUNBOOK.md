@@ -685,25 +685,77 @@ is several points wide, the leaderboard keeps the team's best row, so re-drawing
 upside-only, and every attempt to beat it by editing it has lost (24.65 at concurrency 28, 5.68 on the
 port). Eight slots remain to the 2026-11-02 final deadline.
 
-## 1o. The one live experiment: `analyzer_timeout` 900 → 1800
+## 1o. The `analyzer_timeout` arm, and why it was withdrawn
 
-Version 10 of `arc3-milestone2-flashnext-duck`, pushed 2026-10-25 22:35 UTC, changes exactly one
+Version 10 of `arc3-milestone2-flashnext-duck`, pushed 2026-10-25 22:35 UTC, changed exactly one
 character of the notebook JSON (`9` → `18` in `bm.solver.analyzer_timeout = 900.0`, cell 16, which the
 `TRUE_SUBMISSION` block does not override). Verified that way deliberately: a whole-file text replace,
 then a prefix/suffix scan proving the only difference from HEAD is that one token.
 
-Why it is the last lever worth a slot, when it is the only one that survived the closed list: the scored
-run puts 110 games in front of a server that admits 14 sequences, so 96 requests queue client-side, and
-the measured latency curve from the port's own rehearsal at queue depth 25 was median 30.4 s, p90 58.0,
-max 158.7 s. Extrapolating that to depth 110 lands near 700 s against a 900 s cap — a thin enough margin
-that queue-delayed requests plausibly die and cost whole turns, on the stack that actually scores. The
-cap is a per-request timeout, not a session guard, so raising it cannot push the run past the 32,400 s
-wall any harder than the current config already does: the wall, not `max_runtime_s_per_game`, is what
-ends these runs.
+The motivation was the queue: the scored run creates 110 game tasks, and if 110 requests really queued
+against a 14-sequence engine, the measured latency curve at queue depth 25 (median 30.4 s, p90 58.0,
+max 158.7 s) extrapolates to ~700 s — a thin margin against a 900 s per-request cap.
 
-Gate before submitting it (the Oct 26 task enforces this): the rehearsal must reach the benchmark with a
-nonzero action count, must not raise the 32,400-second budget `RuntimeError`, and must print
-`analyzer_timeout=1800` in its `benchmark.solver:` line. If any fails, Oct 26 re-rolls v9 instead.
+**It is a no-op, and the reason is the thing the port was missing.** The baseline does not run 110 games
+against the server. Its `setup_env` arms `ARC3_MAX_ACTIVE_STREAMS: 10` under `USE_PRIORITY_SCHEDULING`,
+and the patch implements that as a process-wide priority gate: ten games hold a slot, and a slot frees
+only when a game's context is first trimmed, which the author's own comment puts 30-50 turns in — the
+staggering is deliberate, so "a prefix is reused for as long as it lasts, instead of fourteen games each
+progressing at a fourteenth of the rate". At ten active streams the measured max request latency on this
+engine was 185.6 s, so a 900 s timeout never binds and raising it is invisible to the score. The repo
+copy is back to `900.0`; version 10 stays on Kaggle as an unsubmitted dead version so the slot is not
+spent rediscovering this twice.
+
+The gate is also the cleanest explanation of the port's 5.68: it ran 110 games flat against 14 slots with
+no priority rotation, so every game advanced at ~1/110 of the engine and almost nothing cleared a level,
+while the baseline gives ten games at a time real throughput and rotates them by score, pace and tail.
+
+## 1p. Rank chase — the measured curve, and what a draw is worth
+
+Two numbers, both read from the platform on 2026-10-25 rather than reasoned about.
+
+**The rank gradient at our score is enormous.** Downloading the whole public leaderboard
+(`kaggle competitions leaderboard … -d`; 4,833 teams; top score now **71.48**, Yi-Chia Chen @ Fields
+Model, 41 submissions) gives:
+
+| Score | Public rank |
+|---|---|
+| 30.55 — our best row | 581 |
+| 31 | 468 |
+| 33 | 160 |
+| 35 | 55 |
+| 38.85 | 16 |
+| 40 | 13 |
+| 50 | 6 |
+
+One point near 31 is worth ~100 places; three points ~400. Rank, not score, is what makes drawing
+rational here.
+
+**The config's spread is wider than our own three samples implied, and the teams at this level run
+exactly our code.** Searching the competition's kernels by most-recently-run and diffing the two
+candidates cell-by-cell against ours:
+
+- `yukailiu/arc-agi-3-champion-solution` (44 votes, run 2026-10-25) reports **31.46**. Its scored branch is
+  `concurrency 120`, `max_runtime_s_per_game 532*60`, `analyzer_timeout 900`,
+  `USE_PRIORITY_SCHEDULING = True`, and its 54-key `setup_env` dict matches ours key-for-key and
+  value-for-value. There is nothing in it to copy.
+- `rajrajak99/cprs-arc-agi-3-apex-sota-lb-31-54` claims 31.54 in its title but runs `concurrency 28` with
+  `max_runtime_s_per_game = 180`. 180 seconds per game cannot produce a 31 across 110 games, so the title
+  is marketing; discarded.
+
+That is five independent draws of byte-identical code: **26.74, 28.18, 30.55, 31.46, 38.85** — mean 31.2,
+spread ~4.6, with the author's 38.85 sitting at rank 16. Nothing published beats this config, which is the
+strongest available argument for spending the last eight slots on draws: every edit we have made has lost
+(24.65 at concurrency 28; 5.68 and 5.34 on the port) while the same code has drawn 38.85. Expected best of
+eight draws from a mean-31.2 / spread-4.6 distribution is roughly 37, i.e. rank ~70-90, and because the
+leaderboard keeps the maximum, the downside of any individual draw is zero.
+
+### Rank chase log
+
+| Date (UTC) | Ref | Arm drawn | Score | Team best | Rank |
+|---|---|---|---|---|---|
+| 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
+| 2026-10-26 10:00 | scheduled | v9, proven config | — | — | — |
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
