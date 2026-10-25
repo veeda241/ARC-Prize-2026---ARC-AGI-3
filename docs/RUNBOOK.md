@@ -770,15 +770,33 @@ Caveat that cannot be removed: medals are awarded on the **final** leaderboard, 
 the score that lands at a percentile on the private half is not knowable from here. The field can also grow
 until the 2026-10-26 entry deadline, which tightens every boundary in the table.
 
-**The threat to this plan is not the score, it is losing slots silently — and the machine sleeps.** Two of
+**The threat to this plan is not the score, it is losing slots silently — and the machine slept.** Two of
 the last three days burned their allowance without a draw: Oct 24 (the allowance had not rolled over at the
 scheduled hour and the retry window expired) and Oct 25 (`CHAT_SESSION_AGENT_RUNTIME_UNAVAILABLE` after
-35 ms — a runtime failure, not task logic). Measured on this box: `powercfg /q SCHEME_CURRENT SUB_SLEEP
-STANDBYIDLE` reports **Current AC Power Setting Index 0x258 = 600 s**, so the machine sleeps ten minutes
-after going idle, and a sleeping machine runs no automations. Coverage is therefore three attempts per day,
-each idempotent (step 1 is "if a row is dated today, report and stop"): `1748cb44` at 10:00 UTC (Oct 26
-only), `13c22073` at 15:00 UTC daily, and `a396679e` at 21:00 UTC daily as the evening guard. Even so, the
-draws only happen if this machine stays awake and Qoder stays running until 2026-11-02.
+35 ms — a runtime failure, not task logic). Measured on this box, `powercfg /q SCHEME_CURRENT SUB_SLEEP
+STANDBYIDLE` reported **AC index 0x258 = 600 s**, i.e. the machine slept ten minutes after going idle, and a
+sleeping machine runs no automations. **Fixed on 2026-10-25 23:20 UTC with the user's approval**:
+`powercfg /change standby-timeout-ac 0` — verified `Current AC Power Setting Index: 0x00000000`, and
+`HIBERNATEIDLE` on AC was already `0x00000000`. Revert with `powercfg /change standby-timeout-ac 10`.
+Battery (DC) behaviour is untouched at 600 s, so unplugging still sleeps normally.
+
+Coverage is therefore three attempts per day, each idempotent (step 1 is "if a submission row is dated
+today, report and stop"): `1748cb44` at 10:00 UTC (Oct 26 only), `13c22073` at 15:00 UTC daily, and
+`a396679e` at 21:00 UTC daily as the evening guard, which also writes a "slot NOT used and why" row so a
+lost day is visible instead of inferred. **Remaining fragility, stated plainly:** all three are *local*
+automations and only fire while the Qoder app is running. Qoder has no startup entry in `HKCU\...\Run`,
+`HKLM\...\Run`, or either Startup folder (checked 2026-10-25; those folders do hold `Ollama.lnk`,
+`Hermes_Gateway.vbs`, `JARVIS.cmd`, `start_assistant.bat`), so an unattended Windows Update reboot would stop
+the draws until someone reopens the app. Last boot was 2026-10-24 20:56 UTC, so no reboot has happened in
+the window so far. The draws only happen if this machine stays awake **and Qoder stays running** until
+2026-11-02.
+
+**Rejected on purpose, so no future run gets creative on the entry deadline (2026-10-26):** adding a second
+entry via a Kaggle Notes *organization* would double the daily allowance, i.e. double the draws. It is not
+being tried — one team/one entry is the shape these rules assume, the rules text says a participant removed
+from the leaderboard for a breach also forfeits points **and medals**, and losing the medal we can already
+almost see to gain eight more coin flips is a bad trade. Team settings, entries and merges are off-limits to
+every automation in this file.
 
 **The config's spread is wider than our own three samples implied, and the teams at this level run
 exactly our code.** Searching the competition's kernels by most-recently-run and diffing the two
