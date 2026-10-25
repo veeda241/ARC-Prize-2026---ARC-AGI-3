@@ -743,12 +743,42 @@ Bronze = top 10 %, Silver = top 5 %, Gold = top 10 + 0.2 %, with percentages rou
 | Gold | top 19 | 38.22 |
 
 Our best row 30.55 is rank 581 = **top 12 %** — 0.41 points outside bronze, 1.71 outside silver. That is
-the operative target, and it reframes the whole exercise: silver is not a 50-score problem, it is one draw
-about two points above what this config has already produced four times out of five.
+the operative target, and it reframes the whole exercise: silver is not a 50-score problem (50 is rank 5,
+which is *harder* than a silver medal) but a gap of under two points against a config whose five known
+draws already straddle it.
+
+**The honest odds, corrected on 2026-10-25 after re-reading the sample.** Of the five byte-identical draws,
+exactly one (38.85) clears 32.26 — a **20 % raw hit rate**. Fitting the five as normal
+(mean 31.16, sd 4.69) gives z = +0.24 and **41 %**. With n = 5 the two numbers are not in conflict, they are
+the same sample read two ways, so the defensible statement is **20–41 % per draw**, and over the eight
+remaining daily draws the chance of at least one silver-climbing hit is **1 − (1 − p)^8 = 83–99 %**. Bronze
+(30.96) is nearly a given: 40–52 % per draw ⇒ **98–99.7 %** over eight. Earlier drafts of this section
+quoted only the normal fit; treat the range, not the upper number, as the plan's expectation.
+
+**Nothing else is required to win a medal — checked in the rules, not assumed.** The competition's own
+rules text (read from the live rules page 2026-10-25) attaches obligations only to *winners* and *prize*
+eligibility: the open-source licence (CC-BY 4.0, plus open-source system/model/weights) and the detailed
+methodology write-up apply to the teams that take the $850k prize pool, and the milestone prizes required
+published notebooks on dates that have already passed. A progression medal is a function of final rank
+alone, so our **private** kernel `arc3-milestone2-flashnext-duck` is fully eligible and must not be
+published before the deadline just because a comment says "open source it". (One caveat in the same text: a
+participant *removed* from the leaderboard for a rules breach also forfeits points and medals — which is why
+nothing here bypasses the one-submission-per-day allowance or the code-integrity rules.)
 
 Caveat that cannot be removed: medals are awarded on the **final** leaderboard, which scores the *other*
 55 games, so these score boundaries are estimates read off the public half. The percentile rule is exact;
-the score that lands at a percentile on the private half is not knowable from here.
+the score that lands at a percentile on the private half is not knowable from here. The field can also grow
+until the 2026-10-26 entry deadline, which tightens every boundary in the table.
+
+**The threat to this plan is not the score, it is losing slots silently — and the machine sleeps.** Two of
+the last three days burned their allowance without a draw: Oct 24 (the allowance had not rolled over at the
+scheduled hour and the retry window expired) and Oct 25 (`CHAT_SESSION_AGENT_RUNTIME_UNAVAILABLE` after
+35 ms — a runtime failure, not task logic). Measured on this box: `powercfg /q SCHEME_CURRENT SUB_SLEEP
+STANDBYIDLE` reports **Current AC Power Setting Index 0x258 = 600 s**, so the machine sleeps ten minutes
+after going idle, and a sleeping machine runs no automations. Coverage is therefore three attempts per day,
+each idempotent (step 1 is "if a row is dated today, report and stop"): `1748cb44` at 10:00 UTC (Oct 26
+only), `13c22073` at 15:00 UTC daily, and `a396679e` at 21:00 UTC daily as the evening guard. Even so, the
+draws only happen if this machine stays awake and Qoder stays running until 2026-11-02.
 
 **The config's spread is wider than our own three samples implied, and the teams at this level run
 exactly our code.** Searching the competition's kernels by most-recently-run and diffing the two
