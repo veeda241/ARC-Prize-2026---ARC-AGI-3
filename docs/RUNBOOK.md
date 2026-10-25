@@ -731,6 +731,25 @@ Model, 41 submissions) gives:
 One point near 31 is worth ~100 places; three points ~400. Rank, not score, is what makes drawing
 rational here.
 
+**What a medal actually costs, read off Kaggle's own rule rather than guessed.** The progression table
+(`kaggle.com/progression/competitions`, verified 2026-10-25) gives, for a competition of **1,000+ teams**,
+Bronze = top 10 %, Silver = top 5 %, Gold = top 10 + 0.2 %, with percentages rounded down. At the current
+4,833 scored teams that is:
+
+| Medal | Boundary | Public score that reaches it |
+|---|---|---|
+| Bronze | top 483 | **30.96** |
+| Silver | top 241 | **32.26** |
+| Gold | top 19 | 38.22 |
+
+Our best row 30.55 is rank 581 = **top 12 %** — 0.41 points outside bronze, 1.71 outside silver. That is
+the operative target, and it reframes the whole exercise: silver is not a 50-score problem, it is one draw
+about two points above what this config has already produced four times out of five.
+
+Caveat that cannot be removed: medals are awarded on the **final** leaderboard, which scores the *other*
+55 games, so these score boundaries are estimates read off the public half. The percentile rule is exact;
+the score that lands at a percentile on the private half is not knowable from here.
+
 **The config's spread is wider than our own three samples implied, and the teams at this level run
 exactly our code.** Searching the competition's kernels by most-recently-run and diffing the two
 candidates cell-by-cell against ours:
