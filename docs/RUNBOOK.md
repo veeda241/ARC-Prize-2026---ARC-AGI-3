@@ -654,26 +654,56 @@ Two runtime facts that bound any deep fan-out, both read out of the bundle:
   `150 × min(1 + consecutive_yielded_turns, 3)`, so a queued game still executes the actions of its
   first request instead of discarding a generation.
 
-## 1n. Daily arm loop — improve-only, every day until 2026-11-02
+## 1n. Daily loop — what it is now, and why it changed on 2026-10-25
 
-From 2026-10-27 a local automation (`Daily Kaggle arm loop`, `0 15 * * *` UTC) owns the daily slot and
-runs one cycle per day: pick a lever that is **not** on the closed list in §1m, build it against the
-version-4 schedule, prove the notebook diff touches nothing but that one variable, push it so the offline
-branch rehearses, and submit it only if the rehearsal shows the arm's own log line, the verified 3.12
-child interpreter, server-ready inside 3,600 s, and a nonzero action count. Each row below is one day of
-that loop; it is written here because the leaderboard keeps only the team's best row, so what matters
-is which arm the field's ceiling was last probed with.
+The loop was written on Oct 24 to author one new single-variable **port** arm per day. Two scored port
+draws killed that design, so on Oct 25 it was rewritten to draw the proven arm instead of editing it.
+The record below is the reason.
 
-| Date (UTC) | Version | Arm | Rehearsal verdict | Submitted ref | Score |
-|---|---|---|---|---|---|
-| 2026-10-24 | 4 | v4 schedule, stock server, `LOCAL_ANALYZER_TEMPERATURE 0.6` | played 25 games at depth 25 in 42 min | `57601341` | pending |
-| 2026-10-25 | 5 | v4 + `LOCAL_ANALYZER_TEMPERATURE 0.9` (one variable) | to be read from `artifacts/vllm_port5/` | one-shot task at 09:00 UTC | — |
+| Date (UTC) | Kernel / version | Arm | Submitted ref | Score |
+|---|---|---|---|---|
+| 2026-10-24 | port v4 | 110 streams × 28,800 s, stock server, temperature 0.6 | `57601341` | **5.68** |
+| 2026-10-25 | port v5 | v4 + `LOCAL_ANALYZER_TEMPERATURE 0.9` | `57621235` | **5.34** |
+| 2026-10-25 | duck v10 | `analyzer_timeout 900 → 1800` on the 30.55 config | staged, Oct 26 slot | — |
 
-Queued levers, cheapest first, all single-variable and none on the closed list:
-`--env LOCAL_ANALYZER_TOOL_OUTPUT_TOKENS=3072`, `--env LOCAL_ANALYZER_YIELD_SECONDS=60`,
-`--env LOCAL_ANALYZER_TOP_P=0.85`, `--env MULTIMODAL_UPSCALE=6`, `--audit-interval-s 3600`,
-`--env LOCAL_ANALYZER_TOOL_OUTPUT_TOKENS=512`. When they are exhausted the loop falls back to re-rolls of
-the best arm rather than inventing knobs.
+**The port is closed, and it was never one variable.** Its `kernel-metadata.json` differs from the
+baseline's in three attachments at once: harness `lordhansolo/taaf-kaggle-source` instead of
+`pennyroyal-v253`, model `qwen3-8-flash-next-mixed-nvfp4-fp8` instead of
+`intel-qwen3.8-flash-next-w4a16-autoround` + the `albucino` MTP drafter, and the patched vLLM engine
+instead of the bundle's. So 5.68 vs 30.55 says the *combination* is far weaker in our hands, and the
+temperature arm at 5.34 confirms the level is the stack, not the knob — a 0.3 temperature change cannot
+move 0.34 points on a 110-game mean, so both numbers are the same draw from the same weak distribution.
+Every remaining queued port lever (`TOOL_OUTPUT_TOKENS`, `YIELD_SECONDS`, `TOP_P`, `MULTIMODAL_UPSCALE`,
+`--audit-interval-s`) is therefore worthless: they are all tuning on a stack that is 5× below the one
+that scores. **Never spend another slot, push or GPU hour on `arc3-milestone2-vllm-port`.**
+
+What replaced it, in expected-value order, is the arithmetic the loop now encodes: the scored branch of
+`arc3-milestone2-flashnext-duck` is one fixed configuration (concurrency 120, `max_runtime_s_per_game`
+532×60, `n_passes` 1) and its draws so far are 30.55, 28.18, 26.74 — while the notebook's own author drew
+**38.85 with byte-identical code**. That pair of facts is the whole strategy: the spread of a single draw
+is several points wide, the leaderboard keeps the team's best row, so re-drawing the proven config is
+upside-only, and every attempt to beat it by editing it has lost (24.65 at concurrency 28, 5.68 on the
+port). Eight slots remain to the 2026-11-02 final deadline.
+
+## 1o. The one live experiment: `analyzer_timeout` 900 → 1800
+
+Version 10 of `arc3-milestone2-flashnext-duck`, pushed 2026-10-25 22:35 UTC, changes exactly one
+character of the notebook JSON (`9` → `18` in `bm.solver.analyzer_timeout = 900.0`, cell 16, which the
+`TRUE_SUBMISSION` block does not override). Verified that way deliberately: a whole-file text replace,
+then a prefix/suffix scan proving the only difference from HEAD is that one token.
+
+Why it is the last lever worth a slot, when it is the only one that survived the closed list: the scored
+run puts 110 games in front of a server that admits 14 sequences, so 96 requests queue client-side, and
+the measured latency curve from the port's own rehearsal at queue depth 25 was median 30.4 s, p90 58.0,
+max 158.7 s. Extrapolating that to depth 110 lands near 700 s against a 900 s cap — a thin enough margin
+that queue-delayed requests plausibly die and cost whole turns, on the stack that actually scores. The
+cap is a per-request timeout, not a session guard, so raising it cannot push the run past the 32,400 s
+wall any harder than the current config already does: the wall, not `max_runtime_s_per_game`, is what
+ends these runs.
+
+Gate before submitting it (the Oct 26 task enforces this): the rehearsal must reach the benchmark with a
+nonzero action count, must not raise the 32,400-second budget `RuntimeError`, and must print
+`analyzer_timeout=1800` in its `benchmark.solver:` line. If any fails, Oct 26 re-rolls v9 instead.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
