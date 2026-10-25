@@ -822,7 +822,17 @@ leaderboard keeps the maximum, the downside of any individual draw is zero.
 | Date (UTC) | Ref | Arm drawn | Score | Team best | Rank |
 |---|---|---|---|---|---|
 | 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
-| 2026-10-26 10:00 | scheduled | v9, proven config | — | — | — |
+| 2026-10-26 00:10 | scheduled | v9, proven config (earliest bank; 15:00 and 21:00 UTC are the fallbacks) | — | — | — |
+
+**The team entry that actually holds the allowance (read from the downloaded board, 2026-10-25 23:10 UTC).**
+Our row on the public leaderboard is **TeamId 15515494, team name "Hendric Nazarius", members
+`hendricnazarius, marcbenjamessamuel, vyassenthilkumar`**, Score 30.55, Rank 581, SubmissionCount **10** —
+exactly the lifetime count `submission-limits` reports, so all ten submissions to date are ours and no
+teammate has spent the shared allowance yet. That could change while the user is away, and it is the one way
+a day's draw disappears legitimately: the allowance is per *team*, so a teammate's submit on a Monday makes
+every automation here stop at step 1 for that day. The field has meanwhile grown to **4,836 scored teams**
+and the boundaries are unchanged (bronze ≤ 483 = 30.96, silver ≤ 241 = 32.26, gold ≤ 19 = 38.22), because
+three extra teams do not cross a rounding step. Re-read them daily rather than trusting this line.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
