@@ -966,6 +966,14 @@ count gives **1/6 = 17 %** per draw clearing 32.29, the normal fit gives **33 %*
 (Oct 27 → Nov 2) that is **P(silver) ≈ 72–94 %** and **P(bronze) ≈ 94–98 %**. The plan does not change on a
 bad draw — the distribution is what we are betting on, and 25.51 is inside it.
 
+**Correction, 2026-10-27 00:20 UTC — that 72–94 % is wrong and the numbers above it are the contaminated
+pool.** 31.46 and 38.85 are not our draws: they are the best rows of a 6-submission and a 202-submission
+account running the same program, i.e. maxima, not samples of our per-draw distribution. Measured against 23
+accounts whose harness cell and scored block hash byte-identically to ours and who had ≤8 submissions, the
+distribution is median **28.52**, max **33.94**, **0 of 23 at 35 or above**, 3 of 23 at or above the silver
+line and 6 of 23 at or above bronze. Corrected: **P(silver) ≈ 15–40 %**, **P(bronze) ≈ 22–63 %** over the
+seven remaining draws. The plan (draw the same config daily) is unchanged; the expectation is not.
+
 **2026-10-26: the author's live kernel was re-diffed against ours, and there is no hidden fix in it.** Pulled
 `dfranzen/arc-agi-3-milestone-2-solution` (23 cells, 540,581 source chars vs our 541,746) and diffed
 cell-by-cell. Exactly three cells differ, and none of them is on the scored path:
