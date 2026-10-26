@@ -755,7 +755,9 @@ sample read two ways, so the defensible statement is **17–33 % per draw**, and
 draws the chance of at least one silver-climbing hit is **1 − (1 − p)^7 = 72–94 %**. Bronze (31.00) is much
 closer to a given: 33–44 % per draw ⇒ **94–98 %** over seven. Earlier drafts quoted only the normal fit, and
 an n = 5 version of this section said 20–41 % — both overstate it slightly now that a low draw has landed.
-Treat the range, never the upper number, as the plan's expectation.
+Treat the range, never the upper number, as the plan's expectation. **(Superseded 2026-10-27: this pool mixes
+202-draw and 80-draw maxima in with our own single draws — see "The unbiased version of that estimate" below
+for the low-n population and the corrected 15–40 % silver figure.)**
 
 **"Can't we just submit the leader's exact code?" — checked 2026-10-26 21:59 UTC, and the answer is no twice
 over.** (i) It is not obtainable: `kaggle kernels list --user tufalabs` returns *Not found*, so the rank-2 team
@@ -830,6 +832,40 @@ submissions versus our 11 — and their `n_passes`/`max_runtime_s_per_game` diff
 pool quoted above are *other accounts* (yukailiu, the author) running the same program, which is what proves
 the tail is real rather than ours by right. Keep the slots on draws of our kernel, which is the same program
 as theirs plus the boot guard.
+
+### The unbiased version of that estimate — and it is much worse (2026-10-27 00:20 UTC)
+
+The six-sample pool above is contaminated: 38.85 is a **202-submission** account's maximum and 38.98 an
+80-submission one, so quoting them as if they were single draws of ours inflated every hit rate built on
+them. The clean sample is the accounts that ran the identical program and **had few draws to spend**. Method:
+hash the 498,799-char harness cell and the `if TRUE_SUBMISSION:` block of every publishing account whose team
+has ≤8 submissions and a score ≥15, and keep only exact matches — **23 accounts match both hashes**
+(harness `6fdcd1ae7445c0cf`, scored block `68839f77eb237f82`). Their best rows: 24.21, 24.46, 25.31, 26.73,
+26.80, 26.88, 27.12, 27.22, 27.79, 27.80, 28.21, 28.52, 28.96, 29.31, 29.34, 30.65, 30.75, 31.27, 31.58,
+32.16, 32.59, 33.22, 33.94 — **mean 28.91, median 28.52, max 33.94, and zero of 23 reach 35.**
+
+Our own four draws (25.51, 26.74, 28.18, 30.55) sit inside that distribution; 30.55 is roughly its 80th
+percentile. The config is not underperforming for us — it performs for us exactly as it does for everyone
+with our number of attempts. Read the odds off the low-n population rather than the high-n maxima:
+
+| Line | Of those 23 accounts | Implied per-draw p | P(at least one in the 7 draws left) |
+|---|---|---|---|
+| Bronze 31.00 | 6 / 23 = 26 % | ≈ 3 – 13 % | **≈ 22 – 63 %** |
+| Silver 32.29 | 3 / 23 = 13 % | ≈ 2 – 13 % | best estimate **15 – 40 %** |
+| 35.00 | 0 / 23 | not observed | — |
+| Gold 38.20 | 0 / 23 | not observed | — |
+
+The range is the number of real draws hidden inside each account's ≤8 submissions (2 draws ⇒ high end,
+8 ⇒ low end). **Retract the 72–94 % figure in the odds paragraph above**; it was built on the contaminated
+pool. Honest statement now: silver is around a coin-flip or worse, and the binding constraint is the
+one-submission-per-day allowance, not the code.
+
+**Which also says the only accounts worth copying are the ones that beat the lottery — and none of them
+publish.** Board-wide, exactly two teams reached ≥35 with ≤17 submissions: `_LT_zyc` 36.00 in 10 (`zyczyc`,
+whose only kernel is a 2016 digit-recognizer notebook) and AquaUrsa Research 39.69 in 17
+(`aquaursaresearch`, one unrelated AIMO/vLLM kernel); Majkel1337 at 45.03 in 28 publishes nothing. Nobody on
+the board reached ≥38 with ≤20 submissions and nobody ≥40 with ≤25. The 35–45 band is private code plus
+draws; the public band is 25–31, and we already run it byte-for-byte.
 
 **Nothing else is required to win a medal — checked in the rules, not assumed.** The competition's own
 rules text (read from the live rules page 2026-10-25) attaches obligations only to *winners* and *prize*
