@@ -781,15 +781,28 @@ sleeping machine runs no automations. **Fixed on 2026-10-25 23:20 UTC with the u
 Battery (DC) behaviour is untouched at 600 s, so unplugging still sleeps normally.
 
 Coverage is therefore three attempts per day, each idempotent (step 1 is "if a submission row is dated
-today, report and stop"): `1748cb44` at 10:00 UTC (Oct 26 only), `13c22073` at 15:00 UTC daily, and
-`a396679e` at 21:00 UTC daily as the evening guard, which also writes a "slot NOT used and why" row so a
-lost day is visible instead of inferred. **Remaining fragility, stated plainly:** all three are *local*
-automations and only fire while the Qoder app is running. Qoder has no startup entry in `HKCU\...\Run`,
-`HKLM\...\Run`, or either Startup folder (checked 2026-10-25; those folders do hold `Ollama.lnk`,
-`Hermes_Gateway.vbs`, `JARVIS.cmd`, `start_assistant.bat`), so an unattended Windows Update reboot would stop
-the draws until someone reopens the app. Last boot was 2026-10-24 20:56 UTC, so no reboot has happened in
-the window so far. The draws only happen if this machine stays awake **and Qoder stays running** until
-2026-11-02.
+today, report and stop"): `ecfa8d23` at 05:00 UTC, `13c22073` at 15:00 UTC and `a396679e` at 21:00 UTC, the
+last of which also writes a "slot NOT used and why" row so a lost day is visible instead of inferred. (The
+one-shot `1748cb44` at 10:00 then 00:10 UTC is gone: it deleted itself as a `deleteAfterRun` job without
+leaving a submission row, so the Oct 26 draw had to be taken by hand.) **Remaining fragility, stated
+plainly:** all three are *local* automations and only fire while the Qoder app is running, and Qoder had no
+startup entry in `HKCU\...\Run`, `HKLM\...\Run`, or either Startup folder (checked 2026-10-25; those folders
+do hold `Ollama.lnk`, `Hermes_Gateway.vbs`, `JARVIS.cmd`, `start_assistant.bat`).
+
+**Fixed on 2026-10-26 11:30 UTC with the user's approval ("that fine push it now").** There is no registered
+Qoder App setting for this — `manage_app_setting` searches for "startup" and "login" both returned zero
+items — so the supported Windows mechanism was used:
+`%APPDATA%\Microsoft\Windows\Start Menu\Programs\Startup\Qoder.lnk` →
+`C:\Users\Vyas S\AppData\Local\Programs\Qoder\Qoder.exe` (working dir `...\Programs\Qoder`), created through
+`WScript.Shell` and read back to confirm the target resolves and the exe exists. It is absent from
+`Explorer\StartupApproved\StartupFolder`, which is the key that records *disabled* state, so it starts
+enabled; that key shows six of the eight pre-existing entries already pruned by the user (Ollama, JARVIS,
+Hermes_Gateway, Wispr Flow, OneNote, start_assistant). Undo with
+`Remove-Item "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup\Qoder.lnk"`.
+**What this does not solve:** startup-folder items run at *logon*, so if the box reboots and sits at the lock
+screen with nobody signing in, Qoder still never starts and that day's draw is lost. Nothing in this plan
+survives an unattended reboot; the three-attempt spread and the chase log are what make the loss visible
+rather than silent.
 
 **Rejected on purpose, so no future run gets creative on the entry deadline (2026-10-26):** adding a second
 entry via a Kaggle Notes *organization* would double the daily allowance, i.e. double the draws. It is not
