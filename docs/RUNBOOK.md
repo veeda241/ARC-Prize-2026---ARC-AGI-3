@@ -733,16 +733,16 @@ rational here.
 
 **What a medal actually costs, read off Kaggle's own rule rather than guessed.** The progression table
 (`kaggle.com/progression/competitions`, verified 2026-10-25) gives, for a competition of **1,000+ teams**,
-Bronze = top 10 %, Silver = top 5 %, Gold = top 10 + 0.2 %, with percentages rounded down. At the **4,867**
-scored teams on the board as of 2026-10-26 21:00 UTC that is:
+Bronze = top 10 %, Silver = top 5 %, Gold = top 10 + 0.2 %, with percentages rounded down. At the **4,869**
+scored teams on the board as of 2026-10-26 21:59 UTC that is:
 
 | Medal | Boundary | Public score that reaches it |
 |---|---|---|
-| Bronze | top 486 | **30.99** |
+| Bronze | top 486 | **31.00** |
 | Silver | top 243 | **32.29** |
 | Gold | top 19 | 38.20 |
 
-Our best row 30.55 is rank 595 = **top 12 %** — 0.44 points outside bronze, 1.74 outside silver. That is
+Our best row 30.55 is rank 596 = **top 12 %** — 0.45 points outside bronze, 1.74 outside silver. That is
 the operative target, and it reframes the whole exercise: silver is not a 50-score problem (50 is rank 5,
 which is *harder* than a silver medal) but a gap of under two points against a config whose known draws
 already reach 38.85. These boundaries move as the field grows — 4,833 teams on Oct 25, 4,867 on Oct 26 — so
@@ -752,10 +752,26 @@ re-read them from a fresh download rather than trusting this table.
 28.18, 30.55, 31.46, 38.85): mean **30.21**, sd **4.79**. Exactly one (38.85) clears the silver line — a
 **17 % raw hit rate** — while the normal fit gives z = +0.43 and **33 %**. With n = 6 the two are the same
 sample read two ways, so the defensible statement is **17–33 % per draw**, and over the seven remaining daily
-draws the chance of at least one silver-climbing hit is **1 − (1 − p)^7 = 72–94 %**. Bronze (30.99) is much
+draws the chance of at least one silver-climbing hit is **1 − (1 − p)^7 = 72–94 %**. Bronze (31.00) is much
 closer to a given: 33–44 % per draw ⇒ **94–98 %** over seven. Earlier drafts quoted only the normal fit, and
 an n = 5 version of this section said 20–41 % — both overstate it slightly now that a low draw has landed.
 Treat the range, never the upper number, as the plan's expectation.
+
+**"Can't we just submit the leader's exact code?" — checked 2026-10-26 21:59 UTC, and the answer is no twice
+over.** (i) It is not obtainable: `kaggle kernels list --user tufalabs` returns *Not found*, so the rank-2 team
+(68.91) publishes nothing; the only public Tufa artifact is Jeroen Cottaar's copy of the **harness**
+(`taaf-duck-harness-kaggle`, last run 2026-06-30; `…june-30-milestone-winner`, 2026-07-01) — the milestone-1
+scaffold, three months stale, not the model/data config that scores today. (ii) Identical code demonstrably
+does **not** produce an identical score, and we are the control group: our scored branch is byte-identical to
+the author's live kernel and that one config has drawn 25.51, 26.74, 28.18, 30.55, 31.46 **and** 38.85 — a
+13-point spread on one program. A leaderboard score is a draw from a distribution, not a property of the code.
+(iii) The top of this board is also a *budget* artifact. From the same download, every team above 45 has
+dozens-to-hundreds of submissions while the field mean is 12.29 (median 1.31, because the LB keeps each
+team's max): Yi-Chia Chen 71.48 in 42, Tufa Labs 68.91 in 172, Team Turducken 56.02 in 211, the last dance
+50.69 in 92, mtg 50.37 in 80, NVARC3 48.84 in 74, Grigoriy Zatravkin & co 47.19 in 106. We have **11** and the
+allowance is 1/day with 6 days left, so 17 is the ceiling. Even if a leader's config were handed to us whole,
+seven more draws land near *its* mean, not near their max — which is why the plan stays on drawing the proven
+config rather than chasing someone else's.
 
 **Nothing else is required to win a medal — checked in the rules, not assumed.** The competition's own
 rules text (read from the live rules page 2026-10-25) attaches obligations only to *winners* and *prize*
