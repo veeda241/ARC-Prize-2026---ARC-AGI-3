@@ -867,6 +867,19 @@ whose only kernel is a 2016 digit-recognizer notebook) and AquaUrsa Research 39.
 the board reached ≥38 with ≤20 submissions and nobody ≥40 with ≤25. The 35–45 band is private code plus
 draws; the public band is 25–31, and we already run it byte-for-byte.
 
+**Slot policy, decided by the user on 2026-10-26 after seeing that table: all seven remaining draws go to
+v9, and no slot is spent on a code arm.** Asked to choose between holding every day for the proven config and
+buying information with one exploration draw, the answer was the draws. The arithmetic says so: at p(silver)
+2–13 % per draw, a diverted slot costs 2–13 % of a medal, while the only measurable candidate left — the
+rank-3 Turducken stack at `keithtyser/duck-qwen3-8-flash-next-nvfp4-mtp` — has already lost *both* of its
+halves on this account (24.65 for concurrency 28 / 7920 s, 5.68 and 5.34 for patched-vLLM + foreign model),
+so it is a rebuild with a two-failure prior rather than an arm. Nothing in the runner automations may
+deviate from this; a future lever gets written here with its measurement and waits for the human.
+All three scheduled tasks (`ecfa8d23` 05:00, `13c22073` 15:00, `a396679e` 21:00 UTC) now carry this policy
+plus the corrected boundaries (bronze ≤ 486 = 31.00, silver ≤ 243 = 32.29, gold ≤ 19 = 38.20, rank 596 on a
+4,869-team board) and the retraction of the 72–94 % figure in their instructions, so a run cannot act on the
+old numbers even though it inherits no context from this conversation.
+
 **Nothing else is required to win a medal — checked in the rules, not assumed.** The competition's own
 rules text (read from the live rules page 2026-10-25) attaches obligations only to *winners* and *prize*
 eligibility: the open-source licence (CC-BY 4.0, plus open-source system/model/weights) and the detailed
