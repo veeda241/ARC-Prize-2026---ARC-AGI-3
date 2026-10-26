@@ -773,6 +773,36 @@ allowance is 1/day with 6 days left, so 17 is the ceiling. Even if a leader's co
 seven more draws land near *its* mean, not near their max — which is why the plan stays on drawing the proven
 config rather than chasing someone else's.
 
+**"Then can we use the code of a team that is above us?" — answered by joining the board to the kernel list
+(2026-10-26 22:20 UTC).** Method, re-runnable by the daily guard: `kaggle kernels list --competition
+arc-prize-2026-arc-agi-3 --sort-by voteCount --page-size 100` walked to exhaustion (**1,139** public kernels,
+**542** authors — note `--page-size 200` silently caps near 100 and `-v` dies on a cp1252 console, so set
+`PYTHONIOENCODING=utf-8`), then intersected with `TeamMemberUserNames` from a fresh leaderboard download
+(the `ref` prefix *is* the username). Result: **69 of the 598 teams above us publish at least one kernel, and
+25 of the 244 above the silver line do.** Forking is permitted — they are public kernels — so the only
+question is what the code actually is. Pulling the 14 highest-scoring ones and reading their scored cells
+sorts them into three buckets, none of which is a lever:
+
+1. **Not the scoring program.** `cpmpml/notebook582dba8536` (rank 6, 48.84) carries 1,270 code characters;
+   `gyuyoungpark09/arc-agi-3-bono` (rank 34, 36.54) 1,218 *and* `enable_internet: True`, which cannot run
+   under a code-comp rerun at all; the rank-2 "Tufa Labs" artifact
+   `jeroencottaar/tufa-labs-duck-harness-june-30-milestone-winner` is 12,347 chars of milestone-1 scaffold
+   against our 537,712 — same story for `gruvlg/duck-baseline-v3` (rank 35) and
+   `biohack44/1-07-great-team-tufa-labs` (rank 47). A published wrapper says nothing about a ~500k-char
+   scored notebook.
+2. **The program we already run.** `dfranzen/arc-agi-3-milestone-2-solution` (rank 16, 38.85),
+   `shiiin9/affectify-arc-31-54-in-a-single-sub` (rank 15, 38.98) and `lalalia9/arc3-franzen-v19` (rank 46,
+   35.79) all attach our exact pair `dfranzen/pennyroyal-v253` + `taaf-kaggle-source-bundle-copy` and carry
+   the same 10 / 120 concurrency shape. Their rows are draws of *our* config — the same 25.51 → 38.85
+   distribution. Copying them changes nothing.
+3. **A different *system*, and not a knob.** Rank 3 Team Turducken (56.02) publishes
+   `keithtyser/duck-qwen3-8-flash-next-nvfp4-mtp`: `concurrency 28`, `max_runtime_s_per_game = 7920`, plus its
+   own public `keithtyser/qwen38-flash-next-vllm-nvfp4-runtime-v1` + `duck-qwen38-nvfp4-mtp-vllm-smoke-v1`
+   datasets (multi-GB image layers). The same 28/7920 fingerprint recurs at rank 8 (46.82) and rank 22
+   (37.97). Both halves of it have already been drawn on our account, separately, and both lost: 28/7920 on
+   our stack scored **24.65** and a patched-vLLM + foreign-model port scored **5.68 / 5.34**. Rank 9 (45.41)
+   swaps the model outright (`cmechevalier/face-of-agi-qwen36-35b-fp8-weights`), rank 27 runs a Gemma-31B.
+
 **Nothing else is required to win a medal — checked in the rules, not assumed.** The competition's own
 rules text (read from the live rules page 2026-10-25) attaches obligations only to *winners* and *prize*
 eligibility: the open-source licence (CC-BY 4.0, plus open-source system/model/weights) and the detailed
