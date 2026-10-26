@@ -844,9 +844,11 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 
 **2026-10-26 21:00 UTC — the day's draw came in low, and it cost us nothing.** `-v 9` scored **25.51**, a
 below-average draw of unchanged code; the team's best row stays 30.55, so the only movement in rank (581 →
-595) is 31 more teams drawing above us as the field grew to **4,867**. That growth is why the medal
-boundaries are now **bronze ≤ 486 = 30.99, silver ≤ 243 = 32.29, gold ≤ 19 = 38.20** — all re-read from the
-downloaded board, and all slightly further away than yesterday's numbers.
+595) is **14 more teams now sitting above us**, while the field itself grew by 31 to **4,867**. That growth is
+why the medal boundaries are now **bronze ≤ 486 = 30.99, silver ≤ 243 = 32.29, gold ≤ 19 = 38.20** — all
+re-read from the downloaded board, and all slightly further away than yesterday's numbers. The 21:00 evening
+guard found `57664497` already COMPLETE for today and `Remaining today: 0`, so it submitted nothing; rank 595
+is the board's own `Rank` value for our row (team "Hendric Nazarius", score 30.55).
 
 Six draws of the identical config are now on the record: **25.51, 26.74, 28.18, 30.55, 31.46, 38.85** —
 mean **30.21**, sd **4.79** (was mean 31.16 / sd 4.69 on five). Read the hit rate two ways, as always: raw
