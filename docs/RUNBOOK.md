@@ -733,27 +733,29 @@ rational here.
 
 **What a medal actually costs, read off Kaggle's own rule rather than guessed.** The progression table
 (`kaggle.com/progression/competitions`, verified 2026-10-25) gives, for a competition of **1,000+ teams**,
-Bronze = top 10 %, Silver = top 5 %, Gold = top 10 + 0.2 %, with percentages rounded down. At the current
-4,833 scored teams that is:
+Bronze = top 10 %, Silver = top 5 %, Gold = top 10 + 0.2 %, with percentages rounded down. At the **4,867**
+scored teams on the board as of 2026-10-26 21:00 UTC that is:
 
 | Medal | Boundary | Public score that reaches it |
 |---|---|---|
-| Bronze | top 483 | **30.96** |
-| Silver | top 241 | **32.26** |
-| Gold | top 19 | 38.22 |
+| Bronze | top 486 | **30.99** |
+| Silver | top 243 | **32.29** |
+| Gold | top 19 | 38.20 |
 
-Our best row 30.55 is rank 581 = **top 12 %** — 0.41 points outside bronze, 1.71 outside silver. That is
+Our best row 30.55 is rank 595 = **top 12 %** — 0.44 points outside bronze, 1.74 outside silver. That is
 the operative target, and it reframes the whole exercise: silver is not a 50-score problem (50 is rank 5,
-which is *harder* than a silver medal) but a gap of under two points against a config whose five known
-draws already straddle it.
+which is *harder* than a silver medal) but a gap of under two points against a config whose known draws
+already reach 38.85. These boundaries move as the field grows — 4,833 teams on Oct 25, 4,867 on Oct 26 — so
+re-read them from a fresh download rather than trusting this table.
 
-**The honest odds, corrected on 2026-10-25 after re-reading the sample.** Of the five byte-identical draws,
-exactly one (38.85) clears 32.26 — a **20 % raw hit rate**. Fitting the five as normal
-(mean 31.16, sd 4.69) gives z = +0.24 and **41 %**. With n = 5 the two numbers are not in conflict, they are
-the same sample read two ways, so the defensible statement is **20–41 % per draw**, and over the eight
-remaining daily draws the chance of at least one silver-climbing hit is **1 − (1 − p)^8 = 83–99 %**. Bronze
-(30.96) is nearly a given: 40–52 % per draw ⇒ **98–99.7 %** over eight. Earlier drafts of this section
-quoted only the normal fit; treat the range, not the upper number, as the plan's expectation.
+**The honest odds, re-read after every draw.** Six byte-identical draws are on the record (25.51, 26.74,
+28.18, 30.55, 31.46, 38.85): mean **30.21**, sd **4.79**. Exactly one (38.85) clears the silver line — a
+**17 % raw hit rate** — while the normal fit gives z = +0.43 and **33 %**. With n = 6 the two are the same
+sample read two ways, so the defensible statement is **17–33 % per draw**, and over the seven remaining daily
+draws the chance of at least one silver-climbing hit is **1 − (1 − p)^7 = 72–94 %**. Bronze (30.99) is much
+closer to a given: 33–44 % per draw ⇒ **94–98 %** over seven. Earlier drafts quoted only the normal fit, and
+an n = 5 version of this section said 20–41 % — both overstate it slightly now that a low draw has landed.
+Treat the range, never the upper number, as the plan's expectation.
 
 **Nothing else is required to win a medal — checked in the rules, not assumed.** The competition's own
 rules text (read from the live rules page 2026-10-25) attaches obligations only to *winners* and *prize*
@@ -832,10 +834,25 @@ leaderboard keeps the maximum, the downside of any individual draw is zero.
 
 ### Rank chase log
 
+**One row per UTC day.** If a row for today already exists, update it — do not append a second one. Three
+automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot can only be spent once.
+
 | Date (UTC) | Ref | Arm drawn | Score | Team best | Rank |
 |---|---|---|---|---|---|
 | 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
-| 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | PENDING | 30.55 | 581 |
+| 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | **25.51** | 30.55 | 595 |
+
+**2026-10-26 21:00 UTC — the day's draw came in low, and it cost us nothing.** `-v 9` scored **25.51**, a
+below-average draw of unchanged code; the team's best row stays 30.55, so the only movement in rank (581 →
+595) is 31 more teams drawing above us as the field grew to **4,867**. That growth is why the medal
+boundaries are now **bronze ≤ 486 = 30.99, silver ≤ 243 = 32.29, gold ≤ 19 = 38.20** — all re-read from the
+downloaded board, and all slightly further away than yesterday's numbers.
+
+Six draws of the identical config are now on the record: **25.51, 26.74, 28.18, 30.55, 31.46, 38.85** —
+mean **30.21**, sd **4.79** (was mean 31.16 / sd 4.69 on five). Read the hit rate two ways, as always: raw
+count gives **1/6 = 17 %** per draw clearing 32.29, the normal fit gives **33 %**. Over the seven slots left
+(Oct 27 → Nov 2) that is **P(silver) ≈ 72–94 %** and **P(bronze) ≈ 94–98 %**. The plan does not change on a
+bad draw — the distribution is what we are betting on, and 25.51 is inside it.
 
 **2026-10-26: the author's live kernel was re-diffed against ours, and there is no hidden fix in it.** Pulled
 `dfranzen/arc-agi-3-milestone-2-solution` (23 cells, 540,581 source chars vs our 541,746) and diffed
@@ -865,9 +882,9 @@ Our row on the public leaderboard is **TeamId 15515494, team name "Hendric Nazar
 exactly the lifetime count `submission-limits` reports, so all ten submissions to date are ours and no
 teammate has spent the shared allowance yet. That could change while the user is away, and it is the one way
 a day's draw disappears legitimately: the allowance is per *team*, so a teammate's submit on a Monday makes
-every automation here stop at step 1 for that day. The field has meanwhile grown to **4,836 scored teams**
-and the boundaries are unchanged (bronze ≤ 483 = 30.96, silver ≤ 241 = 32.26, gold ≤ 19 = 38.22), because
-three extra teams do not cross a rounding step. Re-read them daily rather than trusting this line.
+every automation here stop at step 1 for that day. The field has meanwhile grown to **4,867 scored teams**
+(4,833 on Oct 25, 4,836 on Oct 26 morning) and the boundaries have moved with it — bronze ≤ 486 = 30.99,
+silver ≤ 243 = 32.29, gold ≤ 19 = 38.20 — which is why rank, not score, is the number to re-read daily.
 
 ## 2. Existing path in this repo — Duck v12 boost (scored 1.13)
 
