@@ -822,7 +822,29 @@ leaderboard keeps the maximum, the downside of any individual draw is zero.
 | Date (UTC) | Ref | Arm drawn | Score | Team best | Rank |
 |---|---|---|---|---|---|
 | 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
-| 2026-10-26 00:10 | scheduled | v9, proven config (earliest bank; 15:00 and 21:00 UTC are the fallbacks) | — | — | — |
+| 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | PENDING | 30.55 | 581 |
+
+**2026-10-26: the author's live kernel was re-diffed against ours, and there is no hidden fix in it.** Pulled
+`dfranzen/arc-agi-3-milestone-2-solution` (23 cells, 540,581 source chars vs our 541,746) and diffed
+cell-by-cell. Exactly three cells differ, and none of them is on the scored path:
+- **cell 16** — the differences are all inside `else:`, the interactive branch (our `FAST_PROXY` pins:
+  `n_passes = 1`, `concurrency = 10`, `max_runtime_s_per_game = 5*60`). The `if TRUE_SUBMISSION:` block is
+  byte-identical: `concurrency 120`, `max_runtime_s_per_game 532*60`, `n_passes = 1`.
+- **cell 4** — `SERVER_STARTUP_TIMEOUT`, ours `60*60` vs theirs `12*60`. Ours only waits *longer* for the
+  server, so it cannot be what costs us points.
+- **cell 12** — our cp312 venv patch (the image kernel is 3.13 and the Pennyroyal wheelhouse is cp312-only);
+  without it the run does not build at all.
+
+**Conclusion, and it closes the "just fix the code" question with evidence:** their 38.85 and our 30.55 are
+draws of the same scored configuration, so no edit to our copy is known to raise the mean. Every change we
+have actually submitted has lost a slot (24.65 at concurrency 28; 5.68 and 5.34 on the port), which is why
+the live allowance goes to a draw of `-v 9` — the one move that can only ever raise the team's best row.
+
+**2026-10-26 coverage finding.** The 00:10 UTC one-shot (`1748cb44`) deleted itself as a `deleteAfterRun` job
+without leaving a submission row and without leaving a readable session, so the day's draw would have been
+lost had it not been taken by hand at 11:27. A one-shot local task is therefore *not* evidence the slot was
+used — only `kaggle competitions submissions` is. A fourth daily attempt (`0 5 * * *` UTC) was added so each
+day now has 05:00 / 15:00 / 21:00 idempotent attempts instead of two.
 
 **The team entry that actually holds the allowance (read from the downloaded board, 2026-10-25 23:10 UTC).**
 Our row on the public leaderboard is **TeamId 15515494, team name "Hendric Nazarius", members
