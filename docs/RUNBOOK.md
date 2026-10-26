@@ -749,7 +749,7 @@ already reach 38.85. These boundaries move as the field grows — 4,833 teams on
 re-read them from a fresh download rather than trusting this table.
 
 **The honest odds, re-read after every draw.** Six byte-identical draws are on the record (25.51, 26.74,
-28.18, 30.55, 31.46, 38.85): mean **30.21**, sd **4.79**. Exactly one (38.85) clears the silver line — a
+28.18, 30.55, 31.46, 38.85 — **four of them ours**; 31.46 is `yukailiu` and 38.85 is the author, same program): mean **30.21**, sd **4.79**. Exactly one (38.85) clears the silver line — a
 **17 % raw hit rate** — while the normal fit gives z = +0.43 and **33 %**. With n = 6 the two are the same
 sample read two ways, so the defensible statement is **17–33 % per draw**, and over the seven remaining daily
 draws the chance of at least one silver-climbing hit is **1 − (1 − p)^7 = 72–94 %**. Bronze (31.00) is much
@@ -802,6 +802,34 @@ sorts them into three buckets, none of which is a lever:
    (37.97). Both halves of it have already been drawn on our account, separately, and both lost: 28/7920 on
    our stack scored **24.65** and a patched-vLLM + foreign-model port scored **5.68 / 5.34**. Rank 9 (45.41)
    swaps the model outright (`cmechevalier/face-of-agi-qwen36-35b-fp8-weights`), rank 27 runs a Gemma-31B.
+
+**The specific candidate asked about on 2026-10-26 — `romantamrazov/the-agi-boys-i-am-better` (rank 51, 35.35)
+— is our own kernel, minus a safety fix.** Full cell-by-cell diff against our working copy: 23 cells each, and
+only four differ. Cell 0 is prose (−438). Cell 16 differs **entirely inside `else:`** — `bm.n_passes 4 → 1`,
+their `demo_excluded_games = ['bp35','cd82','cn04','dc22','g50t','ka59','lf52','ls20','m0r0','s5i5','sk48',
+'sp80',…]` (which is our measured capability wall, independently confirmed by the leader line-up: sk48, bp35,
+g50t, sp80, lf52), and our `# FAST_PROXY` lines; `if TRUE_SUBMISSION:` is identical, and the exclusion list is
+`[] if TRUE_SUBMISSION else […]`, so it cannot touch a scored run. Cells 2–15 and 17–22 match in length. The
+**one scored-path difference is `SERVER_STARTUP_TIMEOUT`: theirs `12 * 60`, ours `60 * 60`** — and the 12-minute
+gate is precisely what zeroed our v4 offline run when the model precache took 2,157 s, with cold boots
+measured at 1,865 s since. Adopting their notebook would therefore reintroduce a boot hazard into a session
+that has no other guard, for zero expected gain. Their 54 `setup_env` keys, all `bm.*` scored values and both
+`*_PROMPT` constants are identical to ours; so are `dfranzen/pennyroyal-v253`,
+`dfranzen/taaf-kaggle-source-bundle-copy` and both `dfranzen` model sources.
+
+The same scan over the nine other above-silver lineage publishers (shiiin9 38.98, dfranzen 38.85, lalalia9
+35.79, vickyfym 33.94, yongjiehishi 33.78, tantan0327 33.55, jingshuifu 33.22, weitaoguo 32.61, heliosli 32.60,
+dennis6886 32.59, samrishb 32.42, greenalgeria 32.38) found **zero** `setup_env` changes and **zero** new
+prompt constants anywhere on the board: every published delta lives in the demo branch. What actually
+separates those rows from ours is the number of draws — 3, 6, 8, 10, 14, 20, 29, 38, 80, 90, 99, 111, 202
+submissions versus our 11 — and their `n_passes`/`max_runtime_s_per_game` differences do not reach the rerun.
+
+**So: no published kernel raises our mean, and gold is not a 35 problem.** Gold here is rank ≤ 19 = **38.20**;
+35.35 would be rank 51 = top 1.05 % = **silver**, comfortably. Our own draws of the byte-identical config are
+**25.51, 26.74, 28.18, 30.55** — four, none above the silver line — and the 31.46 and 38.85 in the six-sample
+pool quoted above are *other accounts* (yukailiu, the author) running the same program, which is what proves
+the tail is real rather than ours by right. Keep the slots on draws of our kernel, which is the same program
+as theirs plus the boot guard.
 
 **Nothing else is required to win a medal — checked in the rules, not assumed.** The competition's own
 rules text (read from the live rules page 2026-10-25) attaches obligations only to *winners* and *prize*
