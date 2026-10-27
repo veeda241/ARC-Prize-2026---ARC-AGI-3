@@ -988,6 +988,13 @@ not a score change; our row is untouched. The gap is now **0.45 to bronze and 1.
 moved *away* twice as fast as we could have closed it with an average draw. Top of board: 75.56, Yi-Chia Chen
 @ Fields Model, 43 submissions.
 
+Independently re-read at **15:00:43 UTC** by the 15:00 attempt, which found the day's slot already spent and
+submitted nothing: the field is unchanged at **4,908**, so the three lines above still hold exactly (490 /
+245 / 19 = 31.00 / 32.31 / 38.22, our row still rank 606). **Verdict for the day: the 26.94 draw cleared
+neither line** — 4.06 short of bronze, and that row on its own sits at rank 1543 (top 31.4 %) — while the
+team's best row stays 30.55 at rank 606, so the draw cost nothing. `submission-limits` 15:00 UTC: *Submissions
+today: 1, Lifetime: 12, Remaining today: 0*.
+
 **2026-10-27 ~15:00 UTC — read the rules on final judging, and the "the LB keeps our best row" assumption
 does NOT carry into the medal.** From the live rules page (browser, since WebFetch returns only the JS
 shell): §2 SUBMISSION LIMITS — *"a. You may submit a maximum of 1 (1) Submissions per day. **b. You may
