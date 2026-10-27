@@ -988,6 +988,32 @@ not a score change; our row is untouched. The gap is now **0.45 to bronze and 1.
 moved *away* twice as fast as we could have closed it with an average draw. Top of board: 75.56, Yi-Chia Chen
 @ Fields Model, 43 submissions.
 
+**2026-10-27 ~15:00 UTC — read the rules on final judging, and the "the LB keeps our best row" assumption
+does NOT carry into the medal.** From the live rules page (browser, since WebFetch returns only the JS
+shell): §2 SUBMISSION LIMITS — *"a. You may submit a maximum of 1 (1) Submissions per day. **b. You may
+select up to two (2) Final Submissions for judging.**"*; §3.18(c) — *"A 'Final Submission' is the Submission
+selected by the user, **or automatically selected by Kaggle in the event not selected by the user**, that
+is/are used for **final placement** on the competition leaderboard"*; §8 — *"The **Private** Leaderboard
+determines the final standing in the competition."* Three consequences:
+1. The best-row rule we have been leaning on is a **public-LB display** behaviour. What medals are made of
+   is the **private half of at most two selected runs** — and we have never observed a private score, so all
+   of the 10–34 % band arithmetic in this entry is a *public-half* proxy for a private-half draw.
+2. **Action required before 2026-11-02 23:59 UTC:** select our two highest-public rows as Final Submissions.
+   The installed CLI cannot do it — `kaggle competitions --help` lists
+   `{list,files,download,submit,submissions,leaderboard,team-submissions,submission-limits,episodes,replay,logs,
+   pages,hosts,data,settings,solution,launch,init,create,topics,topic-messages}` and none of them selects a
+   final submission — so it is a browser action on the team's logged-in session (today the connected browser
+   is signed **out**, so nobody can do it silently). `kaggle competitions team-submissions 15515494` returns
+   exactly one row today (`57402922`, 30.55), which is the public-LB row, not proof of selection state.
+   Selecting the two best-public rows is safe under both possible judge configs, and leaving it to
+   "automatically selected by Kaggle" is the one thing we cannot verify after the fact.
+3. It also means the honest medal arithmetic is a **max over ~2 judged rows, not over the seven draws**. With
+   per-draw p(silver) ≈ 1.7–6.7 %, two judged rows give ≈ **3–13 %**, not 10–34 % — the extra draws are still
+   worth taking because each one is another *candidate* for the pair, and because a strong public half is the
+   only observable signal that its private half is strong too, but their marginal value is sub-linear. Say
+   this rather than quoting 10–34 % as a medal probability. Draw policy is unchanged; the **selection step is
+   the new must-do**.
+
 Five byte-identical draws of ours are now on the record — **25.51, 26.74, 26.94, 28.18, 30.55** — mean
 **27.58**, median 26.94, and **0 of 5 reach either medal line**. That is *not* evidence the config is broken
 for us: against the 23 byte-identical low-draw accounts (mean 28.91, sd 2.74) our five-draw mean sits at
