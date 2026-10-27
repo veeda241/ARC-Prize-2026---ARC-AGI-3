@@ -733,20 +733,21 @@ rational here.
 
 **What a medal actually costs, read off Kaggle's own rule rather than guessed.** The progression table
 (`kaggle.com/progression/competitions`, verified 2026-10-25) gives, for a competition of **1,000+ teams**,
-Bronze = top 10 %, Silver = top 5 %, Gold = top 10 + 0.2 %, with percentages rounded down. At the **4,869**
-scored teams on the board as of 2026-10-26 21:59 UTC that is:
+Bronze = top 10 %, Silver = top 5 %, Gold = top 10 + 0.2 %, with percentages rounded down. At the **4,908**
+scored teams on the board as of 2026-10-27 14:42 UTC that is:
 
 | Medal | Boundary | Public score that reaches it |
 |---|---|---|
-| Bronze | top 486 | **31.00** |
-| Silver | top 243 | **32.29** |
-| Gold | top 19 | 38.20 |
+| Bronze | top 490 | **31.00** |
+| Silver | top 245 | **32.31** |
+| Gold | top 19 | 38.22 |
 
-Our best row 30.55 is rank 596 = **top 12 %** — 0.45 points outside bronze, 1.74 outside silver. That is
+Our best row 30.55 is rank 606 = **top 12.35 %** — 0.45 points outside bronze, 1.76 outside silver. That is
 the operative target, and it reframes the whole exercise: silver is not a 50-score problem (50 is rank 5,
 which is *harder* than a silver medal) but a gap of under two points against a config whose known draws
-already reach 38.85. These boundaries move as the field grows — 4,833 teams on Oct 25, 4,867 on Oct 26 — so
-re-read them from a fresh download rather than trusting this table.
+already reach 38.85. These boundaries move fast — 4,833 teams on Oct 25, 4,867 on Oct 26, 4,894 by 05:01 UTC
+on Oct 27, 4,908 by that afternoon — so the field is growing by ~40 teams a day and dragging the lines up
+under us. Re-read them from a fresh download every day rather than trusting this table.
 
 **The honest odds, re-read after every draw.** Six byte-identical draws are on the record (25.51, 26.74,
 28.18, 30.55, 31.46, 38.85 — **four of them ours**; 31.46 is `yukailiu` and 38.85 is the author, same program): mean **30.21**, sd **4.79**. Exactly one (38.85) clears the silver line — a
@@ -757,7 +758,8 @@ closer to a given: 33–44 % per draw ⇒ **94–98 %** over seven. Earlier draf
 an n = 5 version of this section said 20–41 % — both overstate it slightly now that a low draw has landed.
 Treat the range, never the upper number, as the plan's expectation. **(Superseded 2026-10-27: this pool mixes
 202-draw and 80-draw maxima in with our own single draws — see "The unbiased version of that estimate" below
-for the low-n population and the corrected 15–40 % silver figure.)**
+for the low-n population, and the Oct 27 chase-log entry for the current figures: P(silver) ≈ 10–34 % and
+P(bronze) ≈ 20–60 % over the six draws that remain.)**
 
 **"Can't we just submit the leader's exact code?" — checked 2026-10-26 21:59 UTC, and the answer is no twice
 over.** (i) It is not obtainable: `kaggle kernels list --user tufalabs` returns *Not found*, so the rank-2 team
@@ -844,21 +846,27 @@ has ≤8 submissions and a score ≥15, and keep only exact matches — **23 acc
 26.80, 26.88, 27.12, 27.22, 27.79, 27.80, 28.21, 28.52, 28.96, 29.31, 29.34, 30.65, 30.75, 31.27, 31.58,
 32.16, 32.59, 33.22, 33.94 — **mean 28.91, median 28.52, max 33.94, and zero of 23 reach 35.**
 
-Our own four draws (25.51, 26.74, 28.18, 30.55) sit inside that distribution; 30.55 is roughly its 80th
-percentile. The config is not underperforming for us — it performs for us exactly as it does for everyone
-with our number of attempts. Read the odds off the low-n population rather than the high-n maxima:
+Our own draws (25.51, 26.74, 26.94, 28.18, 30.55 — five, as of the Oct 27 05:00 draw) sit inside that
+distribution; 30.55 is its **65th percentile** (15 of 23 accounts are at or below it — an earlier draft said
+80th, which was wrong), and our five-draw mean 27.58 against the population's 28.91 is **z = −1.08**, well
+inside sampling noise at n = 5. The config is not underperforming for us — it performs for us as it does for
+everyone with our number of attempts. Read the odds off the low-n population rather than the high-n maxima:
 
-| Line | Of those 23 accounts | Implied per-draw p | P(at least one in the 7 draws left) |
+| Line | Of those 23 accounts | Inverted to a per-draw p | P(at least one in the 6 draws left) |
 |---|---|---|---|
-| Bronze 31.00 | 6 / 23 = 26 % | ≈ 3 – 13 % | **≈ 22 – 63 %** |
-| Silver 32.29 | 3 / 23 = 13 % | ≈ 2 – 13 % | best estimate **15 – 40 %** |
+| Bronze 31.00 | 6 / 23 = 26 % | 1 − (1 − 0.26)^(1/k) = **3.7 – 14 %** | **≈ 20 – 60 %** |
+| Silver 32.31 | 3 / 23 = 13 % | 1 − (1 − 0.13)^(1/k) = **1.7 – 6.7 %** | **≈ 10 – 34 %** |
 | 35.00 | 0 / 23 | not observed | — |
-| Gold 38.20 | 0 / 23 | not observed | — |
+| Gold 38.22 | 0 / 23 | not observed | — |
 
-The range is the number of real draws hidden inside each account's ≤8 submissions (2 draws ⇒ high end,
-8 ⇒ low end). **Retract the 72–94 % figure in the odds paragraph above**; it was built on the contaminated
-pool. Honest statement now: silver is around a coin-flip or worse, and the binding constraint is the
-one-submission-per-day allowance, not the code.
+The range is the number of real draws hidden inside each account's ≤8 submissions (k = 2 ⇒ high end, k = 8 ⇒
+low end). Note this also **corrects the 2–13 % per-draw band used in the first version of this table**: 13 %
+is the *account-level* rate, and an account's best row over several draws clears a line more often than one
+draw does, so treating 13 % as a per-draw probability was the same contamination in a smaller hat.
+**Retract the 72–94 % figure in the odds paragraph above**, and the 15–40 % revision with it — both were built
+before that inversion. Honest statement now: silver is roughly one chance in five, maybe one in three at the
+optimistic end; bronze is nearer one in two. Either way the binding constraint is the one-submission-per-day
+allowance, not the code, which is why every remaining slot goes to a draw.
 
 **Which also says the only accounts worth copying are the ones that beat the lottery — and none of them
 publish.** Board-wide, exactly two teams reached ≥35 with ≤17 submissions: `_LT_zyc` 36.00 in 10 (`zyczyc`,
@@ -964,28 +972,33 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 |---|---|---|---|---|---|
 | 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
 | 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | **25.51** | 30.55 | 595 |
-| 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | *PENDING at write time* | 30.55 | 597 |
+| 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 606 |
 
-**2026-10-27 05:00 UTC — the slot was spent on the proven config; score still PENDING.** Step 1 found no row
-dated today (newest was Oct 26 11:27), `submission-limits` said *Submissions today: 0, Remaining today: 1*,
-and `arc3-milestone2-flashnext-duck` was `COMPLETE`, so `-v 9` was submitted as the morning draw → ref
-**`57689693`**. The 15:00 and 21:00 attempts will find this row dated today, stop at step 1 and spend nothing;
-whoever lands the final score updates the row above rather than adding a second one.
+**2026-10-27 05:00 UTC — the slot was spent on the proven config and the draw landed at 26.94.** Step 1 found
+no row dated today (newest was Oct 26 11:27), `submission-limits` said *Submissions today: 0, Remaining
+today: 1*, and `arc3-milestone2-flashnext-duck` was `COMPLETE`, so `-v 9` was submitted as the morning draw →
+ref **`57689693`**, now `SubmissionStatus.COMPLETE` at **26.94**. The 15:00 and 21:00 attempts will find this
+row dated today, stop at step 1 and spend nothing (`Remaining today: 0` confirmed at 14:41 UTC).
 
-Boundaries re-read from a fresh download at 05:01 UTC (not from the Oct 26 numbers): the field is now
-**4,894** scored teams (4,869 on Oct 26 21:59 → +25 overnight), so **bronze rank ≤ 489 = 30.99**, **silver
-rank ≤ 244 = 32.29**, **gold rank ≤ 19 = 38.20**. Tie structure matters at the edges: 30.99 occupies ranks
-489–490, so a draw of exactly 30.99 is only safely inside bronze at ≥ 31.00 (7 teams sit at 31.00, ranks
-482–488); 32.29 occupies ranks 242–244, so it is exactly at the silver line. Our best row 30.55 is
-**rank 597** (596 teams strictly above it, three tied at 30.55) = **top 12.20 %** — 115 teams now lie between
-30.55 and 31.00, and the gap is **0.44 to bronze, 1.74 to silver**. Top of board unchanged: 71.48, Yi-Chia
-Chen @ Fields Model, 42 submissions.
+Boundaries re-read from a fresh download at 14:42 UTC (not from the Oct 26 numbers): the field is now
+**4,908** scored teams (4,869 on Oct 26 21:59 → 4,894 at 05:01 → 4,908 by afternoon, +39 in a day), so
+**bronze rank ≤ 490 = 31.00**, **silver rank ≤ 245 = 32.31**, **gold rank ≤ 19 = 38.22**. Our best row 30.55
+is **rank 606** (board's own `Rank`) = **top 12.35 %** — the 9-place slide since this morning is field growth,
+not a score change; our row is untouched. The gap is now **0.45 to bronze and 1.76 to silver**, and silver has
+moved *away* twice as fast as we could have closed it with an average draw. Top of board: 75.56, Yi-Chia Chen
+@ Fields Model, 43 submissions.
 
-Four scored byte-identical draws of ours are on the record — **25.51, 26.74, 28.18, 30.55** — and `57689693`
-is the fifth. Nothing about the odds estimate changes on a draw that has not landed: per §1p the honest
-per-draw figures remain p(silver) ≈ 2–13 %, p(bronze) ≈ 3–13 %, and with **six daily slots left** (Oct 28 →
-Nov 2, today's now spent) that is P(silver) ≈ 11–57 % and P(bronze) ≈ 17–57 % for the rest of the run. Slot
-policy is unchanged: v9 every day, no arms.
+Five byte-identical draws of ours are now on the record — **25.51, 26.74, 26.94, 28.18, 30.55** — mean
+**27.58**, median 26.94, and **0 of 5 reach either medal line**. That is *not* evidence the config is broken
+for us: against the 23 byte-identical low-draw accounts (mean 28.91, sd 2.74) our five-draw mean sits at
+**z = −1.08**, i.e. about one standard error of ordinary sampling noise, and our best row is the **65th**
+percentile of that population (not the 80th claimed earlier — corrected below). With today's slot spent there
+are **six daily draws left** (Oct 28 → Nov 2). Converting the population's account-level rates back to a
+per-draw rate — 3/23 clears silver and 6/23 clears bronze, but those are maxima over 2–8 draws, so
+per-draw p(silver) ≈ **1.7–6.7 %** and p(bronze) ≈ **3.7–14 %** — over six draws that is
+**P(silver) ≈ 10–34 %** and **P(bronze) ≈ 20–60 %**. This supersedes the 15–40 % / 22–63 % figures, which were
+computed for seven draws and used the wider 2–13 % band. Slot policy is unchanged: v9 every day, no arms —
+a diverted slot still costs the whole per-draw figure, and there is no arm left whose prior is positive.
 
 **2026-10-26 21:00 UTC — the day's draw came in low, and it cost us nothing.** `-v 9` scored **25.51**, a
 below-average draw of unchanged code; the team's best row stays 30.55, so the only movement in rank (581 →
