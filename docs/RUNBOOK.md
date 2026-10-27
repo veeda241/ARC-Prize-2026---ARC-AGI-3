@@ -972,7 +972,7 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 |---|---|---|---|---|---|
 | 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
 | 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | **25.51** | 30.55 | 595 |
-| 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 606 |
+| 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
 
 **2026-10-27 05:00 UTC — the slot was spent on the proven config and the draw landed at 26.94.** Step 1 found
 no row dated today (newest was Oct 26 11:27), `submission-limits` said *Submissions today: 0, Remaining
@@ -994,6 +994,23 @@ submitted nothing: the field is unchanged at **4,908**, so the three lines above
 neither line** — 4.06 short of bronze, and that row on its own sits at rank 1543 (top 31.4 %) — while the
 team's best row stays 30.55 at rank 606, so the draw cost nothing. `submission-limits` 15:00 UTC: *Submissions
 today: 1, Lifetime: 12, Remaining today: 0*.
+
+**2026-10-27 21:00 UTC — evening guard: slot already used, nothing submitted, and the field moved again.**
+Step 1 found `57689693` dated today (`COMPLETE`, **26.94**), and `submission-limits` agrees — *Submissions
+today: 1, Lifetime: 12, Remaining today: 0* — so this attempt fired no submit. The 05:00 task landed the draw
+first, which is the three-attempt design working, not a failure.
+Fresh download at 21:00:47 UTC, counted from `Rank > 0` rows (4,916 score rows minus the same 3 unranked demo
+teams): the field is **4,913**, up 5 ranked teams from the afternoon read, and the boundaries have ticked again
+— **bronze ≤ 491 = 31.02**, **silver ≤ 245 = 32.34**, **gold ≤ 19 = 38.22**. Our best row 30.55 is
+**rank 612** — the board's own `Rank` for "Hendric Nazarius", and independently the count of strictly-higher
+scores plus one — i.e. **top 12.46 %**, with the 6-place slide from 606 being pure field growth. Gaps are now
+**0.47 to bronze and 1.79 to silver**. (The 3 rank-0 rows do not change any boundary: floor(4,913 × 0.1) and
+floor(4,916 × 0.1) are both 491, and both give 245 for 5 %.) Top of board is now **75.56**, Yi-Chia Chen
+@ Fields Model.
+The day's draw also gets a rank of its own, from a second download at 21:02 UTC (same field, 4,913): 26.94 sits
+at **rank 1559 = top 31.73 %**, so it cleared neither line, and the team's best row is unaffected. **Six draws
+remain (Oct 28 → Nov 2)** and the selection step in the paragraph below is still the outstanding must-do — this
+guard cannot perform it, because selecting Final Submissions is browser-only.
 
 **2026-10-27 ~15:00 UTC — read the rules on final judging, and the "the LB keeps our best row" assumption
 does NOT carry into the medal.** From the live rules page (browser, since WebFetch returns only the JS
