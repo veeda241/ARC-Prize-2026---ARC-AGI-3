@@ -964,6 +964,28 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 |---|---|---|---|---|---|
 | 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
 | 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | **25.51** | 30.55 | 595 |
+| 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | *PENDING at write time* | 30.55 | 597 |
+
+**2026-10-27 05:00 UTC — the slot was spent on the proven config; score still PENDING.** Step 1 found no row
+dated today (newest was Oct 26 11:27), `submission-limits` said *Submissions today: 0, Remaining today: 1*,
+and `arc3-milestone2-flashnext-duck` was `COMPLETE`, so `-v 9` was submitted as the morning draw → ref
+**`57689693`**. The 15:00 and 21:00 attempts will find this row dated today, stop at step 1 and spend nothing;
+whoever lands the final score updates the row above rather than adding a second one.
+
+Boundaries re-read from a fresh download at 05:01 UTC (not from the Oct 26 numbers): the field is now
+**4,894** scored teams (4,869 on Oct 26 21:59 → +25 overnight), so **bronze rank ≤ 489 = 30.99**, **silver
+rank ≤ 244 = 32.29**, **gold rank ≤ 19 = 38.20**. Tie structure matters at the edges: 30.99 occupies ranks
+489–490, so a draw of exactly 30.99 is only safely inside bronze at ≥ 31.00 (7 teams sit at 31.00, ranks
+482–488); 32.29 occupies ranks 242–244, so it is exactly at the silver line. Our best row 30.55 is
+**rank 597** (596 teams strictly above it, three tied at 30.55) = **top 12.20 %** — 115 teams now lie between
+30.55 and 31.00, and the gap is **0.44 to bronze, 1.74 to silver**. Top of board unchanged: 71.48, Yi-Chia
+Chen @ Fields Model, 42 submissions.
+
+Four scored byte-identical draws of ours are on the record — **25.51, 26.74, 28.18, 30.55** — and `57689693`
+is the fifth. Nothing about the odds estimate changes on a draw that has not landed: per §1p the honest
+per-draw figures remain p(silver) ≈ 2–13 %, p(bronze) ≈ 3–13 %, and with **six daily slots left** (Oct 28 →
+Nov 2, today's now spent) that is P(silver) ≈ 11–57 % and P(bronze) ≈ 17–57 % for the rest of the run. Slot
+policy is unchanged: v9 every day, no arms.
 
 **2026-10-26 21:00 UTC — the day's draw came in low, and it cost us nothing.** `-v 9` scored **25.51**, a
 below-average draw of unchanged code; the team's best row stays 30.55, so the only movement in rank (581 →
