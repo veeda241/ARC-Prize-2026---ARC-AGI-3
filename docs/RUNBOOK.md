@@ -1036,9 +1036,10 @@ our lowest of the config, and because the leaderboard keeps the max it cost noth
 sd 2.74) the six-draw mean is now **z = −1.68**, not the −1.08 that five draws gave. That is still inside
 ordinary sampling noise at n = 6 (one-sided ≈ 5 %), and our best row remains that population's ~65th
 percentile, so it is not evidence the config is broken for us — but the margin has clearly narrowed and the
-honest read is that six draws have produced nothing above 30.55. **After today, four daily draws remain
-(Oct 29 → Nov 2)**, so §1p's inverted per-draw rates give **P(silver) ≈ 7–24 %** and **P(bronze) ≈ 14–45 %**
-for the rest of the run, down from the 8–29 % / 18–53 % quoted when five were left. Both are public-half
+honest read is that six draws have produced nothing above 30.55. **After today, five daily draws remain
+(Oct 29, 30, 31, Nov 1, Nov 2)**, so §1p's inverted per-draw rates give **P(silver) ≈ 8–29 %** and
+**P(bronze) ≈ 17–53 %** for the rest of the run — the same window the 15:00 entry computed, because today's slot
+is already the one that reduced it from six. Both are public-half
 figures over *candidate* draws; medals judge at most **two selected rows on the private half**, which is why
 the ~3–13 % figure remains the number to quote for the medal itself. Slot policy unchanged: v9 daily, no arms.
 
