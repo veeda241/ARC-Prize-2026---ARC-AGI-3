@@ -973,7 +973,7 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
 | 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | **25.51** | 30.55 | 595 |
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
-| 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | *still PENDING at 15:00* | 30.55 | 637 |
+| 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 
 **2026-10-28 ~08:55 UTC — a second guard on the same day, arriving 85 s after the draw, and what its 400 means.**
 This attempt passed step 1 honestly: its first `submissions -v` at 08:50:30 showed nothing newer than
@@ -1015,13 +1015,32 @@ unchanged, and the 08:52 lines (31.06 / 32.34) are already stale. `57731198` was
 it clears bronze only at ≥ 31.11 and silver only at ≥ 32.41, and the 21:00 guard writes the result into the row
 above.
 
-With `57731198` still PENDING the day's verdict is open; it will be written into the row above when it lands
-(the 15:00 and 21:00 guards stop at step 1 and are the ones to fill it). Note for the human, unchanged by
-today: **five** byte-identical draws are now on the record — 25.51, 26.74, 26.94, 28.18, 30.55 — none of them
-at either line, and the Oct 27 draw at 26.94 was 4.12 short of bronze. After today's slot **five daily draws
-remain (Oct 29 → Nov 2)**, so §1p's inverted per-draw rates give **P(silver) ≈ 8–29 %** and
-**P(bronze) ≈ 18–53 %** for the rest of the run, down from the 10–34 % / 20–60 % quoted when six were left.
-Slot policy is unchanged: v9 daily, no arms.
+**2026-10-28 21:00 UTC — evening guard: slot already spent, and the day's verdict is 24.29, our worst draw.**
+Step 1 found exactly one row dated today (`57731198`, 08:51:09), now `SubmissionStatus.COMPLETE` at **24.29**,
+and `submission-limits` agrees — *Submissions today: 1, Lifetime: 13, Remaining today: 0* — so nothing was
+submitted and no kernel was touched. Lifetime 13 equals the board's own `SubmissionCount` for our row
+(TeamId 15515494), so every submission to date is still ours.
+Fresh full-board download at 21:00:37 UTC: **4,942** ranked teams (4,945 score rows minus the same 3 `Rank` 0
+demo rows), up 29 in 24 h. Lines re-cut again: **bronze rank ≤ 494 = 31.13**, **silver rank ≤ 247 = 32.43**,
+**gold rank ≤ 19 = 38.22**. Our best row 30.55 is **rank 647** (646 teams strictly above it; the board's own
+`Rank` agrees) = **top 13.09 %**, so the gap is **0.58 to bronze and 1.88 to silver** — wider again than the
+15:00 read (0.56 / 1.86) and the morning's (0.51 / 1.79), with our score frozen throughout. The bronze line has
+risen 31.00 → 31.02 → 31.06 → 31.11 → 31.13 over the 30 h since Oct 27 14:42 (each step a fresh download); that
+is the whole story of this week — the target moves away faster than an average draw can approach it. Top of
+board still 75.56 (Yi-Chia Chen @ Fields Model, 44 subs).
+**Today's draw cleared neither line**: 24.29 sits at **rank 1949 = top 39.44 %**, 6.84 short of bronze. It is
+our lowest of the config, and because the leaderboard keeps the max it cost nothing — the best row stays 30.55.
+
+**Six byte-identical draws of ours are now on the record — 24.29, 25.51, 26.74, 26.94, 28.18, 30.55 — mean
+27.04, sd 2.17, and 0 of 6 reach either line.** Against the 23 byte-identical low-draw accounts (mean 28.91,
+sd 2.74) the six-draw mean is now **z = −1.68**, not the −1.08 that five draws gave. That is still inside
+ordinary sampling noise at n = 6 (one-sided ≈ 5 %), and our best row remains that population's ~65th
+percentile, so it is not evidence the config is broken for us — but the margin has clearly narrowed and the
+honest read is that six draws have produced nothing above 30.55. **After today, four daily draws remain
+(Oct 29 → Nov 2)**, so §1p's inverted per-draw rates give **P(silver) ≈ 7–24 %** and **P(bronze) ≈ 14–45 %**
+for the rest of the run, down from the 8–29 % / 18–53 % quoted when five were left. Both are public-half
+figures over *candidate* draws; medals judge at most **two selected rows on the private half**, which is why
+the ~3–13 % figure remains the number to quote for the medal itself. Slot policy unchanged: v9 daily, no arms.
 
 **2026-10-28 08:51 UTC — the day's draw was taken by hand, three minutes ahead of the cron that was also
 trying.** The 05:00 task (`ecfa8d23`) first fired late, at ~07:32 UTC, and died in **3,934 ms** with `lastError
