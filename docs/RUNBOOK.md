@@ -1011,30 +1011,25 @@ remain (Oct 29 → Nov 2)**, so §1p's inverted per-draw rates give **P(silver) 
 **P(bronze) ≈ 18–53 %** for the rest of the run, down from the 10–34 % / 20–60 % quoted when six were left.
 Slot policy is unchanged: v9 daily, no arms.
 
-**2026-10-28 08:51 UTC — the day's draw exists, but only because an interactive session was open.** The
-05:00 task (`ecfa8d23`) fired late at ~07:32 UTC and died in **3,934 ms** with `lastError
-{"type":"session-failed"}` (`consecutiveFailures: 1`) — it never reached step 1, so no row was written and
-`submission-limits` still read *Remaining today: 1* at 08:45. Checked `arc3-milestone2-flashnext-duck` =
-`KernelWorkerStatus.COMPLETE`, then submitted `-v 9` by hand → ref **`57731198`**, PENDING as of 08:54;
-`submission-limits` now reads *Submissions today: 1, Lifetime: 13, Remaining today: 0*. Score expected in
-~9 h (≈17:45–18:30 UTC); the 15:00 and 21:00 attempts will find this row dated today and spend nothing.
-
-Boundaries re-read from a fresh download at **08:55 UTC today**: the field is **4,927** ranked teams (4,908
-Oct 27 14:42 → 4,913 at 21:00 → 4,927 now, another +19), so **bronze rank ≤ 492 = 31.07**, **silver rank
-≤ 246 = 32.35**, **gold ≤ 19 = 38.22**. Our best row 30.55 is **rank 626** on the board's own column =
-**top 12.71 %** — 14 places of pure field growth since the evening read, score unchanged. Gaps are now
-**0.52 to bronze and 1.80 to silver**; silver crept 0.04 since yesterday while an average draw of ours moves
-the team's best row by 0.00, which is the arithmetic reason this chase is a lottery and not a climb.
+**2026-10-28 08:51 UTC — the day's draw was taken by hand, three minutes ahead of the cron that was also
+trying.** The 05:00 task (`ecfa8d23`) first fired late, at ~07:32 UTC, and died in **3,934 ms** with `lastError
+{"type":"session-failed"}` (`consecutiveFailures: 1`) — no step 1, no submission, no RUNBOOK edit, so at 08:45
+the repo looked exactly like a day whose slot had been deliberately skipped. `submission-limits` still said
+*Remaining today: 1*, so the slot was checked, the kernel confirmed `KernelWorkerStatus.COMPLETE`, and `-v 9`
+was submitted by hand at **08:51:09** → ref **`57731198`** (PENDING as of 08:54). Qoder then re-ran the same
+cron at ~08:50–08:52 and it got the 400 documented in the block above — the automated path and the hand path
+were both live inside one minute, and the hand submit won by ~80 s. Score expected in ~9 h (≈17:45–18:30 UTC);
+the 15:00 and 21:00 attempts will find this row dated today and spend nothing.
 
 **The lesson is about the automation design, not the config.** Three attempts at three different times was
-built to survive a *rejected submit* (slot not yet rolled over, kernel still running). It does not survive a
-*session that cannot start*: a `session-failed` run produces no submission row, no RUNBOOK edit and no
-push — the only trace is `lastRunStatus`/`lastError` inside the cron store, which nothing reads unless a
-human or an agent opens the day. Until ~08:45 this repo therefore looked exactly like a day where the slot
-had been deliberately left unspent. Practical rule for the five days left: **if the 05:00 entry is missing
-from the chase log when the user or an agent next reads the file, check `submission-limits` before
-assuming anything was drawn** — an empty slot is recoverable only until 23:59 UTC, and a failed cron is
-silent.
+built to survive a *rejected submit* (slot not yet rolled over, kernel still running). It does not reliably
+survive a *session that cannot start*: a `session-failed` run leaves no submission row, no RUNBOOK edit and no
+push — the only trace is `lastRunStatus`/`lastError` inside the cron store, which nothing reads unless a human
+or an agent opens the day. Whether Qoder re-fires such a job is not something this repo can observe or
+control (today it did, ~80 min later, and today that saved nothing only because a live session was open).
+Practical rule for the five days left: **if today's row is missing from the chase log when the file is next
+read, run `submission-limits` before assuming anything was drawn** — an empty slot is recoverable only until
+23:59 UTC, and a failed cron is silent in git.
 
 **2026-10-27 05:00 UTC — the slot was spent on the proven config and the draw landed at 26.94.** Step 1 found
 no row dated today (newest was Oct 26 11:27), `submission-limits` said *Submissions today: 0, Remaining
