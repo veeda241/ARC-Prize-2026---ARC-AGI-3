@@ -973,6 +973,25 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
 | 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | **25.51** | 30.55 | 595 |
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
+| 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | *PENDING at write time* | 30.55 | 612 |
+
+**2026-10-28 08:51 UTC — the day's draw exists, but only because an interactive session was open.** The
+05:00 task (`ecfa8d23`) fired late at ~07:32 UTC and died in **3,934 ms** with `lastError
+{"type":"session-failed"}` (`consecutiveFailures: 1`) — it never reached step 1, so no row was written and
+`submission-limits` still read *Remaining today: 1* at 08:45. Checked `arc3-milestone2-flashnext-duck` =
+`KernelWorkerStatus.COMPLETE`, then submitted `-v 9` by hand → ref **`57731198`**, PENDING as of 08:54;
+`submission-limits` now reads *Submissions today: 1, Lifetime: 13, Remaining today: 0*. Score expected in
+~9 h (≈17:45–18:30 UTC); the 15:00 and 21:00 attempts will find this row dated today and spend nothing.
+
+**The lesson is about the automation design, not the config.** Three attempts at three different times was
+built to survive a *rejected submit* (slot not yet rolled over, kernel still running). It does not survive a
+*session that cannot start*: a `session-failed` run produces no submission row, no RUNBOOK edit and no
+push — the only trace is `lastRunStatus`/`lastError` inside the cron store, which nothing reads unless a
+human or an agent opens the day. Until ~08:45 this repo therefore looked exactly like a day where the slot
+had been deliberately left unspent. Practical rule for the five days left: **if the 05:00 entry is missing
+from the chase log when the user or an agent next reads the file, check `submission-limits` before
+assuming anything was drawn** — an empty slot is recoverable only until 23:59 UTC, and a failed cron is
+silent.
 
 **2026-10-27 05:00 UTC — the slot was spent on the proven config and the draw landed at 26.94.** Step 1 found
 no row dated today (newest was Oct 26 11:27), `submission-limits` said *Submissions today: 0, Remaining
