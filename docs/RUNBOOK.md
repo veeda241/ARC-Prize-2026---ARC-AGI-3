@@ -973,7 +973,7 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
 | 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | **25.51** | 30.55 | 595 |
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
-| 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | *PENDING at write time* | 30.55 | 625 |
+| 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | *still PENDING at 15:00* | 30.55 | 637 |
 
 **2026-10-28 ~08:55 UTC — a second guard on the same day, arriving 85 s after the draw, and what its 400 means.**
 This attempt passed step 1 honestly: its first `submissions -v` at 08:50:30 showed nothing newer than
@@ -1002,6 +1002,18 @@ never carried forward. Our best row 30.55 is **rank 625** (624 teams strictly ab
 and the board's own `Rank` column says 625) = **top 12.68 %**, so the gap is now **0.51 to bronze and 1.79 to
 silver** — both wider than yesterday (0.45 / 1.76) purely through field growth. 122 teams lie between 30.55
 and 31.00; 376 between 30.55 and 32.34. Top of board 75.56, Yi-Chia Chen @ Fields Model, 44 submissions.
+
+**2026-10-28 15:00:47 UTC — the 15:00 guard: slot already spent, and the lines moved again inside the same
+day.** Step 1 found exactly one row dated today (`57731198`) and `submission-limits` read *Submissions today:
+1, Lifetime: 13, Remaining today: 0*, so **nothing was submitted and no kernel was touched**. Fresh full-board
+download, **4,941** scored teams (+11 in the 6 h since the 08:52 read), which re-cut the lines:
+**bronze rank ≤ 494 = 31.11**, **silver rank ≤ 247 = 32.41**, **gold rank ≤ 19 = 38.22**. Our best row 30.55 is
+**rank 637** (636 teams strictly above it; the board's own `Rank` agrees) = **top 12.89 %**, so the gap is now
+**0.56 to bronze and 1.86 to silver** — both wider than this morning's 0.51 / 1.79 while our score is
+unchanged, and the 08:52 lines (31.06 / 32.34) are already stale. `57731198` was still
+`SubmissionStatus.PENDING` at 6.2 h into a ~9 h rerun, so **today's draw has no verdict yet** — when it lands
+it clears bronze only at ≥ 31.11 and silver only at ≥ 32.41, and the 21:00 guard writes the result into the row
+above.
 
 With `57731198` still PENDING the day's verdict is open; it will be written into the row above when it lands
 (the 15:00 and 21:00 guards stop at step 1 and are the ones to fill it). Note for the human, unchanged by
