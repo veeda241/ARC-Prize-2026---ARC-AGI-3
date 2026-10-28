@@ -973,7 +973,43 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-25 07:21 | `57621235` | port v5, temperature 0.9 — the last port draw | 5.34 | 30.55 | 581 |
 | 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | **25.51** | 30.55 | 595 |
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
-| 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | *PENDING at write time* | 30.55 | 612 |
+| 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | *PENDING at write time* | 30.55 | 625 |
+
+**2026-10-28 ~08:55 UTC — a second guard on the same day, arriving 85 s after the draw, and what its 400 means.**
+This attempt passed step 1 honestly: its first `submissions -v` at 08:50:30 showed nothing newer than
+`57689693`, `submission-limits` read *Submissions today: 0, Remaining today: 1*, and
+`arc3-milestone2-flashnext-duck` read `KernelWorkerStatus.COMPLETE`. It then issued the mandated `-v 9` submit
+and got **`400 Client Error: Bad Request for url:
+https://api.kaggle.com/v1/competitions.CompetitionApiService/CreateCodeSubmission`**. Re-reading after the
+error explains it: exactly one row dated 2026-10-28 exists (`57731198`, PENDING) and `submission-limits` now
+reads *Submissions today: 1, Lifetime: 13, Remaining today: 0* — i.e. the interactive draw logged above had
+consumed the allowance ~80 s earlier, and this was the day's second draw being refused. Not a closed window
+(the daily allowance exists and is now merely spent) and not a bad file. **No retry was issued.**
+
+**Operational lesson: a 400 on `CreateCodeSubmission` must be resolved by re-reading `submissions -v` before
+anything else**, because the same generic message also covers "you already submitted today". And because the
+guard is read-then-submit rather than atomic, two sessions scheduled near each other can both pass step 1 in
+the same minute; the loser gets a 400 and the day still has exactly one row, which is the safe failure mode.
+The fix is scheduling, not code — if the interactive/hand path and a cron entry can both be live, one of them
+should not fire in the 05:00–09:00 window.
+
+Boundaries re-read from a fresh download at **08:52:46 UTC**, 2026-10-28 — the field is now **4,930** scored
+teams (4,908 yesterday 14:42 → +22), so **bronze rank ≤ 493 = 31.06**, **silver rank ≤ 246 = 32.34**, **gold
+rank ≤ 19 = 38.22**. Both medal lines moved up overnight even though our score did not: yesterday's bronze
+line 31.00 now sits at ranks 503–510 (outside the top 493) and yesterday's silver line 32.31 at ranks 249–250
+(outside the top 246), which is the clearest possible demonstration of why these numbers are re-read daily and
+never carried forward. Our best row 30.55 is **rank 625** (624 teams strictly above it, three tied at 30.55,
+and the board's own `Rank` column says 625) = **top 12.68 %**, so the gap is now **0.51 to bronze and 1.79 to
+silver** — both wider than yesterday (0.45 / 1.76) purely through field growth. 122 teams lie between 30.55
+and 31.00; 376 between 30.55 and 32.34. Top of board 75.56, Yi-Chia Chen @ Fields Model, 44 submissions.
+
+With `57731198` still PENDING the day's verdict is open; it will be written into the row above when it lands
+(the 15:00 and 21:00 guards stop at step 1 and are the ones to fill it). Note for the human, unchanged by
+today: **five** byte-identical draws are now on the record — 25.51, 26.74, 26.94, 28.18, 30.55 — none of them
+at either line, and the Oct 27 draw at 26.94 was 4.12 short of bronze. After today's slot **five daily draws
+remain (Oct 29 → Nov 2)**, so §1p's inverted per-draw rates give **P(silver) ≈ 8–29 %** and
+**P(bronze) ≈ 18–53 %** for the rest of the run, down from the 10–34 % / 20–60 % quoted when six were left.
+Slot policy is unchanged: v9 daily, no arms.
 
 **2026-10-28 08:51 UTC — the day's draw exists, but only because an interactive session was open.** The
 05:00 task (`ecfa8d23`) fired late at ~07:32 UTC and died in **3,934 ms** with `lastError
@@ -982,6 +1018,13 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 `KernelWorkerStatus.COMPLETE`, then submitted `-v 9` by hand → ref **`57731198`**, PENDING as of 08:54;
 `submission-limits` now reads *Submissions today: 1, Lifetime: 13, Remaining today: 0*. Score expected in
 ~9 h (≈17:45–18:30 UTC); the 15:00 and 21:00 attempts will find this row dated today and spend nothing.
+
+Boundaries re-read from a fresh download at **08:55 UTC today**: the field is **4,927** ranked teams (4,908
+Oct 27 14:42 → 4,913 at 21:00 → 4,927 now, another +19), so **bronze rank ≤ 492 = 31.07**, **silver rank
+≤ 246 = 32.35**, **gold ≤ 19 = 38.22**. Our best row 30.55 is **rank 626** on the board's own column =
+**top 12.71 %** — 14 places of pure field growth since the evening read, score unchanged. Gaps are now
+**0.52 to bronze and 1.80 to silver**; silver crept 0.04 since yesterday while an average draw of ours moves
+the team's best row by 0.00, which is the arithmetic reason this chase is a lottery and not a climb.
 
 **The lesson is about the automation design, not the config.** Three attempts at three different times was
 built to survive a *rejected submit* (slot not yet rolled over, kernel still running). It does not survive a
