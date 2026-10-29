@@ -983,6 +983,52 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
+**2026-10-29 ~17:54 UTC — the revert-to-v9 contingency in the three draw crons is arithmetically wrong, and is replaced.**
+
+All three daily tasks (`ecfa8d23`, `13c22073`, `a396679e`) currently carry this line: *"If both the v11 and v12
+draws land below 30.0, the mean did not move — revert to `-v 9`."* Followed literally on Nov 1 or Nov 2 it
+would spend our last two slots on the arm we have just shown is ~5 points worse, so it is corrected here, in
+the block they are instructed to read first.
+
+The rule confuses **one noisy observation** with **the mean having moved**. Work it through with the numbers
+§1p just established:
+
+| quantity | value | where it comes from |
+|---|---|---|
+| sd of one public-half draw | ~2.0 | our seven v9 draws, sd 1.9–2.17 |
+| prior mean, v11 (SLM) | ~32.0 | `lalalia9` max 35.79 over 22 draws ⇒ mu = 35.79 − 1.91σ ≈ 32.0 at σ=2 |
+| prior uncertainty, v11 | ±1.5 | σ of the *conversion* (σ=1.5 ⇒ 32.9; σ=2.5 ⇒ 31.0) plus the risk their node differs |
+| prior mean, v12 (SLM+PACE) | ~33.5 | v11's 32.0 + PACE's ~1.5 (jingshuifu 33.22 over 6 ⇒ mu ≈ 30.7 vs ~29.2 for plain upstream) |
+| prior uncertainty, v12 | ±2.0 | the SLM+PACE **combination** has never been published — additive is an assumption |
+| known mean, v9 | 27.12 | seven direct draws, not an inference |
+
+Bayes with a prior sd of 1.5 against an observation sd of 2.0 weights the prior 0.64 and the single draw 0.36.
+So a v11 draw of **29.5** leaves a posterior mean of 0.64·32 + 0.36·29.5 = **31.1**; a draw of **25** still
+leaves **29.5**; it takes roughly **20** before v11's posterior falls to v9's known 27.12. For v12 the prior
+weight is 0.5, so a draw of 27 leaves **30.3** and it takes about **21**. Both arms therefore beat a known
+27.12 across the entire plausible range of a bad-luck afternoon, and "below 30.0" is not a cliff at all — it
+is the region where the prior is *right most of the time* (v11's own mean of 32 still clears only ~40 % of
+draws over the 32.54 line).
+
+**Corrected contingency, which supersedes that line wherever it appears:** on Nov 1 and Nov 2 keep drawing the
+arm with the higher posterior mean, computed as above — in practice that means `-v 9` returns **only if both**
+v11 and v12 rows land below ~21, or either row is 0.00 / its guard failed (a genuine broken-arm signal, not a
+lottery signal). Anything in the 20s is one draw of a distribution, and the whole point of the sweep is that
+the distribution moved up.
+
+**Nov 1 tie-break, stated so nobody has to improvise:** "higher public row" is the rule, with one asymmetry —
+the v12 prior is ~1.5 above v11's, so when v12's row is *within* ~1.5 of v11's, take `-v 12`; take `-v 11` only
+when v12 fell more than ~1.5 below it. That is the 0.5/0.5-vs-0.64/0.36 weighting above, not a preference.
+
+**What the two judged rows are actually worth (estimates with the assumptions named, not a promise).** Final
+standing uses at most two selected rows scored on the private half. If the standing takes the better of the
+two and the private half has the same sd as the public half, then at mean 31–32 against today's silver line
+32.54 each row clears with p ≈ 0.31–0.41 and two rows give ≈ 0.52–0.65 — versus the 0 of 7 that v9 produced
+at mean 27.12 (p ≈ 0.05 per row). The three honest caveats: we cannot see the private half, per-row sd on 55
+games may exceed 2.0, and if Kaggle's standing uses something other than the max of the selected rows the
+number is lower. Even so this is the first time in this competition that our *plan* has a coin-flip shot at
+silver rather than a lottery ticket.
+
 **2026-10-29 ~17:50 UTC — a 13-kernel forensic sweep: v11 is a byte-for-byte reproduction of the best published config, and the final four slots are scheduled.**
 (The three draw crons point at this block as "the ~18:05 block"; that label was written from the rehearsal's expected
 completion time rather than `date -u`. Same block — the clock said 17:49 when it was committed.)
