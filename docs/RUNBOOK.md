@@ -983,6 +983,79 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
+**2026-10-29 ~16:45 UTC — v11 passes its guard, and a second, bigger arm is now in rehearsal.**
+
+(1) **v11 guard = PASS.** `arc3-milestone2-flashnext-duck` v11's interactive rehearsal reached
+`KernelWorkerStatus.COMPLETE` in ~36 min with **zero** `Traceback`/`AttributeError` in the session log, and the
+marker line `SOLVED_LEVEL_MEMORY_PATCH on` is printed at log record 729, immediately before `benchmark.solver:`
+(record 730) — i.e. the four `ToolAgent` monkeypatches were installed *before* the run started, and the scored
+config printed unchanged after them. The ask path also fires for real: `Rule for level` appears in 10 of the
+downloaded per-game `*_p0_requests.jsonl` traces, so cleared levels are being captured. What did **not** happen
+offline is the write: `SOLVED LEVELS` appears in 0 traces and `SOLVED_LEVEL_MEMORY pinned` 0 times, because the
+block is only rewritten inside `_note_history_evicted`/`_trim_messages_for_context` and a 25-min offline game
+never drains the conversation (9-33 actions, 11-21 k tokens per game, far below the 118 k→59 k drain). So the
+rehearsal proves **install safety, not effect** — the effect can only be measured by a scored draw. Offline mean
+was 2.12/2.27, which is not a leaderboard number and proves nothing either way. Oct 30 05:00 therefore draws
+`-v 11`.
+
+(2) **Where the real levers are: Tufa Labs ships their harness as a *dataset*, not as notebook code.** Their own
+readable notebook (`gruvlg/duck-baseline-v3` — the TAAF/Tufa Labs submission notebook, 17-24 KB) has an **empty**
+customization cell, so nothing about their approach is in notebook source. But `kaggle datasets list -s taaf
+--sort-by updated` returns modified bundles, and two of them are the same thing: `lordhansolo/taaf-kaggle-source`
+(656 KB, Apache-2.0, 3,631 downloads) and `francescosabbarese97/taaf-kaggle-source-bundle` — both `git_status.txt`
+at **`ca1bd02`, branch `solution-improve-qwen38-flash-next`, "Let the agent act without full certainty"**, i.e. the
+harness authors' own improvement branch for the model we serve, whereas our attachment
+`dfranzen/taaf-kaggle-source-bundle-copy` is the older `aa69123` (branch `add-kaggle-share-flag`). Diff: 87 files
+vs 73, `prompts.py` 13,574→26,504 chars (adds `STRATEGY_AUDIT_PROMPT`, drops `TOOL_CALL_FORMAT_GUIDANCE`),
+`solver.py` 49,315→69,332, `tool_agent.py` refactored into 10 new modules, plus `configs/draft_vocab_32k.json`,
+`draft_vocab_48k.json` and `inference.local.json`. The `ONLY_RESET_LEVELS` fix in their `game_api.py` is **not** a
+lever — our bundle already sets it at `game_api.py:214/221`.
+
+(3) **The arm is `lordhansolo`'s whole published stack, not a patch.** `lordhansolo/built-on-tufa-labs-duck-harness-milestone-2`
+(72 votes; author = **rank 31 at 37.07 in 106 submissions**, read from today's board) attaches three public inputs:
+that `ca1bd02` bundle, `lordhansolo/vllm-main-e975732-arc3` (7.93 GB patched vLLM: `VLLM_GDN_DECODE_KERNEL=triton`,
+`VLLM_ARC3_GDN_RECOVERSSM=1`, `--mamba-ssm-cache-dtype bfloat16`, `max_num_seqs 14` ⇒ decode step 14×(1+3)=56,
+MTP `{'method':'mtp','num_speculative_tokens':3}` with `use_local_argmax_reduction`, `--kv-cache-metrics`, a
+watchdog that restarts the server and a GPU shard prefetcher), and model
+`lordhansolo/qwen3-8-flash-next-mixed-nvfp4-fp8/PyTorch/hf-mixed-mtp-nvfp4/1` — **180.2 GB over 108 files with
+per-layer `ct-experts-layerNN.safetensors`**, i.e. the same Qwen3.8-Flash-Next MoE scale as our
+`dfranzen/intel-qwen3.8-flash-next-w4a16-autoround` (181.2 GB over 51 files + 4.2 GB `albucino` drafter) but
+quantised **mixed NVFP4+FP8** (Blackwell-native) instead of W4A16 AutoRound, served by vLLM instead of SGLang
+pennyroyal. Their schedule: `VLLM_MAX_MODEL_LEN 147,072`, `ANALYZER_CONTEXT_WINDOW 127,488`,
+`LOCAL_ANALYZER_TARGET_CONTEXT 81,536`, `gpu_memory_utilization 0.98`, **concurrency 14 × 3,918 s per game**
+(110/14 × 3,918 = 30,800 s inside the 32,400 s wall) — a flat one-wave schedule rather than our 120-queued /
+10-active-gate shape. Their analyzer env is temp 0.6, top_p 0.95, top_k 20, `MAX_OUTPUT 0`, `TOOL_OUTPUT_TOKENS 1024`,
+`YIELD_SECONDS 150`, reasoning `xhigh`, `MULTIMODAL_CONTEXT=current_grid`, `MULTIMODAL_UPSCALE=4`.
+Copied verbatim into `kaggle_submit_nvfp4_lord/` (git `46d1618`), pushed as the private kernel
+`vyassenthilkumar/arc3-nvfp4-lord-recipe` with our own metadata (same pinned docker image, same machine shape).
+**Honest caveat, from their own notebook text:** the 37.07 row came from notebook v293 with bundle **v297** and the
+older runtime `arc3-vllm-e975732-gdn-recoverssm v2`; the currently published pairing we copied is newer and they
+write "*should be faster and have a larger KV cache pool than the runtime used in the highest-scoring run.
+Unfortunately, no run with it has beaten that score so far*". And 37.07 is a **best-of-106**, so it says nothing
+directly about their per-draw mean — which is exactly what one or two of our draws would get.
+
+(4) **Why v1 of that rehearsal died, and the rule it teaches.** `KernelWorkerStatus.ERROR` after ~5 min with
+`AssertionError: nvidia-smi failed:` inside `assert_expected_cuda_gpu` — but the attachments were fine (the log
+resolved `/kaggle/input/datasets/lordhansolo/vllm-main-e975732-arc3` and
+`/kaggle/input/models/lordhansolo/qwen3-8-flash-next-mixed-nvfp4-fp8/pytorch/hf-mixed-mtp-nvfp4/1`). The real cause
+is that the duck kernel's v11 rehearsal was **still running** at that moment: Kaggle gave the second session no
+GPU, so `nvidia-smi` exits non-zero with empty stderr and their fail-closed assert kills the run. **Never start a
+GPU session while another is live** — it fails in a way that looks like a bug in the new arm. Re-pushed as v2 at
+16:34 UTC with the card free.
+
+(5) **GPU quota, measured — and it does not threaten the draws.** `kaggle quota`: GPU **22.27 h used, 7.73 h
+remaining, refreshes 2026-10-31T00:00 UTC**. Six ~10-hour scored reruns ran inside this window while only 22 h
+were charged, so **competition reruns do not consume the notebook GPU quota; interactive rehearsals do**. Therefore
+rehearsing the NVFP4 arm (~1-3 h) cannot starve the Oct 30/31 draws, and the quota resets two days before the
+deadline anyway.
+
+**Slot plan for the four remaining days, in EV order.** Oct 30 05:00 → duck `-v 11` (SLM, guard passed). Oct 31 →
+the NVFP4 arm if its v2 rehearsal reaches COMPLETE having played games (14 streams, no `nvidia-smi`/launch assert);
+otherwise duck `-v 11` again. Nov 1 → whichever of the two arms produced the better row on Oct 30/31. Nov 2 → the
+same arm once more, leaving the last draw inside the day so the 18:00 UTC selection automation can still name two
+refs. Keeping two arms also diversifies the ≤2 rows that the Private Leaderboard actually judges. Do **not** add the
+D′ scheduler (task #15) on top of the NVFP4 arm: their `ca1bd02` bundle is not the tree D′ was written against.
+
 **2026-10-29 ~15:50 UTC — the "nothing to copy" premise is FALSE, and the slot policy changes.** For four days
 every automation here has repeated one sentence: *nobody at ≥35 with few submissions publishes a scoring
 kernel, so there is no lever to copy*. It was never checked against the low-submission slice — only against
