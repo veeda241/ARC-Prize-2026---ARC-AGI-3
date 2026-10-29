@@ -983,6 +983,42 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
+**2026-10-29 ~17:58 UTC — the v12 PACE rehearsal is COMPLETE and passes its guard, on stronger evidence than the guard was designed to ask for.**
+
+`kaggle kernels status vyassenthilkumar/arc3-milestone2-flashnext-duck` → `COMPLETE` at 17:54 UTC (pushed 17:22,
+so 32 minutes — the offline branch, not a scored run). Output pulled to `C:\Users\Vyas S\AppData\Local\Temp\v12check`
+(`arc3-milestone2-flashnext-duck.log`, 91,731 bytes / 943 lines, plus `benchmark.json` and 25 `*_p0_requests.jsonl`).
+All three guard criteria, with the line each came from:
+
+- **(i) SLM is live:** `SOLVED_LEVEL_MEMORY_PATCH on` at `time: 847.43` (log line 738).
+- **(ii) the run reached the benchmark and scored:** `mean score: 2.05` at `time: 1761.92` (line 895), with an
+  intermediate `mean score: 1.86` at 1451.89 (line 812). `benchmark.json` says why the number is small but valid:
+  25 games, **13 levels completed across 11 games**, window 17:37:44 → 17:52:55, every game ending `state=gave_up`
+  under the offline branch's `max_runtime_s_per_game=300` and `concurrency=10`. **2.05 is an offline artifact and
+  is not a leaderboard candidate** — the same branch that produced it never runs under a rerun.
+- **(iii) nothing crashed:** no `Traceback`, `FileNotFoundError`, `RuntimeError` or `Kernel ended with error`
+  anywhere in the log, and the harness diff applied `ARC3-Inference/inference/agent/priority_pace_reference.json`
+  *cleanly* (lines 12/30, 48/66, 83/101 — three passes of the same patch check).
+
+**The part that surprised us, in our favour:** the guard was written expecting to prove only that PACE *could not
+crash*, because the demo branch was assumed not to carry the scored env block. It does. Cell 4 sets
+`USE_PRIORITY_SCHEDULING = True` at line 53 and ends with `os.environ.update({k: str(v) for k, v in setup_env.items()})`
+at line 136 — **outside any `if TRUE_SUBMISSION:`**, so the rehearsal process really did hold
+`ARC3_PRIORITY_PACE='1'` (line 129) alongside `ARC3_MAX_ACTIVE_STREAMS: 10`. Chain that with the 13 level
+transitions: each one reaches the patch's `if _get_env_bool("ARC3_PRIORITY_PACE", False):` inside
+`_update_summarized_knowledge_from_step_summary` (patch line 4569) → `ProgressPace.record_completion` (line 322) →
+`_pace_reference_tokens` (line 3211) → `_load_pace_reference` (line 3203) reading the file the patch itself wrote;
+and every gate re-admission calls `cost_multiplier()` at line 6973. **PACE executed end-to-end inside the rehearsal,
+against the real 1,417-episode reference table, with no exception** — which is the strongest statement this kernel
+version can make without a scored run.
+
+Honest limit: the log never echoes an `ARC3_*` value (`setup_env` is not printed), so the claim rests on the code
+path plus the absence of errors, not on a printed confirmation. Getting a printed one would need a new kernel
+version and another GPU round-trip; in the last four days that is a worse trade than the uncertainty.
+
+**Consequence for the schedule:** Oct 30 draws `-v 11` and Oct 31 draws `-v 12` as planned, with no fallback
+needed unless the kernel stops being COMPLETE. Both arms are now guard-clean.
+
 **2026-10-29 ~17:54 UTC — the revert-to-v9 contingency in the three draw crons is arithmetically wrong, and is replaced.**
 
 All three daily tasks (`ecfa8d23`, `13c22073`, `a396679e`) currently carry this line: *"If both the v11 and v12
@@ -1096,12 +1132,14 @@ per-game shape is exactly the concurrency that scored **24.65** for us (§1l).
 | Day | Draw | Why |
 |---|---|---|
 | Oct 30 | duck **`-v 11`** | the reproduced 35.79@22 config; highest-confirmed mean we hold, guard already passed at 16:00 UTC |
-| Oct 31 | duck **`-v 12`** if tonight's PACE guard passes, else `-v 11` | tests the SLM×PACE interaction on a live slot; falls back without losing the day |
-| Nov 1 | re-roll whichever of v11/v12 has the higher public row | the winner gets two draws; re-rolls are upside-only on the public board |
+| Oct 31 | duck **`-v 12`** — its PACE guard **PASSED** at 17:54 UTC (block above) | tests the SLM×PACE interaction on a live slot; falls back to `-v 11` only if the kernel stops being COMPLETE |
+| Nov 1 | re-roll whichever of v11/v12 has the higher public row, with the ~1.5 asymmetry in favour of `-v 12` explained in the block above | the winner gets two draws; re-rolls are upside-only on the public board |
 | Nov 2 | same winner, **only** if the 05:00 attempt can finalise by ~23:00 UTC | a scored run needs ~10 h; a PENDING row on the deadline day is worth nothing |
 
-Contingency unchanged: if both the v11 and v12 draws land below 30.0, the mean did not move and the policy reverts to
-`-v 9`. The NVFP4 arm stays retired (§ block above). No scored slot goes to an untested scheduler (D′) or to the
+~~Contingency unchanged: if both the v11 and v12 draws land below 30.0, the mean did not move and the policy reverts to
+`-v 9`.~~ **Superseded by the ~17:54 UTC block above** — one noisy draw cannot overturn the v11/v12 priors, so `-v 9`
+returns only below ~21 or on a genuine guard failure. The NVFP4 arm stays retired (§ block above). No scored slot goes
+to an untested scheduler (D′) or to the
 `analyzer_timeout 3600` value — §1o already documents why that arm is a **no-op** (at 10 gated streams the measured
 max request latency was 185.6 s, so a 900 s cap never binds and 3600 s is invisible to the score). That also means
 vickyfym's ~32.2 and lalalia9's ~32.0 are two *independent* readings of the same SLM arm, which is the single most
