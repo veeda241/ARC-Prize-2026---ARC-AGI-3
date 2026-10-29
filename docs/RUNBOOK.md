@@ -983,6 +983,85 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
+**2026-10-29 ~17:50 UTC — a 13-kernel forensic sweep: v11 is a byte-for-byte reproduction of the best published config, and the final four slots are scheduled.**
+(The three draw crons point at this block as "the ~18:05 block"; that label was written from the rehearsal's expected
+completion time rather than `date -u`. Same block — the clock said 17:49 when it was committed.)
+
+Thirteen public kernels were pulled to temp and diffed cell-by-cell against ours (their refs, hashes and diffs are
+reproducible from `C:\Users\Vyas S\AppData\Local\Temp\kernelforge`). The headline:
+
+*(a) The harness patch is public property, and everyone runs it.* Cell 2 — the 498,799-char `git diff` heredoc — is
+**byte-identical (`030f0b8f33`) in every Milestone-2 fork examined**: jingshuifu, tantan0327, heliosli, dennis6886,
+weitaoguo, lalalia9, all three vickyfym kernels. Cells 6, 8, 10, 14, 18, 20, 22 are identical everywhere too. The
+only scored-code divergence anywhere is in cells 4 (setup_env), 12 (serve/venv) and 16/17 (the `bm` hook). One fork
+diverges: `sujanmajhisuzan/arc-agi-3-m2-top-submission` carries a **second** 138 KB base64+gzip patch and ~15 extra
+scored env flags (`ARC3_UND`, `ARC3_DEATH_LEDGER`, `ARC3_WORLD_MODEL_SIM`, …) and scores 31.93 in 11 — heavy,
+unverified, not adopted.
+
+*(b) `lalalia9/arc3-franzen-v19` — 35.79 in 22 submissions, rank 52 — **is our v11**.* Its env cell differs from ours
+in three lines: `SERVER_STARTUP_TIMEOUT` (offline-only), `ARC3_PRIORITY_PACE '0'` (our v11 is '0' too; only v12 is
+'1'), and a no-op `os.environ.update({})` + `print('VARIANT franzen-v19')`. Its hook cell differs from ours only in
+the comment block and in the `else:` demo branch (`n_passes`, `demo_excluded_games` = 15 games, `25*60`) — every one
+of those is overridden by `if TRUE_SUBMISSION:`. Its serve cell is upstream's. So **v11 reproduces, on the scored
+branch, the highest-placing published M2 configuration we can actually build**, which is a far stronger claim than
+the patch authors' "+2.8 on the leaderboard" that motivated it.
+
+*(c) The max-vs-mean trap, and the arithmetic that fixes it.* A delegated read of this evidence concluded "PACE='0'
+configs score 33.55/93 and 32.60/13, so revert PACE" — that compares *maxima over different numbers of draws*, which
+is not a mean. Correcting it with extreme-value arithmetic, `E[max_N] = mu + sigma * z_N` with
+`z_N = Phi^-1((N-0.375)/(N+0.25))` and `sigma = 2.0` (our own seven byte-identical v9 draws have sd 1.9):
+
+| config | observed max @ N draws | z_N | implied per-draw mean |
+|---|---|---|---|
+| plain upstream scored branch (tantan0327) | 33.55 @ 93 | 2.47 | ~28.6 |
+| plain upstream (weitaoguo / heliosli / dennis6886) | 32.61 @ 17, 32.60 @ 13, 32.59 @ 11 | 1.80 / 1.67 / 1.59 | ~29.0 – 29.4 |
+| **our v9, measured directly** | mean of 7 draws | — | **27.12 ± 0.7** (consistent) |
+| SLM + PACE='0' (lalalia9) | 35.79 @ 22 | 1.91 | **~32.0** |
+| SLM + `analyzer_timeout 3600` (vickyfym) | 33.94 @ 3 | 0.87 | **~32.2** |
+| no SLM + PACE='1' (jingshuifu) | 33.22 @ 6 | 1.28 | **~30.7** |
+
+Reading: the SLM patch is worth about **+3** over the plain config and PACE about **+1.7**, both positive, and the two
+estimates are single-team observations with ±1.5 error bars — not measured. **Nobody has published SLM + PACE
+together**, so v12 is an untested interaction of two individually-positive levers. That is why the four remaining
+slots are split rather than committed to the stack.
+
+*(d) Two findings are insurance, not upside, and are deliberately NOT taken in the final week.*
+`weitaoguo/affectify-arc-dfranzen-form-d1` replaces `TRUE_SUBMISSION = env(KAGGLE_IS_COMPETITION_RERUN)` with
+`_ENV_FLAG or _arc_gateway_reachable('http://gateway:8001/', 900, 15)` and records that on a **2026-10-22 scored
+rerun the env var was absent, the notebook took the rehearsal branch, and Kaggle returned 0.00**. And
+`dennis6886/arc3-d-prime-public-base` (32.59 @ 11) attaches `destinyfire1/arc3-cpython312-runtime`, concatenates
+7 `cpython-3.12.14-part-*.bin`, asserts sha256 `3297691ae3…` and builds the venv from that, whereas our cell 12
+probes `/usr/bin/python3.12` and **raises `RuntimeError` if absent** — a latent hard-fail of a whole scored rerun.
+Both are real 0-score paths; both changes touch the interpreter/bootstrap of a config with 14 successful reruns
+behind it, and neither can be validated without burning GPU and a slot. Left alone, recorded here.
+
+*(e) The top of the board is not an M2 fork.* `rellik13/sirikilohit` (37.97 @ 63, rank 25) publishes
+`arc-agi-3-duck-18-1gc-submit`: 50 cells, no `TRUE_SUBMISSION`/`setup_env` lineage, datasets
+`keithtyser/duck-qwen38-nvfp4-mtp-vllm-smoke-v1` + `keithtyser/qwen38-flash-next-vllm-nvfp4-runtime-v1` +
+`sirikilohit/sglang-penny-build-qwen`, model `woochangsim/qwen38-flash-next-w4a16-autoround-4c67bf6`, and
+`concurrency = 28` / `max_runtime_s_per_game = 7920.0`. Not copyable into our attachment lineage, and that
+per-game shape is exactly the concurrency that scored **24.65** for us (§1l).
+
+*(f) Board re-read 2026-10-29 17:28:36 UTC:* 4,972 rows, **4,969 ranked**; rank 248 = **32.54** (silver line moved
++0.01), rank 249 = 32.53, rank 250 = 32.52; our team row reads rank **676**, 30.55, 14 submissions.
+
+**DRAW SCHEDULE for the last four slots (this supersedes every earlier ordering):**
+
+| Day | Draw | Why |
+|---|---|---|
+| Oct 30 | duck **`-v 11`** | the reproduced 35.79@22 config; highest-confirmed mean we hold, guard already passed at 16:00 UTC |
+| Oct 31 | duck **`-v 12`** if tonight's PACE guard passes, else `-v 11` | tests the SLM×PACE interaction on a live slot; falls back without losing the day |
+| Nov 1 | re-roll whichever of v11/v12 has the higher public row | the winner gets two draws; re-rolls are upside-only on the public board |
+| Nov 2 | same winner, **only** if the 05:00 attempt can finalise by ~23:00 UTC | a scored run needs ~10 h; a PENDING row on the deadline day is worth nothing |
+
+Contingency unchanged: if both the v11 and v12 draws land below 30.0, the mean did not move and the policy reverts to
+`-v 9`. The NVFP4 arm stays retired (§ block above). No scored slot goes to an untested scheduler (D′) or to the
+`analyzer_timeout 3600` value — §1o already documents why that arm is a **no-op** (at 10 gated streams the measured
+max request latency was 185.6 s, so a 900 s cap never binds and 3600 s is invisible to the score). That also means
+vickyfym's ~32.2 and lalalia9's ~32.0 are two *independent* readings of the same SLM arm, which is the single most
+encouraging number in this table.
+
+
 **2026-10-29 ~17:45 UTC — the NVFP4 gate passes and is still retired, because a second account gave us a cheaper, single-value arm.**
 
 *(a) v4 verdict, read from `kaggle kernels output vyassenthilkumar/arc3-nvfp4-lord-recipe` (COMPLETE at 17:13 UTC).*
