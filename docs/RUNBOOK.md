@@ -983,6 +983,67 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
+**2026-10-29 ~17:45 UTC — the NVFP4 gate passes and is still retired, because a second account gave us a cheaper, single-value arm.**
+
+*(a) v4 verdict, read from `kaggle kernels output vyassenthilkumar/arc3-nvfp4-lord-recipe` (COMPLETE at 17:13 UTC).*
+The gate set at 16:50 was "the vLLM server actually answered and games took actions on a card we can name in the
+log", and it is met: `NVIDIA RTX PRO 6000 Blackwell Server Edition` appears in the session log, the un-pinned image
+took the card, 14 games ran their demo cap (`rehearsal wave: 14 games` at t=819 s), and they took **539 actions /
+17 levels completed** for `mean score: 6.09, median 3.57` at ~626 s per game (ar25 4 levels/27.78, vc33 3/21.43,
+lp85 2/8.33; bp35, m0r0, sc25 0). So the arm is mechanically alive.
+
+*(b) Retiring it anyway, on the schedule rather than the stack.* Its scored branch is **14 concurrency x 3,918 s =
+8 fixed waves**, so a game gets exactly one 65-minute turn and no priority rotation: no second attempt on a stalled
+game, and any boot overrun eats the *tail* waves. We measured that exact failure mode on the duck — the
+`concurrency 28` draw scored **24.65** against **30.55** at 120, because the tail games never got scheduled — and
+this session's own boot spread for a comparable image pull is 582 s (warm) to 1,975 s (cold) against a
+32,400 - 30,800 = **1,600 s margin**. It also ships neither of the two arms we now have evidence for (no SLM patch,
+no PACE) and drags a 180.166 GB NVFP4 checkpoint. One draw of an untested scored regime is worth less than one draw
+of the proven regime with a positive-evidence value changed. Task #16/#18 close here; **no NVFP4 submission.**
+
+*(c) The cheaper arm, found by diffing a 33.22 account against our own notebook.*
+`jingshuifu/arc3-m2-solution-v3` (33.22 in **6** submissions, rank 165 at the Oct 29 read) was pulled and compared
+cell-by-cell against our `kaggle_submit_milestone2/arc-agi-3-milestone-2-solution.ipynb`. All 23 cells are
+identical except 4, 12 and 16, and **cell 2 — the 498,799-char harness patch — is byte-identical (`030f0b8f`)**.
+Attachments match ours exactly (same 2 datasets, same 2 model instances, same `NvidiaRtxPro6000`), only reordered.
+Cell 16's `if TRUE_SUBMISSION:` block is character-for-character ours (`save_request_logs = False`, `n_passes = 1`,
+`concurrency = 120`, `max_runtime_s_per_game = 532*60`); their differences are confined to the `else:` demo branch.
+Cell 4's diff is two hunks, one of which is `SERVER_STARTUP_TIMEOUT` — an offline-only constant. The other is a
+**scored-branch env value**:
+
+```
+-    'ARC3_PRIORITY_PACE': '1',  # jingshuifu v3: enable pace penalty   (theirs, 33.22 @ 6 draws)
++    'ARC3_PRIORITY_PACE': '0',                                          (ours, 30.55 max over 7 draws)
+```
+
+What it does, read from our own identical harness cell: on every `level_transition` the agent logs
+`log(tokens_spent_on_that_level / reference_tokens_for_that_level)`, EMA'd at 0.6/0.4, and the priority of a game is
+divided by `pace = exp(clip(confidence * log_cost_ratio))` with `confidence = completed/(completed+3)`, clamped to
+[0.5, 2.0] (`ProgressPace`, `priority_value`, `_update_summarized_knowledge_from_step_summary`). So a level that
+costs more tokens than the empirical reference for that level number gets *deprioritised* — the gate's 10 streams
+go to games that are progressing cheaply. The reference table it needs is **not** a missing-file risk: the patch
+cell itself creates `ARC3-Inference/inference/agent/priority_pace_reference.json` (`fallback_tokens` 45,925;
+per-level 27,011 / 51,073 / 48,932 / 56,352 / 55,797 / 67,264 / 40,699 / 22,696; "Kaplan-Meier restricted mean token
+cost, capped at 120000 tokens", fit on 1,417 reached-level episodes), which is why the bundle dataset does not
+contain it and why the file is absent from `kaggle datasets files` yet present at `Path(__file__)`.
+
+*(d) v12 is built and pushed.* Kernel `vyassenthilkumar/arc3-milestone2-flashnext-duck` **version 12** = v11 + that
+one character — verified as a single-token diff against HEAD (common prefix 526,367, common suffix 54,637, removed
+`0`, added `1`; 23 cells parse) before `kernels push`, which printed `Kernel version 12 successfully pushed`.
+It is running the offline 25-game FAST_PROXY branch as a guard. **Guard criteria for drawing it** (PACE prints
+nothing on its own, so the check is absence of the failure it could cause): status COMPLETE, the log still contains
+`SOLVED_LEVEL_MEMORY_PATCH on`, the run reaches the benchmark stage and prints `mean score:` **> 0** — a nonzero
+mean requires a completed level, which is the only path that reads the pace reference file — and no
+`FileNotFoundError`/`Traceback` around `priority_pace_reference` or `_pace_reference_tokens`.
+
+*(e) Honest caveat.* Their notebook pins `docker_image: gcr.io/kaggle-private-byod/python@sha256:57e612b4...` while
+ours takes the default image, so "PACE explains 33.22 vs 30.55" is not established — the image is a second,
+untestable difference and the gap is inside a 7-draw spread of 24.29-30.55. What *is* established: a one-value,
+zero-throughput-cost scored-branch flag that a medal-line account runs and we do not, on a code path we have read
+and can prove is exercised. Stacking it on the SLM patch (v12) is deliberate: the two levers touch different
+subsystems (prompt memory vs stream admission) and share no state.
+
+
 **2026-10-29 ~17:20 UTC — the guard run's zero pins are explained, and the explanation says v11 is probably live.**
 
 Reading the SLM code properly: it **captures** on every turn (`_slm_before_turn` is hung off `analyze`) but
@@ -1071,6 +1132,9 @@ with no GPU is free and that scored reruns are not the quota consumer.
 
 **Oct 31 gate, restated.** Draw the NVFP4 arm only if v4 reaches a state where the vLLM server actually answered
 and games took actions on a card we can name in the log; otherwise Oct 31 draws duck `-v 11` and the arm is retired.
+**Resolved 2026-10-29 ~17:45 UTC (block at the top of this log): the condition was met, and the arm is retired anyway**
+on its 14 x 3,918 s fixed-wave scored schedule. So the two sentences below that hand days to "the NVFP4 arm" are dead —
+Oct 30 onward draws the duck: `-v 12` (PACE) if its guard passes, else `-v 11`, else `-v 9`.
 **Correction, same evening: the scored rerun's log is not reachable, so that gate was not executable.**
 `kaggle competitions submissions arc-prize-2026-arc-agi-3 --csv` returns exactly
 `ref,fileName,date,description,status,publicScore,privateScore` — no notebook id, no session handle, no output URL.
