@@ -758,8 +758,8 @@ closer to a given: 33–44 % per draw ⇒ **94–98 %** over seven. Earlier draf
 an n = 5 version of this section said 20–41 % — both overstate it slightly now that a low draw has landed.
 Treat the range, never the upper number, as the plan's expectation. **(Superseded 2026-10-27: this pool mixes
 202-draw and 80-draw maxima in with our own single draws — see "The unbiased version of that estimate" below
-for the low-n population, and the Oct 27 chase-log entry for the current figures: P(silver) ≈ 10–34 % and
-P(bronze) ≈ 20–60 % over the six draws that remain.)**
+for the low-n population, and the Oct 29 chase-log entry for the current figures: P(silver) ≈ 7–24 % and
+P(bronze) ≈ 14–45 % over the four draws that remain after today.)**
 
 **"Can't we just submit the leader's exact code?" — checked 2026-10-26 21:59 UTC, and the answer is no twice
 over.** (i) It is not obtainable: `kaggle kernels list --user tufalabs` returns *Not found*, so the rank-2 team
@@ -846,18 +846,25 @@ has ≤8 submissions and a score ≥15, and keep only exact matches — **23 acc
 26.80, 26.88, 27.12, 27.22, 27.79, 27.80, 28.21, 28.52, 28.96, 29.31, 29.34, 30.65, 30.75, 31.27, 31.58,
 32.16, 32.59, 33.22, 33.94 — **mean 28.91, median 28.52, max 33.94, and zero of 23 reach 35.**
 
-Our own draws (25.51, 26.74, 26.94, 28.18, 30.55 — five, as of the Oct 27 05:00 draw) sit inside that
+Our own draws (24.29, 25.51, 26.74, 26.94, 28.18, 30.55 — six, as of the Oct 28 08:51 draw) sit inside that
 distribution; 30.55 is its **65th percentile** (15 of 23 accounts are at or below it — an earlier draft said
-80th, which was wrong), and our five-draw mean 27.58 against the population's 28.91 is **z = −1.08**, well
-inside sampling noise at n = 5. The config is not underperforming for us — it performs for us as it does for
+80th, which was wrong), and our six-draw mean 27.04 against the population's 28.91 is **z = −1.68** (the five
+draws before it gave 27.58 and z = −1.08), still inside sampling noise at n = 6 but no longer comfortably so.
+The config is not underperforming for us — it performs for us as it does for
 everyone with our number of attempts. Read the odds off the low-n population rather than the high-n maxima:
 
-| Line | Of those 23 accounts | Inverted to a per-draw p | P(at least one in the 6 draws left) |
+| Line | Of those 23 accounts | Inverted to a per-draw p | P(at least one in the 4 draws left) |
 |---|---|---|---|
-| Bronze 31.00 | 6 / 23 = 26 % | 1 − (1 − 0.26)^(1/k) = **3.7 – 14 %** | **≈ 20 – 60 %** |
-| Silver 32.31 | 3 / 23 = 13 % | 1 − (1 − 0.13)^(1/k) = **1.7 – 6.7 %** | **≈ 10 – 34 %** |
+| Bronze 31.00 | 6 / 23 = 26 % | 1 − (1 − 0.26)^(1/k) = **3.7 – 14 %** | **≈ 14 – 45 %** |
+| Silver 32.31 | 3 / 23 = 13 % | 1 − (1 − 0.13)^(1/k) = **1.7 – 6.7 %** | **≈ 7 – 24 %** |
 | 35.00 | 0 / 23 | not observed | — |
 | Gold 38.22 | 0 / 23 | not observed | — |
+
+The "4 draws left" column is the Oct 29 05:00 state (Oct 30, 31, Nov 1, Nov 2); it was 6 draws / 10–34 % on Oct
+27 and 5 draws / 8–29 % on Oct 28, so it shrinks by one factor of (1 − p) every day regardless of what we draw.
+The account-level counts in column 2 were measured against the 31.00 / 32.31 lines, and today's re-read lines
+are **higher** (bronze 31.15, silver 32.44 at 4,960 teams), so these per-draw rates are, if anything, slightly
+optimistic.
 
 The range is the number of real draws hidden inside each account's ≤8 submissions (k = 2 ⇒ high end, k = 8 ⇒
 low end). Note this also **corrects the 2–13 % per-draw band used in the first version of this table**: 13 %
@@ -974,6 +981,40 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | **25.51** | 30.55 | 595 |
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
+| 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | *PENDING at write time* | 30.55 | 652 |
+
+**2026-10-29 05:00 UTC — the day's draw taken by the first attempt, and the lines have moved again.**
+Step 1 found no row dated today (newest `57731198`, Oct 28, COMPLETE **24.29**), `submission-limits` read
+*Submissions today: 0, Lifetime: 13, Remaining today: 1*, and `arc3-milestone2-flashnext-duck` read `COMPLETE`,
+so the `-v 9` submit fired and returned *0 submissions remaining today* → ref **`57759315`**, PENDING at
+05:00:39. No 400: this time nothing else was racing for the slot. Limits after: *Submissions today: 1,
+Lifetime: 14, Remaining today: 0* (the board snapshot still shows `SubmissionCount` 13 for our row because the
+PENDING row is not in it).
+
+Fresh full-board download at **05:00:55 UTC**: 4,963 score rows, of which **4,960** carry a `Rank` ≥ 1 — the
+same three `Rank` 0 demo teams (Stochastic Goose 0.25, Random Agent 0.12, Just Explore 0.06) — and the two
+counting methods give identical rank and identical lines. Field **4,960** (4,942 last night 21:00, +18 in 8 h),
+so **bronze rank ≤ 496 = 31.15**, **silver rank ≤ 248 = 32.44**, **gold rank ≤ 19 = 38.84**. Our best row 30.55
+is **rank 652** (651 teams strictly above it, board's own `Rank` agrees, three tied at 30.55) = **top 13.15 %**
+— the 647 → 652 slide is field growth, our score frozen. Gap now **0.60 to bronze, 1.89 to silver**, the widest
+of the week; the bronze line has gone 31.00 → 31.02 → 31.06 → 31.11 → 31.13 → **31.15** across six consecutive
+fresh reads. Two other things moved: the **gold line jumped 38.22 → 38.84** because rank 19 is now
+Nhan Duc Nguyen at 38.84 in 27 submissions (rank 20 is 38.22), and the leader's submission count is 45 with the
+score still 75.56.
+
+Worth recording because it bears on the odds, not because it is a lever: **three teams now sit one to four
+places off the silver line with almost no draws** — rank 245 Morten Middelfart 32.49 in **4** submissions, rank
+246 atharva 32.48 in **4**, rank 247 Dheeraj Sharma 32.47 in **3**. That is the upper tail of this config's
+distribution arriving on a handful of attempts (the 23 byte-identical low-draw accounts topped out at 33.94),
+which is the honest case that one draw can still do it — and none of those three publishes a scoring kernel,
+so there is nothing to copy, only to draw.
+
+**With today's slot spent, four daily draws remain (Oct 30, 31, Nov 1, Nov 2)**, so §1p's inverted per-draw
+rates (p(silver) 1.7–6.7 %, p(bronze) 3.7–14 %) give **P(silver) ≈ 7–24 %** and **P(bronze) ≈ 14–45 %** for the
+rest of the run — down from 8–29 % / 17–53 % last night. Six scored byte-identical draws stand on the record
+(24.29, 25.51, 26.74, 26.94, 28.18, 30.55; mean 27.04, z ≈ −1.68 against the 23-account population) and the
+15:00 / 21:00 guards fill `57759315`'s score into the row above when it lands (~14:00–14:30 UTC on this
+cadence). Slot policy unchanged: v9 daily, no arms.
 
 **2026-10-28 ~08:55 UTC — a second guard on the same day, arriving 85 s after the draw, and what its 400 means.**
 This attempt passed step 1 honestly: its first `submissions -v` at 08:50:30 showed nothing newer than
