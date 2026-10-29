@@ -983,7 +983,49 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
-**2026-10-29 ~16:45 UTC — v11 passes its guard, and a second, bigger arm is now in rehearsal.**
+**2026-10-29 ~17:10 UTC — the NVFP4 arm's no-GPU failure is the pinned docker image, not concurrency.**
+
+The 1-cell probe `vyassenthilkumar/arc3-gpu-probe` (their exact pinned image + `NvidiaRtxPro6000`, no attachments,
+nothing else on the card) came back `COMPLETE` in ~2 min printing `python 3.12.13 (main, Mar 4 2026)`,
+`KAGGLE_GPU_TYPE= None KAGGLE_GPU_COUNT= None` and `rc 12 out "NVIDIA-SMI couldn't find libnvidia-ml.so library in
+your system…"`. So the pin **is** honoured (that build is 3.12; our un-pinned sessions run 3.13 — the v11 rehearsal
+log writes to `/usr/local/lib/python3.13/dist-packages`) and the card is **not**: the session was scheduled
+CPU-only. Control from the same log set: the un-pinned duck kernel on the same machine shape prints
+`GPU: NVIDIA RTX PRO 6000 Blackwell Server Edition capability: (12, 0)`. I pulled the author's own
+`kernel-metadata.json` first to rule out a copy mistake — same digest, same shape, same three sources, and their
+kernel's last run was `COMPLETE` on **2026-10-01 18:38 UTC**. Whatever changed on Kaggle's side since then, today
+that pin costs our account the GPU.
+
+The pin is not load-bearing for *their* recipe, though, which is why the arm is worth one more try. Their
+`setup_commands.json` (850 lines) does not install into the container's python: it unpacks the dataset's six
+`layer-NN-<sha>.tar.gz.blob` files into `IMAGE_RUNTIME_ROOT = /tmp/vllm-image-runtime` and then derives
+everything *manifest-relative* — `IMAGE_RUNTIME_ROOT / manifest['dist_packages']`,
+`cuda_home = IMAGE_RUNTIME_ROOT / manifest['nvcc']`, and `PATH`/`LD_LIBRARY_PATH`/`PYTHONPATH` prepended from that
+root (`'Image runtime ready at …: vLLM {…}, torch {…}'`). The only host-facing requirement is
+`assert_expected_cuda_gpu`. So **v3 was pushed with `docker_image` removed** — the one config we know gets a card —
+and **v4 adds a rehearsal-only trim** in the customization cell, guarded by Kaggle's own rerun flag so a scored
+run keeps the full 110-game list and their native 14 × 3,918 s schedule:
+
+```python
+if not true_submission:
+    bm.games = bm.games[:14]
+```
+
+One wave of 14 games at 3,918 s costs ~65 min of GPU plus setup instead of ~8.6 h, and 3,918 s is their real
+per-game budget, so the rehearsal shows level depth under the scored schedule rather than a crippled version of it.
+Quota re-read after all of this: **22.31 h used / 7.69 h remaining, refresh 2026-10-31T00:00 UTC** — three failed
+pinned sessions plus the probe charged 0.04 h in total, which independently confirms the (5) finding that a session
+with no GPU is free and that scored reruns are not the quota consumer.
+
+**Oct 31 gate, restated.** Draw the NVFP4 arm only if v4 reaches a state where the vLLM server actually answered
+and games took actions on a card we can name in the log; otherwise Oct 31 draws duck `-v 11` and the arm is retired.
+**And on the `-v 11` draw, read the scored rerun log for `SOLVED_LEVEL_MEMORY pinned`.** The patch *captures* on
+every turn (`_slm_before_turn` hangs off `analyze`) but *injects* only inside `_note_history_evicted` /
+`_trim_messages_for_context` — deliberately, because rewriting the system prompt invalidates the shared prefix and
+the 94.3 % cache hit rate. So the whole +2.8 claim is conditional on a drain happening after a level clears. Our
+offline rehearsal could not answer that (a 25-min game never drains); a scored draw will, and if the counter is zero
+the memory arm is inert and should be treated as a v9 re-roll rather than an upgrade.
+
 
 (1) **v11 guard = PASS.** `arc3-milestone2-flashnext-duck` v11's interactive rehearsal reached
 `KernelWorkerStatus.COMPLETE` in ~36 min with **zero** `Traceback`/`AttributeError` in the session log, and the
@@ -1034,14 +1076,13 @@ write "*should be faster and have a larger KV cache pool than the runtime used i
 Unfortunately, no run with it has beaten that score so far*". And 37.07 is a **best-of-106**, so it says nothing
 directly about their per-draw mean — which is exactly what one or two of our draws would get.
 
-(4) **Why v1 of that rehearsal died, and the rule it teaches.** `KernelWorkerStatus.ERROR` after ~5 min with
-`AssertionError: nvidia-smi failed:` inside `assert_expected_cuda_gpu` — but the attachments were fine (the log
-resolved `/kaggle/input/datasets/lordhansolo/vllm-main-e975732-arc3` and
-`/kaggle/input/models/lordhansolo/qwen3-8-flash-next-mixed-nvfp4-fp8/pytorch/hf-mixed-mtp-nvfp4/1`). The real cause
-is that the duck kernel's v11 rehearsal was **still running** at that moment: Kaggle gave the second session no
-GPU, so `nvidia-smi` exits non-zero with empty stderr and their fail-closed assert kills the run. **Never start a
-GPU session while another is live** — it fails in a way that looks like a bug in the new arm. Re-pushed as v2 at
-16:34 UTC with the card free.
+(4) **Why v1/v2 of that rehearsal died — and the rule it teaches.** Both ended `KernelWorkerStatus.ERROR` after
+~5 min with `AssertionError: nvidia-smi failed:` inside `assert_expected_cuda_gpu`, while the attachments resolved
+fine (`/kaggle/input/datasets/lordhansolo/vllm-main-e975732-arc3`,
+`/kaggle/input/models/lordhansolo/qwen3-8-flash-next-mixed-nvfp4-fp8/pytorch/hf-mixed-mtp-nvfp4/1`). My first
+diagnosis was **concurrency** — the duck v11 rehearsal was still live when v1 ran, so Kaggle handed the second
+session no card. **That was wrong**: v2 ran with the card free and failed identically, and `kaggle quota` never
+moved for either (a session with no GPU cannot charge GPU time). See the ~17:00 entry for the real cause.
 
 (5) **GPU quota, measured — and it does not threaten the draws.** `kaggle quota`: GPU **22.27 h used, 7.73 h
 remaining, refreshes 2026-10-31T00:00 UTC**. Six ~10-hour scored reruns ran inside this window while only 22 h
@@ -1050,8 +1091,8 @@ rehearsing the NVFP4 arm (~1-3 h) cannot starve the Oct 30/31 draws, and the quo
 deadline anyway.
 
 **Slot plan for the four remaining days, in EV order.** Oct 30 05:00 → duck `-v 11` (SLM, guard passed). Oct 31 →
-the NVFP4 arm if its v2 rehearsal reaches COMPLETE having played games (14 streams, no `nvidia-smi`/launch assert);
-otherwise duck `-v 11` again. Nov 1 → whichever of the two arms produced the better row on Oct 30/31. Nov 2 → the
+the NVFP4 arm if its rehearsal reaches COMPLETE having played games on a card (v4 = un-pinned image, one 14-game
+wave); otherwise duck `-v 11` again. Nov 1 → whichever of the two arms produced the better row on Oct 30/31. Nov 2 → the
 same arm once more, leaving the last draw inside the day so the 18:00 UTC selection automation can still name two
 refs. Keeping two arms also diversifies the ≤2 rows that the Private Leaderboard actually judges. Do **not** add the
 D′ scheduler (task #15) on top of the NVFP4 arm: their `ca1bd02` bundle is not the tree D′ was written against.
