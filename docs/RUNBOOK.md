@@ -983,6 +983,37 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
+**2026-10-29 ~18:10 UTC — the σ that the implied-mean table rests on is only known to a factor of ~3, and the SLM arm's edge is 0 to +6, not +5.**
+
+The table in the ~17:50 block converts other teams' *maxima* to per-draw *means* with
+`E[max_N] = mu + σ·z_N`, using σ ≈ 2.0 — our own seven v9 draws have sd 1.9. That σ is load-bearing, so its
+confidence interval belongs next to the table. For s = 1.90 over n = 7, the χ² interval is
+
+```
+σ ∈ [ s·√((n−1)/χ²₀.₉₇₅,₆) , s·√((n−1)/χ²₀.₀₂₅,₆) ]
+  = [ 1.90·√(6/14.449) , 1.90·√(6/1.2373) ] = [ 1.22 , 4.19 ]     (95 %)
+```
+
+and every implied mean moves with it. For `lalalia9` (35.79 over 22 draws, z₂₂ = 1.91):
+
+| σ | implied per-draw mean | minus our measured v9 mean 27.12 |
+|---|---|---|
+| 1.22 (low) | 33.5 | **+6.4** |
+| 1.90 (point) | 32.2 | **+5.1** |
+| 4.19 (high) | 27.8 | **+0.7** |
+
+Two things worth keeping from that. *(1) It survives pessimistically.* Even at the upper σ bound the reproduced
+config still beats our own measured mean, so `-v 11`/`-v 12` stay strictly better uses of a slot than `-v 9` —
+and since the public board keeps the maximum, an arm that turns out to be worth +0.7 instead of +5 costs us
+nothing. The plan does not change. *(2) Do not read the +5 as a measurement.* The same small-n problem is what
+made the author's 38.85 look like "our config, 8 points better" on Oct 26 (§1i) — with z₂₀₂ = 2.74, his
+202-draw maximum implies a mean of 31.4 at σ = 2.7 and only **27.4** at σ = 4.19, i.e. level with what we have
+actually drawn. Any future automation that quotes an implied mean should quote the σ it used.
+
+Independent cross-check we cannot get: more *consecutive* draws of identical code from another account, which
+is the only clean way to estimate σ. `kaggle competitions team-submissions` only opens our own TeamId, so σ
+stays a 7-sample estimate for the rest of the competition.
+
 **2026-10-29 ~18:05 UTC — task #17 closed by arithmetic, not by hope: the solved-level memory *cannot* fire in a rehearsal, and *must* fire in a scored run.**
 
 The one thing the v11/v12 guard could not show is the payload. Grepping tonight's log gives exactly one
