@@ -983,6 +983,66 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
+**2026-10-29 ~15:50 UTC — the "nothing to copy" premise is FALSE, and the slot policy changes.** For four days
+every automation here has repeated one sentence: *nobody at ≥35 with few submissions publishes a scoring
+kernel, so there is no lever to copy*. It was never checked against the low-submission slice — only against
+the top-14-by-score. It is now checked, and it is wrong. `kaggle kernels list --competition
+arc-prize-2026-arc-agi-3 --user <name>` for the 26 highest-scoring ≤8-submission medal-club teams returns two
+publishers, and both are forks of **our exact stack**:
+
+| Team (live board read 15:46 UTC) | Score | Subs | Rank | What its published notebook adds |
+|---|---|---|---|---|
+| `vickyfym` | **33.94** | **3** | 106 | 6 kernels; `arc-agi-3-lalalia-final` = dfranzen M2 + solved-level memory |
+| `jingshuifu` | 33.22 | 6 | 165 | `arc3-m2-solution-v3` = our notebook, 3 lines different (`ARC3_PRIORITY_PACE '0'→'1'`) |
+| `lalalia9` (the memory patch's author) | 35.79 | 22 | 52 | the same `SOLVED_LEVEL_MEMORY_PATCH` |
+| `rellik13` / `sirikilohit` (M85, the idea's origin) | 37.97 | 63 | 25 | the memory block, CC-BY 4.0 |
+| `weitaoguo` (D′ scheduler author) | 32.61 | 17 | 237 | a replacement slot-priority formula |
+
+**All five attachments are identical to ours** (`dfranzen/intel-qwen3.8-flash-next-w4a16-autoround`,
+`dfranzen/albucino-qwen3.8-flash-next-drafter`, `pennyroyal-v253`, `taaf-kaggle-source-bundle-copy`,
+competition 133468, `accelerator: nvidiaRtxPro6000`), and their harness patch cell is **hash-identical to ours
+(498,799 chars)** — so these are not different models or different engines, they are our program plus a
+text/scheduler change. That is the first mechanism found this week which shifts the *mean* rather than the max.
+
+**The mechanism (solved-level memory, `SOLVED_LEVEL_MEMORY_PATCH`).** dfranzen keeps one rolling conversation
+per game and drains it from ~118k to ~59k tokens when the window fills. After the first drain on a new level
+the agent has lost how it solved the previous levels and re-derives mechanics it already knew. The patch
+records, per cleared level, the level number, the actions of the winning attempt, the last 30 actions before it
+cleared and the tail of the reasoning in the clearing turn; it then asks the model for one `Rule for level N:`
+line and pins the whole block at the **END** of the system prompt. It rewrites the block only when a context
+trim is already forcing the server to re-read the conversation, so the shared prefix — and the 94.3 % cache hit
+rate — survive. Implementation is 4 monkeypatches on `ToolAgent` (`analyze`, `_build_user_prompt`,
+`_note_history_evicted`, `_trim_messages_for_context`), every one wrapped in try/except so "any error leaves
+the turn unchanged". Verified against *our* copy of the bundle before believing it: all four methods exist on
+`ToolAgent` (patch lines 5513, 6878, 7024, 7126), and `HistoryEntry.action`, `HistoryEntry.frame`,
+`Frame.level`, `self._system_prompt`, `self._history_messages`, `self._last_step_summary` and
+`inference.agent.runtime_state.load_runtime_state` are all present. Their cell also independently confirms two
+arms we had already killed: 12 streams instead of 10 and compacted per-turn prompts "looked neutral on public
+games but cost ~7-8 points on the hidden games".
+
+**What was built.** `kaggle_submit_milestone2/arc-agi-3-milestone-2-solution.ipynb` cell 16 = the patch
+prepended verbatim above our untouched scored block; git `4b68c33`; pushed as **kernel version 11**. Diff-vs-v9
+is exactly one cell and one delta — harness patch, server CFG (CTX 139,264 / mem 0.96 / MAXREQ 10 / fp8 KV),
+`ARC3_MAX_ACTIVE_STREAMS=10`, and the `if TRUE_SUBMISSION:` block (concurrency 120, `532*60`, `n_passes 1`,
+`analyzer_timeout 900`) are byte-identical. Deliberately NOT copied from vickyfym: `analyzer_timeout 3600`
+(no-op — measured max request latency 185.6 s at 10 streams), `ARC3_HTTP_RETRY_INITIAL_SECONDS 3600` (a 1-hour
+backoff inside a 9-hour budget), and their 24-game `demo_excluded_games` (interactive branch only).
+
+**The honest size of the bet, and it is the first one this week worth a slot.** The patch's own authors credit
+it with **+2.8 on the leaderboard**, which is the number to use — not 33.94. Our seven byte-identical v9 draws
+have mean 27.12, sd 2.74, so at a +2.8 mean shift a single draw's p(≥ silver 32.53) goes from ~2.4 % to
+~17 % and p(≥ bronze 31.22) from ~10 % to ~32 %. Caveats that are NOT resolved: we cannot attribute
+vickyfym's 33.94 row to any specific published version (Kaggle does not expose other teams' kernel versions),
+their own notebook text says identical code ranges 27.62–31.47 across draws, and the medal is judged on the
+private half from ≤2 selected rows. **New policy, contingent on tonight's rehearsal:** Oct 30 and Oct 31 draw
+`-v 11` (SLM); Nov 1–2 stay on whichever arm has actually landed, with v9 as the fallback if the SLM draws show
+no mean shift. The D′ scheduler arm (`arc-agi-3-lalalia-dprime-m85tuned`, untested merge, its author's own cell
+says "expected range roughly 33-40") is staged as knowledge, not as a slot: it replaces `priority_value` and
+`ProgressPace` and removes the unstarted-game queue-jump by overriding `_PriorityGate.acquire`, and every symbol
+it needs is present in our bundle, so it can be armed in minutes if the two SLM draws come in clean and low.
+A v9 draw can never be beaten by an arm that fails to boot, so **`-v 11` goes into the board only after
+`KernelWorkerStatus.COMPLETE` on the interactive rehearsal proves the patch installed without raising.**
+
 **2026-10-29 05:00 UTC — the day's draw taken by the first attempt, and the lines have moved again.**
 Step 1 found no row dated today (newest `57731198`, Oct 28, COMPLETE **24.29**), `submission-limits` read
 *Submissions today: 0, Lifetime: 13, Remaining today: 1*, and `arc3-milestone2-flashnext-duck` read `COMPLETE`,
