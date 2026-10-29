@@ -1042,12 +1042,21 @@ with no GPU is free and that scored reruns are not the quota consumer.
 
 **Oct 31 gate, restated.** Draw the NVFP4 arm only if v4 reaches a state where the vLLM server actually answered
 and games took actions on a card we can name in the log; otherwise Oct 31 draws duck `-v 11` and the arm is retired.
-**And on the `-v 11` draw, read the scored rerun log for `SOLVED_LEVEL_MEMORY pinned`.** The patch *captures* on
-every turn (`_slm_before_turn` hangs off `analyze`) but *injects* only inside `_note_history_evicted` /
-`_trim_messages_for_context` — deliberately, because rewriting the system prompt invalidates the shared prefix and
-the 94.3 % cache hit rate. So the whole +2.8 claim is conditional on a drain happening after a level clears. Our
-offline rehearsal could not answer that (a 25-min game never drains); a scored draw will, and if the counter is zero
-the memory arm is inert and should be treated as a v9 re-roll rather than an upgrade.
+**Correction, same evening: the scored rerun's log is not reachable, so that gate was not executable.**
+`kaggle competitions submissions arc-prize-2026-arc-agi-3 --csv` returns exactly
+`ref,fileName,date,description,status,publicScore,privateScore` — no notebook id, no session handle, no output URL.
+The rerun happens on Kaggle's side and we get only its score. So nothing on Oct 30 will let us count
+`SOLVED_LEVEL_MEMORY pinned` in a scored log; a draw below 30 would not even be evidence that the patch was inert,
+because v9's own seven draws span 24.29–30.55.
+
+The drain question **is** answerable, but only interactively, and it is the most informative experiment left for our
+primary arm. Planned as the **drain probe** (after v4 releases the card, ~2.5 h, paid from the 7.12 h quota that is
+left, and it costs no submission slot): push a duck version whose *offline* branch runs the **scored** schedule —
+532×60 s per game, `analyzer_timeout 900`, `n_passes 1` — trimmed to one wave of games, long enough that the
+conversation can reach the ~118 k→59 k drain instead of dying at 25 min like tonight's guard run. Then count the
+`SOLVED_LEVEL_MEMORY pinned` prints. If the counter is zero even with scored-length games, the +2.8 claim does not
+transfer to our configuration, the memory arm is a v9 re-roll, and Oct 31/Nov 1 belong to the NVFP4 arm. The scored
+branch of that push stays byte-identical, so `-v 11` remains exactly what the daily crons draw.
 
 
 **2026-10-29 ~16:45 UTC — v11 passes its guard, and a second, bigger arm is now in rehearsal.**
