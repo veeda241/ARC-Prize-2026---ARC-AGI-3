@@ -983,6 +983,35 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
+**2026-10-29 ~17:20 UTC — the guard run's zero pins are explained, and the explanation says v11 is probably live.**
+
+Reading the SLM code properly: it **captures** on every turn (`_slm_before_turn` is hung off `analyze`) but
+**injects** only inside `_note_history_evicted` / `_trim_messages_for_context` — on purpose, because rewriting the
+system prompt invalidates the shared prefix and the 94.3 % cache hit rate. So the arm pays off only on games that
+actually drain, and tonight's rehearsal printed `SOLVED_LEVEL_MEMORY pinned` zero times. That looked like a dead arm.
+The 25 downloaded `*_p0_requests.jsonl` traces say otherwise, because the offline branch is not the scored branch:
+cell 16 sets `max_runtime_s_per_game = 5*60` "FAST_PROXY: sized for the demo set, not the hidden rerun", so every
+game there was killed at 300 s.
+
+Measured from those traces (real numbers, not a model of them): median growth **2,516 prompt tokens per turn**, first
+request at **5,479** tokens, best game **21 turns → 55,807** tokens — i.e. the 300-second cap, not the context cap, is
+what stopped it. The drain the patch waits for fires at ~118 k, which is **45 turns** in, and each later cycle
+(118 k→59 k) is **23 turns**. Throughput under our `ARC3_MAX_ACTIVE_STREAMS=10` gate is 25 games × 25 turns / 300 s =
+**2.08 turns/s aggregate**; spread over the scored 110 games that is 0.0189 turns/s each, so a game that lives the
+whole 32,400 s session sees ~**614 turns ≈ 26 drain cycles**, and one that only gets a fifth of the session still sees
+~**5**. So in the scored regime the pin should fire repeatedly, and tonight's zero is fully accounted for by the
+5-minute demo cap.
+
+**What this is and is not.** It is arithmetic on offline traces, with two soft spots: it assumes scored games live
+long (most die early — a game that ends at 30 turns never drains, but also never re-derives anything), and it assumes
+the aggregate turn rate transfers from 25 games to 110 (the 10-stream gate is what makes that roughly true). It is
+**not** a measurement of a scored run, and it does not raise the +2.8 claim's status: the only real evidence stays
+`vickyfym` 33.94 in 3 draws and `lalalia9` 35.79 in 22 on our exact stack plus this patch. Consequence for the plan:
+the ~2.5 h **drain probe** (task #17) is demoted from "needed" to "confirmation" — the arithmetic already says the
+arm is not inert, and tonight's remaining 7.1 h of quota is better left whole than spent proving a number the traces
+give us.
+
+
 **2026-10-29 ~16:55 UTC — the Nov 2 browser step is a taste decision, not a cliff.** Every automation here has been
 treating "select two Final Submissions in the web UI" as must-do-or-lose-everything, on the strength of the rules
 line *A "Final Submission" is the Submission selected by the user, **or automatically selected by Kaggle in the
