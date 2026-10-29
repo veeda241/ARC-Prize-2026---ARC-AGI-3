@@ -983,7 +983,7 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
-**2026-10-29 ~17:10 UTC — the NVFP4 arm's no-GPU failure is the pinned docker image, not concurrency.**
+**2026-10-29 ~16:50 UTC — the NVFP4 arm's no-GPU failure is the pinned docker image, not concurrency.**
 
 The 1-cell probe `vyassenthilkumar/arc3-gpu-probe` (their exact pinned image + `NvidiaRtxPro6000`, no attachments,
 nothing else on the card) came back `COMPLETE` in ~2 min printing `python 3.12.13 (main, Mar 4 2026)`,
