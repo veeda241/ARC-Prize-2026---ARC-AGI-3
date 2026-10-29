@@ -983,6 +983,29 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
+**2026-10-29 ~16:55 UTC — the Nov 2 browser step is a taste decision, not a cliff.** Every automation here has been
+treating "select two Final Submissions in the web UI" as must-do-or-lose-everything, on the strength of the rules
+line *A "Final Submission" is the Submission selected by the user, **or automatically selected by Kaggle in the
+event not selected by the user**, that is/are used for final placement*. That sentence never says *which* rows Kaggle
+picks. Two Kaggle forum answers found by search (`general/432319`: "If none are selected then the 2 best public LB
+are used for the final selection for private LB scores"; `general/6384`: "If you don't pick the total number
+available we pick the highest public submissions") both say **best-public**, not "your last submission" — which also
+means the common fear that a forgotten selection leaves you judged on a throwaway final roll is wrong.
+
+**Honest status of that claim: forum answers, not documentation, and the rules text itself is silent.** Treat it as
+"the downside of forgetting is small", not as proof. What it changes here: the 18:00 UTC selection automation stays
+scheduled (its output — the two refs, plus for each one the arm, the log evidence and which games went deep — is
+exactly what a *deliberate* choice needs, because judging is on the private half and public-best is only a proxy for
+it), but nobody should panic if the browser step is missed: the fallback is our two highest public rows, which we
+would very likely have chosen anyway.
+
+**Rehearsal state while this is written:** `vyassenthilkumar/arc3-nvfp4-lord-recipe` v4 is `RUNNING` and the GPU
+counter is climbing (22.39 → 22.46 h over ~10 min), which is the proof it needed — the un-pinned session owns a card,
+where all three pinned-image attempts charged nothing. Still to see from its log: the layer extraction finishing,
+`Image runtime ready at /tmp/vllm-image-runtime: vLLM …, torch …`, the vLLM server answering, and whether a level
+past 1 falls out of a 3,918-second game.
+
+
 **2026-10-29 ~16:50 UTC — the NVFP4 arm's no-GPU failure is the pinned docker image, not concurrency.**
 
 The 1-cell probe `vyassenthilkumar/arc3-gpu-probe` (their exact pinned image + `NvidiaRtxPro6000`, no attachments,
@@ -1026,6 +1049,8 @@ the 94.3 % cache hit rate. So the whole +2.8 claim is conditional on a drain hap
 offline rehearsal could not answer that (a 25-min game never drains); a scored draw will, and if the counter is zero
 the memory arm is inert and should be treated as a v9 re-roll rather than an upgrade.
 
+
+**2026-10-29 ~16:45 UTC — v11 passes its guard, and a second, bigger arm is now in rehearsal.**
 
 (1) **v11 guard = PASS.** `arc3-milestone2-flashnext-duck` v11's interactive rehearsal reached
 `KernelWorkerStatus.COMPLETE` in ~36 min with **zero** `Traceback`/`AttributeError` in the session log, and the
