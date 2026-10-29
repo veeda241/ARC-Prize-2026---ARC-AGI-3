@@ -9,7 +9,6 @@
   "enable_tpu": false,
   "enable_internet": false,
   "machine_shape": "NvidiaRtxPro6000",
-  "docker_image": "gcr.io/kaggle-images/python@sha256:dafd4ce5668bbf1ad422e4c109e0f18c9623c3a7c7f48b0235f13142755c40b9",
   "dataset_sources": [
     "lordhansolo/taaf-kaggle-source",
     "lordhansolo/vllm-main-e975732-arc3"
