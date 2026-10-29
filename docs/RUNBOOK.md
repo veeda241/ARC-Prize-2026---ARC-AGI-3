@@ -983,7 +983,7 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
-**2026-10-29 ~18:10 UTC — the σ that the implied-mean table rests on is only known to a factor of ~3, and the SLM arm's edge is 0 to +6, not +5.**
+**2026-10-29 ~18:07 UTC — the σ that the implied-mean table rests on is only known to a factor of ~3, and the SLM arm's edge is 0 to +6, not +5.**
 
 The table in the ~17:50 block converts other teams' *maxima* to per-draw *means* with
 `E[max_N] = mu + σ·z_N`, using σ ≈ 2.0 — our own seven v9 draws have sd 1.9. That σ is load-bearing, so its
