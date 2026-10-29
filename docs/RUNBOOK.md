@@ -981,7 +981,47 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-26 11:27 | `57664497` | v9 proven config, submitted by hand after the 00:10 one-shot vanished | **25.51** | 30.55 | 595 |
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
-| 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
+| 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 678 |
+
+**2026-10-29 21:00 UTC — evening guard: slot spent, nothing submitted, and all three lines rose again.**
+Step 1 found exactly one row dated today (`57759315`, 05:00:39) and it is `SubmissionStatus.COMPLETE` at
+**27.65** — the 15:00 guard had already filled that score in, so there was no PENDING value left to write.
+`submission-limits` reads *Submissions today: 1, Lifetime: 14, Remaining today: 0*, and Lifetime 14 equals the
+board's own `SubmissionCount` for our row (TeamId 15515494), so the allowance and the row list agree and no
+teammate spent anything behind our back. **No submit, no `kernels push`, no notebook edit.**
+
+Fresh download at **21:00:58 UTC**: 4,975 score rows, **4,972 ranked** (same three `Rank` 0 demo rows excluded;
++3 ranked since the 17:28 read). The percentile brackets are **bronze ≤ 497, silver ≤ 248, gold ≤ 19** — the
+bronze bracket stepped 496 → 497 on field growth alone, because floor(0.10 × 4,972) = 497. The lines themselves:
+**bronze 31.24, silver 32.54, gold 38.98.** Our best row 30.55 is **rank 678** (677 teams strictly above it; the
+board's own `Rank` agrees) = **top 13.64 %**, so the gap is now **0.69 to bronze and 1.99 to silver** — the
+widest of the week, and 181 teams sit between our row and the bronze line. The 672 → 676 → 678 drift across
+15:00 / 17:28 / 21:00 is other teams crossing over us, not our score moving.
+
+**Today's draw cleared neither line:** 27.65 is **rank 1482 = top 29.81 %**, 3.59 below bronze and 4.89 below
+silver. It is the seventh byte-identical v9 draw (24.29, 25.51, 26.74, 26.94, 27.65, 28.18, 30.55; mean 27.12,
+best 30.55) and **0 of 7** reach either line. Because the public board keeps the team's max, it cost nothing.
+
+**Readiness for tomorrow's `-v 11`, verified read-only tonight:**
+`kaggle kernels status vyassenthilkumar/arc3-milestone2-flashnext-duck` → **`KernelWorkerStatus.COMPLETE`**
+(check at 21:00 UTC; nothing was pushed, so the newest version remains v12 and the v11 scored branch is
+unchanged). I did **not** re-pull the rehearsal log — the step-3 criteria were evidenced in full at **17:54 UTC**
+by the block above (SLM marker `SOLVED_LEVEL_MEMORY_PATCH on` at t=847.43; `mean score: 2.05` with 13 level
+transitions across 11 games; zero `Traceback`/`FileNotFoundError`/`Kernel ended with error`), and that rehearsal
+is still the newest output since pushing is forbidden. Two things that entry should keep straight: the **2.05 is
+an offline artifact, never a leaderboard candidate**, and criterion (ii) is the load-bearing one — a completed
+level is the only path that reads `priority_pace_reference.json`, which is how the 17:58 block concluded PACE ran
+end-to-end (cell 4 exports `setup_env` outside `if TRUE_SUBMISSION:`), while the 18:05 block shows the SLM
+*benefit* cannot appear offline at all (2,330 tok/req ⇒ ~54 requests to drain the 131 k window; offline games stop
+at 23).
+
+**Do not carry the old probability band onto the arms.** The 15:00 block's P(silver) ≈ 7–24 % / P(bronze) ≈
+14–45 % was built from v9-era per-draw rates and applies to v9 draws. The standing prior for `-v 11` / `-v 12` is
+the implied-mean table in the 17:50 block — SLM ≈ 32.0, PACE ≈ 30.7, plain upstream ≈ 28.6–29.4 against our
+measured v9 mean 27.12 — with ±1.5 error bars on single-team observations, and the ~18:07 block bounds the SLM
+edge at +0 to +6. Four draws remain (Oct 30, 31, Nov 1, Nov 2). The point of tomorrow is to start *measuring* that
+prior, not to re-derive it: with a mean near 32 against today's bronze line 31.24, the arm is expected to reach
+bronze more often than v9 ever did, and silver is still above its own mean.
 
 **2026-10-29 ~18:07 UTC — the σ that the implied-mean table rests on is only known to a factor of ~3, and the SLM arm's edge is 0 to +6, not +5.**
 
