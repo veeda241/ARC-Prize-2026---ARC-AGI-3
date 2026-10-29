@@ -983,6 +983,37 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 672 |
 
+**2026-10-29 ~18:05 UTC — task #17 closed by arithmetic, not by hope: the solved-level memory *cannot* fire in a rehearsal, and *must* fire in a scored run.**
+
+The one thing the v11/v12 guard could not show is the payload. Grepping tonight's log gives exactly one
+`SOLVED_LEVEL_MEMORY` line — `…PATCH on` (the load marker) — and **zero** `…pinned` (the injection marker), plus
+zero occurrences of `trim`. So every rehearsal we will ever run leaves the memory block unexercised, and the
+question "is v11 actually a live arm or another `analyzer_timeout`-style no-op?" is still open after a CLEAN
+guard. Answering it from data we already hold instead of from the patch authors' claim:
+
+The rehearsal's own `*_p0_requests.jsonl` carries real `usage` on every response, so the accumulation rate is
+measured, not estimated. Across all 25 games: **first request = 5,472–5,492 prompt tokens, median growth
+2,330 tokens per request (mean 2,387, range 1,740–3,178)**, and the 300 s offline cap stops every game between
+28,843 and 51,775 tokens (10–23 requests, 4–13 analysis steps).
+
+Now divide by the window our own `setup_env` arms — `LOCAL_ANALYZER_CONTEXT_WINDOW = (116+12)*1024 = 131,072`,
+drain floor `ARC3_CONTEXT_DRAIN_TOKENS = 58*1024 = 59,392`:
+
+- requests to reach the window ≈ (131,072 − 5,480) / 2,330 ≈ **54 requests**;
+- the deepest offline game got **23** requests and stopped at 51,775 tokens — *40 % of the window*, which is
+  precisely why no trim happened in a single one of the 25 games;
+- the scored budget is `max_runtime_s_per_game = 532*60 = 31,920 s` against a measured ~264 actions per game in
+  the §1m throughput run, i.e. **≈5× the number of requests needed to force the first trim**.
+
+So the trim path — and with it `_note_history_evicted`, the `Rule for level N:` rewrite, `ProgressPace.
+record_completion` and the priority gate's slot release — fires in **every scored game that survives ~54
+requests**, and cannot fire in any offline rehearsal. Two consequences worth stating plainly: (1) the author's
+"30–50 turns until the first trim" (§1o) is now corroborated by our own token curve at 2,330 tok/req, which is
+what the whole +5-point bet on v11 rests on; (2) it also means **PACE's EMA has data by the first handover**
+in scored runs but never in a rehearsal, so "the rehearsal proved PACE ran end-to-end" above should be read as
+"the recording and multiplier code paths were live and did not crash", not "a multiplier other than 1.0 was
+observed". Nobody can observe that without a scored run.
+
 **2026-10-29 ~17:58 UTC — the v12 PACE rehearsal is COMPLETE and passes its guard, on stronger evidence than the guard was designed to ask for.**
 
 `kaggle kernels status vyassenthilkumar/arc3-milestone2-flashnext-duck` → `COMPLETE` at 17:54 UTC (pushed 17:22,
