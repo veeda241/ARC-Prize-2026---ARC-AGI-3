@@ -972,7 +972,7 @@ leaderboard keeps the maximum, the downside of any individual draw is zero.
 
 ### Rank chase log
 
-**CRON-TEXT OVERRIDE (2026-10-30 00:40 UTC) — read this before acting on anything in an automation prompt.** Every
+**CRON-TEXT OVERRIDE (updated 2026-10-30 11:45 UTC) — read this before acting on anything in an automation prompt.** Every
 draw automation (05:00 / 15:00 / 21:00 UTC) is told to read this area first and obey it over its own prompt, so this
 block is where corrections live. Two corrections are outstanding and both are load-bearing:
 
@@ -982,13 +982,16 @@ block is where corrections live. Two corrections are outstanding and both are lo
    arm, not evidence the mean did not move. **`-v 9` returns only if a draw lands below ~21 (a stack failure, not a
    lottery) or step 3's guard fails outright** — and on a guard failure, name which criterion failed.
 2. **The board numbers quoted inside those prompts are stale** (`4,969 ranked / silver 32.54 / bronze 31.22 / rank
-   676`, read 2026-10-29 17:28 UTC). Current values, read 00:25:53 UTC on 2026-10-30: **4,975 ranked, bronze ≤ 497 =
-   31.27, silver ≤ 248 = 32.56, gold ≤ 19 = 38.98, our best row 30.55 at rank 682 (top 13.71 %).** Always re-download
-   rather than quoting either set.
+   676`, read 2026-10-29 17:28 UTC). Current values, read **11:43:05 UTC on 2026-10-30**: **4,984 ranked, bronze
+   ≤ 498 = 31.33, silver ≤ 249 = 32.62, gold ≤ 19 = 39.69, our best row 31.21 at rank 525 (top 10.53 %).** Always
+   re-download rather than quoting either set.
 
-Also current: **Oct 30's slot was already spent at 00:21:30 UTC by hand** (ref `57786789`, `-v 11`, PENDING) — all
-three of today's automations should stop at step 1, fill the score in once it finalises (~10:20–11:00 UTC), and
-submit nothing.
+Also current: **Oct 30's slot is spent and finalised** — `57786789` (`-v 11`) went COMPLETE at **31.21**, a new team
+best. `submission-limits` reads **Remaining today: 0** at 11:43 UTC and has not refreshed since the 00:00 roll, so all
+three of today's automations must stop at step 1 and submit nothing. **The next slot opens with the Oct 31 roll
+(historically 00:00–01:00 UTC, occasionally later); draw `-v 12` the moment `submission-limits` reads ≥ 1** — its guard
+passed at 17:54 UTC on 2026-10-29, and an early fire is free: it finalises ~10 h sooner and the public board keeps the
+team max.
 
 **One row per UTC day.** If a row for today already exists, update it — do not append a second one. Three
 automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot can only be spent once.
@@ -1000,7 +1003,39 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 678 |
-| 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | PENDING | 30.55 | 687 |
+| 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 525 |
+
+**2026-10-30 11:45 UTC — the first v11 draw scored 31.21: one draw beat seven, and we are 0.12 under the bronze line.**
+
+`57786789` went `SubmissionStatus.COMPLETE` at **31.21** (read 11:43 UTC, ~11.4 h after the 00:21:30 submit). It is a
+**new team best**: the highest of the seven byte-identical v9 draws was 30.55, so the SLM arm beat the baseline's best
+on its first attempt. Fresh board at 11:43:05 UTC — 4,987 rows, **4,984 ranked**, brackets bronze ≤ 498, silver
+≤ 249, gold ≤ 19 — lines **bronze 31.33, silver 32.62, gold 39.69**, our row at **rank 525 = top 10.53 %** (the
+board's own `Rank` agrees; 524 teams strictly above). So: **0.12 to bronze, 1.41 to silver.** Twenty-seven teams sit
+between us and the bronze cut, and the lines rose 0.06 / 0.06 / 0.71 since the 00:25 read, so repeating today's
+number will not be enough tomorrow — bronze needs ≈ 31.35+, silver ≈ 32.65.
+
+**How much this draw actually proves (more than I first wrote, less than the headline).** Treating σ = 1.90 (our
+measured v9 spread) and comparing the two hypotheses for the SLM arm's per-draw mean:
+`L(31.21 | m = 27.12) = exp(−16.73/7.22) = 0.0985` versus `L(31.21 | m = 32.2) = exp(−0.98/7.22) = 0.873` — a
+likelihood ratio of **8.9 : 1**, i.e. the same result in log form, `exp(((31.21−27.12)² − (31.21−32.2)²)/2σ²)`.
+That is substantial evidence, not a shrug: a 31.21 is a ~2.2σ event for a mean-27.12 arm and an entirely ordinary one
+for a mean-32.2 arm, and it is the first *direct* evidence from our own account rather than other teams' maxima.
+What it still is not: a measurement of the arm mean. It is one draw, σ is borrowed from the baseline, and the χ²
+interval from the 18:07 block leaves the SLM edge over v9 somewhere in **+0.7 to +6.4** — the observation sits
+comfortably in the upper half of that band and awkwardly in the lower. What does change is that v9's "0 of 7 cleared a
+line" record is broken on the first try of the arm built to break it.
+
+**Three slots left** (Oct 31, Nov 1, Nov 2), and the public board keeps the max, so each is a free ticket. At the two
+credible (m, σ) corners for the best of those three draws: (m = 32.2, σ = 1.90) gives per-draw P(≥ 32.62) ≈ 0.41 and
+P(best of 3 ≥ silver) ≈ 0.80; (m = 27.8, σ = 1.90) gives ≈ 0.006 and ≈ 0.016. So **the whole question is whether the
+arm mean is where the reproduction says it is — which is exactly what tomorrow's `-v 12` and the Nov 1 re-roll
+measure.** All of it is public-half arithmetic; the judged half is never visible (see the λ block).
+
+Selection state after this draw: the two highest public rows are now **31.21 (v11)** and **30.55 (v9)**, gap 0.66.
+That is case (b) of the ~00:35 block — if nothing better lands, the hedge says take the second *arm* row rather than
+the v9 row, and it stays cheap while the gap is under 1.5. With three draws still to roll, the likelier end state is
+case (a): both judged rows come from the arms and the argument is moot.
 
 **2026-10-30 05:00 UTC — first attempt: stopped at step 1, submitted nothing, and the board slid 5 more places.**
 Step 1 found exactly one row dated today (`57786789`, 00:21:30, `SubmissionStatus.PENDING`, description
