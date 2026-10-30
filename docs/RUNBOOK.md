@@ -982,9 +982,9 @@ block is where corrections live. Two corrections are outstanding and both are lo
    arm, not evidence the mean did not move. **`-v 9` returns only if a draw lands below ~21 (a stack failure, not a
    lottery) or step 3's guard fails outright** — and on a guard failure, name which criterion failed.
 2. **The board numbers quoted inside those prompts are stale** (`4,969 ranked / silver 32.54 / bronze 31.22 / rank
-   676`, read 2026-10-29 17:28 UTC). Current values, read **11:43:05 UTC on 2026-10-30**: **4,984 ranked, bronze
-   ≤ 498 = 31.33, silver ≤ 249 = 32.62, gold ≤ 19 = 39.69, our best row 31.21 at rank 525 (top 10.53 %).** Always
-   re-download rather than quoting either set.
+   676`, read 2026-10-29 17:28 UTC). Current values, read **15:00:46 UTC on 2026-10-30**: **4,985 ranked, bronze
+   ≤ 498 = 31.34, silver ≤ 249 = 32.63, gold ≤ 19 = 39.69, our best row 31.21 at rank 528 (top 10.57 %)** — 0.13
+   under bronze, 1.42 under silver, and 30 places off the cutoff. Always re-download rather than quoting either set.
 
 Also current: **Oct 30's slot is spent and finalised** — `57786789` (`-v 11`) went COMPLETE at **31.21**, a new team
 best. `submission-limits` reads **Remaining today: 0** at 11:43 UTC and has not refreshed since the 00:00 roll, so all
@@ -1003,7 +1003,22 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 678 |
-| 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 525 |
+| 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 528 |
+
+**2026-10-30 15:00 UTC — the midday guard: slot already spent, and the first arm draw has moved us 150+ places.**
+Step 1 found a row dated today (`57786789`, `-v 11`, COMPLETE at **31.21**) and `submission-limits` read *Submissions
+today: 1, Lifetime: 15, Remaining today: 0*, so **nothing was submitted and no kernel was touched**. Fresh board
+download at 15:00:46: **4,985** ranked teams (4,988 rows less the three `Rank` 0 demos) → **bronze ≤ 498 = 31.34**,
+**silver ≤ 249 = 32.63**, **gold ≤ 19 = 39.69**; our 31.21 is **rank 528 = top 10.57 %** (526 strictly above, three
+tied at 31.21, board's own `Rank` says 528). Against the 11:43 read the field grew 1 and each line moved 0.01, so the
+position is stable: **0.13 short of bronze, 1.42 short of silver, 30 places off the cutoff.** The old v9 best row
+30.55 would now sit at rank 709, which is what the arm change bought — we went from top 14.2 % to top 10.6 % in one
+draw, and this is the first row of ours to beat 30.55 since that row was set on Oct 19 (nine later submissions, all
+below it). Context for the remaining three slots: rank
+495 Kaijun Hao holds 31.35 in **2 submissions**, i.e. the teams sitting on the bronze line are not high-volume
+grinders. Plan unchanged and already staged by the override block: **`-v 12` at the Oct 31 roll as soon as
+`submission-limits` reads ≥ 1** (its guard passed 17:54 UTC Oct 29; an early fire is free), Nov 1 re-rolls whichever
+of v11/v12 has the higher public row, Nov 2 takes that winner only if it can finalise by ~23:00 UTC.
 
 **2026-10-30 ~14:20 UTC — the "find a better arm" sweep came back empty, and converting its maxima properly shows why: we are already on the reproducible frontier.**
 
