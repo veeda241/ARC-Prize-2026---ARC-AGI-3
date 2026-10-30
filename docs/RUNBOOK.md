@@ -1000,7 +1000,37 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 678 |
-| 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | PENDING | 30.55 | 682 |
+| 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | PENDING | 30.55 | 687 |
+
+**2026-10-30 05:00 UTC — first attempt: stopped at step 1, submitted nothing, and the board slid 5 more places.**
+Step 1 found exactly one row dated today (`57786789`, 00:21:30, `SubmissionStatus.PENDING`, description
+"Solved-level-memory arm v11: reproduced lalalia9 35.79 config") and `submission-limits` agrees — *Submissions
+today: 1, Lifetime: 15, Remaining today: 0* — so no submit was attempted and no kernel output was needed (step 3
+only gates a draw we are about to take). This attempt also read and obeyed the CRON-TEXT OVERRIDE banner above:
+**no `-v 9` revert logic was applied**, because the banner says the "below 30.0 revert" line still sitting in the
+cron prompts is arithmetically wrong and must not be executed; today's arm is `-v 11` exactly as the 17:54 UTC
+schedule table requires. Score expected ~10:20–11:00 UTC, so the 15:00 attempt fills it into the row above.
+
+Fresh full-board download at **05:01:04 UTC**: 4,982 score rows, **4,979** with `Rank` ≥ 1 (the same three demo
+rows — Stochastic Goose 0.25, Random Agent 0.12, Just Explore 0.06). Lines: **bronze rank ≤ 497 = 31.27**,
+**silver rank ≤ 248 = 32.56**, **gold rank ≤ 19 = 39.11**. Our best row 30.55 (board `Rank` 687, `SubmissionCount`
+14) = **686 teams strictly above it = rank 687 = top 13.80 %**, so **0.72 short of bronze and 2.01 short of
+silver**. The two medal scores are unchanged from the 00:25:53 read (31.27 / 32.56) while our rank slid 682 → 687
+and the field grew 4,975 → 4,979 — rank loss with a frozen score, exactly the drift the daily re-read exists for.
+The **gold line rose 38.98 → 39.11** because rank 19 is now dreach.ai at 39.11 in 48 submissions.
+
+**A §1p claim is now falsified, and it is worth the human's eye even though it changes no slot.** The standing
+paragraph "The top of this board is also a *budget* artifact" says *every* team above 45 has dozens-to-hundreds of
+submissions. Not true as of this read: **rank 3, "faster machine is all you need" (`xiaoz259`), sits at 58.59 in
+only 12 submissions** — 2× our best row with fewer draws than we have lifetime. Rank 2 Tufa Labs is 70.02 in 176
+and rank 4 Team Turducken 56.02 in 213, so the claim was true of its neighbours and false of this one team. The
+lead is closed the same way the others were: `kaggle kernels list --user xiaoz259` returns three kernels —
+`daigt` (2024), `aas-final-submission-cd` (2026-09-01), `nfl-2026-gbdts-inference` (2025-09-28) — **none for this
+competition**, so 58.59 in 12 is private code, not a copyable artifact. Consequence for the plan: it does not
+touch the v11/v12 schedule (nothing to adopt, and no slot to spare), but it does retire the comfortable sentence
+"more draws are what bought the top of this board" — a high-mean config plausibly exists that we have not found,
+which is the same conclusion the low-draw ≥35 accounts already gave us a week ago. **No action taken; recorded for
+the human.**
 
 **2026-10-30 ~00:35 UTC — I went to "fix" the Nov 2 selection rule and the arithmetic says it is already right, with one quantified hedge.**
 
