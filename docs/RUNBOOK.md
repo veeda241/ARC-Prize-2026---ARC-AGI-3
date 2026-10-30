@@ -1005,6 +1005,53 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 678 |
 | 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 525 |
 
+**2026-10-30 ~14:20 UTC — the "find a better arm" sweep came back empty, and converting its maxima properly shows why: we are already on the reproducible frontier.**
+
+A background sweep took the whole board, isolated the **33 teams with public score ≥ 33 and ≤ 12 submissions** (the
+only cohort whose maxima can be read as per-draw means), and checked every one of them for published code. Result,
+stated flatly: **nothing published beats v11 + v12.** Of those 33, only two publish any ARC-AGI-3 code — `vickyfym`
+(33.94 / 3) and `jingshuifu` (33.22 / 6) — and both are *already* our evidence base (the SLM arm and the PACE arm).
+Every team in that cohort that actually beats us — `xiaoz259` 58.59 / 12, `kostasmouratidis` 36.00 / 10, `bil022`
+35.26 / 4, `sigmatango` 35.20 / 5 — publishes no kernel, no dataset and no forum post. So there is no delta left to
+copy, which retires the "keep re-drawing because there is nothing else to do" framing: there genuinely is nothing
+else to fold in, and the three remaining slots are worth more as draws of a known arm than as untested edits.
+
+One correction to the sweep's own reasoning, because it committed the error this file warns about everywhere else: it
+rejected the D′ (`ARC3_PRIORITY_FORM='dprime'`) family by comparing *its maxima* to `lalalia9`'s 35.79 maximum. Maxima
+over unequal submission counts are not comparable. Converted properly (`E[max_N] = mu + σ·z_N`):
+
+| source | max | subs | z_N | implied mean @ σ=1.90 | @ σ=4.19 |
+|---|---|---|---|---|---|
+| `vickyfym` (SLM + D′ mix) | 33.94 | 3 | 0.87 | 32.29 | 30.30 |
+| `bil022` | 35.26 | 4 | 1.05 | 33.27 | 30.86 |
+| `sigmatango` | 35.20 | 5 | 1.18 | 32.96 | 30.26 |
+| `jingshuifu` (PACE) | 33.22 | 6 | 1.28 | 30.79 | 27.85 |
+| `kostasmouratidis` | 36.00 | 10 | 1.55 | 33.06 | 29.52 |
+| `lalalia9` (**= our v11**) | 35.79 | 22 | 1.91 | 32.16 | 27.79 |
+| `xiaoz259` | 58.59 | 12 | 1.64 | **55.48** | 51.74 |
+| `threerabbits` (rank 1) | 75.56 | 46 | 2.21 | **71.36** | 66.30 |
+| **our first v11 draw** | 31.21 | 1 | 0.00 | 31.21 | 31.21 |
+
+Read the middle of that table, not the top: at σ = 1.90 the low-submission leaders sit at implied means **32.2–33.3**,
+and our v11 lineage's own implied mean is **32.16**. Our single 31.21 draw is *inside* that band, which is the honest
+version of "we are 0.12 under bronze" — the gap to silver (32.62) is roughly half a draw to one draw, and closing it
+does not need new code.
+
+Read the bottom two rows for the other half of the truth, and it overturns a line in memory. **"The board top is a
+submission-budget artifact" is only half right.** 176 and 214 draws do explain ranks 2 and 4, but rank 3 does 58.59 in
+**12** submissions, which implies a per-draw mean near **55**, and rank 1 implies ~**71**. Those are not lottery
+tickets; they are materially better agents — and none of them publish. So the ceiling reachable by *copying* is the
+low thirties, not the fifties: **gold (39.69, rank ≤ 19) is not reachable from a mean-32 arm in three draws** (it needs
++8.5 ≈ 4.4σ), whereas silver is a within-reach draw. Say that to the user rather than quoting 40 again.
+
+**Task #15 (the D′ slot-priority arm) is closed as "no", with reasons.** D′ replaces the priority term with
+`A·M·C + B·φ` and `shiiin9`'s D′ config sets `ARC3_PRIORITY_PACE='0'` — i.e. it is a *substitution* for the scheduler
+we already run, not an addition to it; its best in-family implied means (32.3 / 33.3) are not above v11's 32.16; and
+it has no in-house rehearsal. With three slots and the public board keeping the max, spending one on swapping the
+priority function for an unmeasured variant is negative expected value. Slots stay: Oct 31 `-v 12`, Nov 1 and Nov 2
+re-roll the winner. Board state at this read: our row **31.21, rank 526 of 4,984**, 15 lifetime submissions, lines
+unchanged from 11:43 UTC (bronze 31.33, silver 32.62, gold 39.69).
+
 **2026-10-30 11:45 UTC — the first v11 draw scored 31.21: one draw beat seven, and we are 0.12 under the bronze line.**
 
 `57786789` went `SubmissionStatus.COMPLETE` at **31.21** (read 11:43 UTC, ~11.4 h after the 00:21:30 submit). It is a
