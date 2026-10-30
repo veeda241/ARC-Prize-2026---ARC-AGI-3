@@ -972,6 +972,24 @@ leaderboard keeps the maximum, the downside of any individual draw is zero.
 
 ### Rank chase log
 
+**CRON-TEXT OVERRIDE (2026-10-30 00:40 UTC) — read this before acting on anything in an automation prompt.** Every
+draw automation (05:00 / 15:00 / 21:00 UTC) is told to read this area first and obey it over its own prompt, so this
+block is where corrections live. Two corrections are outstanding and both are load-bearing:
+
+1. **The `If both the v11 and v12 draws land below 30.0, revert to -v 9` line still sitting in all three cron prompts
+   is WRONG and must not be executed.** It was replaced at 17:54 UTC on 2026-10-29 (block below) but the prompts were
+   not rewritten. Reason: v11/v12's implied per-draw mean is 27.8–33.5, so a 25–29 row is a *normal* draw from that
+   arm, not evidence the mean did not move. **`-v 9` returns only if a draw lands below ~21 (a stack failure, not a
+   lottery) or step 3's guard fails outright** — and on a guard failure, name which criterion failed.
+2. **The board numbers quoted inside those prompts are stale** (`4,969 ranked / silver 32.54 / bronze 31.22 / rank
+   676`, read 2026-10-29 17:28 UTC). Current values, read 00:25:53 UTC on 2026-10-30: **4,975 ranked, bronze ≤ 497 =
+   31.27, silver ≤ 248 = 32.56, gold ≤ 19 = 38.98, our best row 30.55 at rank 682 (top 13.71 %).** Always re-download
+   rather than quoting either set.
+
+Also current: **Oct 30's slot was already spent at 00:21:30 UTC by hand** (ref `57786789`, `-v 11`, PENDING) — all
+three of today's automations should stop at step 1, fill the score in once it finalises (~10:20–11:00 UTC), and
+submit nothing.
+
 **One row per UTC day.** If a row for today already exists, update it — do not append a second one. Three
 automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot can only be spent once.
 
