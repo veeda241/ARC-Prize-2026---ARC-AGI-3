@@ -982,6 +982,103 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 678 |
+| 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | PENDING | 30.55 | 682 |
+
+**2026-10-30 ~00:35 UTC — I went to "fix" the Nov 2 selection rule and the arithmetic says it is already right, with one quantified hedge.**
+
+The standing rule in cron `61b457f2` is *select the two highest public scores*. The suspicion going in was that this
+optimises the wrong objective, because only ≤2 rows are judged and they are judged on the **private** half (§1 memory:
+`kaggle.com/general/432319`, `6384` — the auto-fallback is also public-best). The counter-argument was that a 30.55
+row from the v9 arm (measured mean 27.12) is a lucky draw, whereas a v11 row at 29 comes from an arm whose mean is
+~32, so the 29 is "really" better. Ranking rows by a posterior blend `E[private | x, arm] = λ·x + (1−λ)·m_arm` would
+capture that. Working out what λ is killed the idea — and it is worth writing down why, because it also tells us what
+the private half can and cannot do to us.
+
+In a code comp **one scored rerun produces both halves**: public = mean over the fixed 55 public games, private = mean
+over the fixed 55 private games. Decompose a run's per-game weighted score as `μ_arm + δ_run + η_game`, so
+
+```
+x_r = μ + δ_r + η̄_P      p_r = μ + δ_r + η̄_Q      cov(x,p) = var(δ)
+λ ≡ corr(x,p) = var(δ) / (var(δ) + v_g),   v_g = var(η̄) over a 55-game half
+```
+
+and the observed quantity pins the denominator: our seven v9 draws are all on the **same** public set, so their
+sd 1.90 is exactly `√(var(δ) + v_g)`. Hence **λ = 1 − v_g/3.61** — and `v_g`, the variance of the game-specific luck
+averaged over one half, is something we have never measured. Everything hinges on that unknown:
+
+| λ | what it means | v9 row 30.55 vs v11 row 29.0 (Δ = m₁₁−m₉ = 5.1) |
+|---|---|---|
+| 0.3 | half-of-which-games luck dominates | blend 28.15 vs **31.24** → arm row, by 3.1 |
+| 0.5 | split evenly | 28.84 vs **30.60** → arm row, by 1.8 |
+| 0.77 | crossover (threshold gap = 1.5) | 29.76 vs 29.74 → **tie** |
+| 0.9 | run quality dominates, game identity is small | **30.21** vs 29.32 → v9 row, by 0.9 |
+
+The general form of the same row: prefer the arm row over the `30.55` v9 row iff the public gap is under
+`(1−λ)·Δ/λ` = **11.9 / 5.1 / 2.2 / 0.6** points at λ = 0.3 / 0.5 / 0.7 / 0.9 — and at the pessimistic end of the σ
+interval (Δ = +0.7, the 4.19 case from the 18:07 block) those collapse to 1.6 / 0.7 / 0.3 / 0.08.
+
+Two things follow, and the first is a correction to myself. *(1) The default rule survives.* Whatever λ is, a row that
+leads on public **and** comes from the better arm wins under every value of it, so the only contested situation is the
+narrow one where `57402922` (v9, 30.55) sits above every arm row. *(2) Do not claim λ either way.* The tempting
+argument for λ near 1 is that averaging 55 games should wash the game-identity term out (`v_g` small against 3.61),
+which would make public-best exactly right; the honest reply is that the level-weighted metric makes a single
+top-weighted level worth several score points, so `η̄` is *not* obviously a √55-shrunk average, and the one artifact
+that could settle it — a scored run's per-game breakdown — is exactly what Kaggle never returns (`team-submissions`
+opens only our own TeamId and shows the aggregate). No number here is measured, so no number here is quoted as one.
+
+The usable rule is therefore a **hedge with a stated price**, not a re-derivation: keep two-highest-public as the
+default, and when the top row is the v9 `30.55` while a v11/v12 row sits **within ~1.5 points below it**, select the
+arm row instead. At λ = 0.9 that costs ≤ 0.9·1.5 − 0.1·5.1 ≈ **0.8** expected private points; at λ = 0.5 it gains
+~1.8, and the penalty shrinks with the gap, so a hedge taken at a 0.5 gap costs at most 0.9·0.5 − 0.1·5.1 < 0 — it is
+a gain even at λ = 0.9. Above ~1.5 the cost runs the wrong way and the public number wins outright. Diversification across arms is **not** a reason to include a worse-blend row — the halves come from one
+rerun, so a second row only adds value through its own expected private score.
+
+Not changed: the tick-the-checkbox step is browser-only (`kaggle competitions --help` in 2.2.4 has no select/final
+verb) and stays with the user; if it is skipped the auto-selection is public-best, which is this same rule and bounded,
+not fatal.
+
+**The load-bearing assumption, stated so a future reader can break it.** All of the above rests on *one* scored rerun
+producing both halves, which is how Kaggle code competitions work and is consistent with the comp's own "110 games,
+55 public / 55 private" description — but we have never seen it written on the Rules page, and we cannot test it from
+inside the notebook (the rerun is hidden from us and `team-submissions` opens only our own TeamId). If instead the
+private half were a **separate** rerun in a fresh session, `δ` would differ between halves, λ → 0, and the rule would
+invert: public score would carry no information and the two judged rows should simply be the two from the best arm.
+That is the one scenario in which the ~1.5-point hedge is not conservative but mandatory — which is the actual reason
+to take it. Confirm on the Rules page in the browser before Nov 2 if there is a spare minute; the hedge needs no such
+confirmation to be cheap.
+
+**2026-10-30 00:25 UTC — Oct 30's slot taken at 00:21 for the first `-v 11` draw, and the three medal lines all rose again.**
+
+`submission-limits` read **Submissions today: 0 / Lifetime: 14 / Remaining today: 1** at 00:20:54, i.e. the
+allowance had already rolled with the UTC date rather than waiting for a reset later in the day (§1 memory: the
+roll has previously landed as late as 17:06 UTC, so the only safe test is to read the count). Because it had
+rolled, the draw went in at **00:21:30** — 4.6 h earlier than the 05:00 cron would have fired it, which is worth
+taking: a scored rerun finalises ~10 h after submission, so an early submit means an early score and a wider
+window for the day's contingency. Verified before firing: `submission.parquet` present at repo root (3,190 B),
+`kernels status` = **COMPLETE**, and `-v 11` is the version number `kernels push` printed for the SLM blob
+`7d41ccefa149`, not anything the status call reports.
+
+Command and receipt, both as printed:
+
+```
+kaggle competitions submit arc-prize-2026-arc-agi-3 \
+  -k vyassenthilkumar/arc3-milestone2-flashnext-duck -v 11 \
+  -f submission.parquet -m "Solved-level-memory arm v11: reproduced lalalia9 35.79 config"
+→ 0 submissions remaining today.
+```
+
+`57786789,submission.parquet,2026-10-30 00:21:30.347000,Solved-level-memory arm v11: …,SubmissionStatus.PENDING,,`
+— the blank score column is the queued-rerun display rule, not an absence of submission. Expected to land
+COMPLETE around **10:20–11:00 UTC**, i.e. after the 05:00 guard and in time for the 15:00 one. No `kernels push`
+was run (pushing also *runs*, and v12 is already the newest version).
+
+Fresh board at **00:25:53 UTC**: 4,978 rows, **4,975 ranked** (three `Rank` 0 demo rows excluded), +3 since the
+21:00 read. Brackets **bronze ≤ 497, silver ≤ 248, gold ≤ 19** (unchanged brackets) and lines
+**bronze 31.27, silver 32.56, gold 38.98**. Our 30.55 is now **rank 682 = top 13.71 %** (681 teams strictly
+above, board's own `Rank` agrees) — 678 → 682 overnight, again other teams crossing us, not our score. The gaps
+are **0.72 to bronze, 2.01 to silver.** For calibration of what a draw buys: 31.26 → rank 498 (still misses
+bronze by one), 32.60 → rank 244 (silver), 34.00 → rank 102, 36.00 → rank 48. The point of `-v 11` is that its
+implied per-draw mean (27.8–33.5, point 32.2) sits *at and above* the bronze line rather than 4 points under it.
 
 **2026-10-29 21:00 UTC — evening guard: slot spent, nothing submitted, and all three lines rose again.**
 Step 1 found exactly one row dated today (`57759315`, 05:00:39) and it is `SubmissionStatus.COMPLETE` at
