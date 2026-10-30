@@ -1003,7 +1003,45 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-27 05:00 | `57689693` | v9 proven config, 05:00 draw (first of three attempts, slot used) | **26.94** | 30.55 | 612 |
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 678 |
-| 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 528 |
+| 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 534 |
+
+**2026-10-30 21:00 UTC — evening guard: slot already spent on the new team best, and six places slid off us while the score sat still.**
+
+Step 1 found a row dated today — `57786789`, `-v 11`, `SubmissionStatus.COMPLETE`, public **31.21** — and
+`submission-limits` read *Submissions today: 1, Lifetime submissions: 15, Remaining today: 0*, which agrees with the
+board's own `SubmissionCount 15` on our row, so no teammate spent the shared allowance either. **Nothing was
+submitted; no kernel was pushed, run or touched.**
+
+Fresh full-board download at 21:02:05: **4,993** rows, **4,990** of them ranked (the three `Rank` 0 demos again) →
+**bronze ≤ 499 = 31.35**, **silver ≤ 249 = 32.66**, **gold ≤ 19 = 39.69**; top of the board is 75.56 (`Yi-Chia Chen @
+Fields Model`, 46 submissions). Our row is listed at **rank 534 = top 10.66 %**, inside a four-way tie at 31.21 that
+occupies ranks 532–535 (531 teams strictly above). Against the 15:00 read the field grew 4,985 → 4,990, bronze moved
+31.34 → 31.35 and silver 32.63 → 32.66, and **our own rank slid 528 → 534 with the score frozen**: teams strictly
+above us went 526 → 531. The board cannot tell us whether those five are new entrants or existing teams drawing
+upward, only that our fixed score is now lower down the list — the recurring asymmetry is that the lines only ever
+move away from a held score.
+
+Where we actually stand: **0.14 under bronze, 1.45 under silver**, with **31** teams strictly between 31.21 and 31.35.
+The tie structure at the cutoff is worth reading exactly, because it changes what a lucky draw is worth. 31.35 is the
+bronze line only because it lands on ranks **499–500** (Kaijun Hao, 2 subs; Ascendant, 13) — a draw that prints 31.35
+is *on* the line, tied with the teams holding it, and Kaggle's sequential tie-break could place us at 500 and out.
+**31.36 is inside**: ranks 494–498, five teams (210 / 110 / 25 / 25 / 10 submissions). So the 0.15 we need is better
+spent aiming at 31.36 than at 31.35, and the teams sitting on the line are not high-volume grinders. For scale: our
+previous best 30.55 would now read **rank 716 = top 14.35 %**, so the v11 arm bought **182 places** in one draw — the
+first of our rows to beat 30.55 since Oct 19, across the nine submissions that sat between (26.74 / 24.65 / 28.18 /
+5.68 / 5.34 / 25.51 / 26.94 / 24.29 / 27.65 — all below it).
+
+Oct 31 readiness, checked read-only: `kaggle kernels status` on the duck kernel is
+`KernelWorkerStatus.COMPLETE`, and `kernels list -v` puts its newest run at **2026-10-29 17:23:34**, i.e. nothing was
+pushed after the 17:54 UTC PACE rehearsal, so that log is still the current evidence and no fresh `armcheck` pull was
+needed. It satisfies all three `-v 12` criteria: `SOLVED_LEVEL_MEMORY_PATCH on` at `time: 847.43`, `mean score: 2.05`
+at 1761.92 (25 games, 13 level completions across 11 games, every game ending `state=gave_up` under the offline
+branch's 300 s/game cap — **an offline artifact, never a leaderboard candidate**), and no `Traceback` /
+`FileNotFoundError` / `Kernel ended with error` anywhere. The honest limit is unchanged: that log never echoes an
+`ARC3_*` value, so PACE firing is established by the code path plus 13 level transitions plus the absence of errors,
+not by a printed confirmation. Plan: **`-v 12` fires at the Oct 31 roll as soon as `submission-limits` reads ≥ 1**,
+Nov 1 re-rolls whichever of v11/v12 has the higher public row, Nov 2 takes that winner only via the 05:00 attempt —
+the evening guard must not submit on Nov 2 while the day's row is PENDING. Three slots left.
 
 **2026-10-30 15:00 UTC — the midday guard: slot already spent, and the first arm draw has moved us 150+ places.**
 Step 1 found a row dated today (`57786789`, `-v 11`, COMPLETE at **31.21**) and `submission-limits` read *Submissions
