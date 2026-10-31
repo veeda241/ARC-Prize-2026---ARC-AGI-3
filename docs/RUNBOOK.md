@@ -972,7 +972,7 @@ leaderboard keeps the maximum, the downside of any individual draw is zero.
 
 ### Rank chase log
 
-**CRON-TEXT OVERRIDE (updated 2026-10-30 11:45 UTC) — read this before acting on anything in an automation prompt.** Every
+**CRON-TEXT OVERRIDE (updated 2026-10-31 00:20 UTC) — read this before acting on anything in an automation prompt.** Every
 draw automation (05:00 / 15:00 / 21:00 UTC) is told to read this area first and obey it over its own prompt, so this
 block is where corrections live. Two corrections are outstanding and both are load-bearing:
 
@@ -982,16 +982,19 @@ block is where corrections live. Two corrections are outstanding and both are lo
    arm, not evidence the mean did not move. **`-v 9` returns only if a draw lands below ~21 (a stack failure, not a
    lottery) or step 3's guard fails outright** — and on a guard failure, name which criterion failed.
 2. **The board numbers quoted inside those prompts are stale** (`4,969 ranked / silver 32.54 / bronze 31.22 / rank
-   676`, read 2026-10-29 17:28 UTC). Current values, read **15:00:46 UTC on 2026-10-30**: **4,985 ranked, bronze
-   ≤ 498 = 31.34, silver ≤ 249 = 32.63, gold ≤ 19 = 39.69, our best row 31.21 at rank 528 (top 10.57 %)** — 0.13
-   under bronze, 1.42 under silver, and 30 places off the cutoff. Always re-download rather than quoting either set.
+   676`, read 2026-10-29 17:28 UTC). Current values, read **00:15:57 UTC on 2026-10-31**: **4,995 ranked, bronze
+   ≤ 499 = 31.36, silver ≤ 249 = 32.66, gold ≤ 19 = 39.69, our held 31.21 at rank 536 (top 10.73 %)** — 0.15 under
+   bronze, 1.45 under silver, 37 places off the cutoff, and the rank sliding 534 → 536 overnight on a frozen score.
+   Always re-download rather than quoting either set.
 
-Also current: **Oct 30's slot is spent and finalised** — `57786789` (`-v 11`) went COMPLETE at **31.21**, a new team
-best. `submission-limits` reads **Remaining today: 0** at 11:43 UTC and has not refreshed since the 00:00 roll, so all
-three of today's automations must stop at step 1 and submit nothing. **The next slot opens with the Oct 31 roll
-(historically 00:00–01:00 UTC, occasionally later); draw `-v 12` the moment `submission-limits` reads ≥ 1** — its guard
-passed at 17:54 UTC on 2026-10-29, and an early fire is free: it finalises ~10 h sooner and the public board keeps the
-team max.
+Also current: **Oct 31's slot is taken** — `-v 12` (the PACE arm) fired at **00:15:39 UTC as ref `57820948`** and was
+`SubmissionStatus.PENDING` at the time of writing; the allowance had rolled by 00:16, so no retry loop was needed.
+**All three of today's automations (05:00 / 15:00 / 21:00) must stop at step 1 on that row and submit nothing, even
+while it is still PENDING** — one submission per UTC day, and the rerun finalises around 10:00–11:00 UTC. Once it is
+COMPLETE, the day's chase-log row and the 21:00 guard record the score; do not confuse it with yesterday's 31.21.
+**Nov 1 draws `-v 11` or `-v 12` — whichever of the two has the higher public row after `57820948` scores**, and Nov 2
+takes that winner only via the 05:00 attempt. Two slots left. The bronze line is **31.36, not 31.35** (31.35 sits at
+rank 500, outside), so a 31.35 draw does not reach a medal.
 
 **One row per UTC day.** If a row for today already exists, update it — do not append a second one. Three
 automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot can only be spent once.
@@ -1004,6 +1007,40 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-28 08:51 | `57731198` | v9 proven config — taken by hand after the 05:00 automation's session died | **24.29** | 30.55 | 647 |
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 678 |
 | 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 534 |
+| 2026-10-31 00:15 | `57820948` | **v12 PACE arm** — first draw of PACE, fired 15 min after the Oct 31 roll | *PENDING at write time* | 31.21 | 536 |
+
+**2026-10-31 00:15 UTC — the Oct 31 slot was taken early, on `-v 12`, four minutes after the allowance rolled.**
+
+Steps 2–5 as they actually read, all at 00:15 UTC:
+- Step 1 (`submissions -v`): newest row was `57786789` dated 2026-10-30 00:21:30, COMPLETE at 31.21 — **no Oct 31
+  row existed**, so the slot was open and one submit-capable session was live.
+- Step 2 (`submission-limits` at ~00:15:30): *Submissions today: 0, Lifetime submissions: 15, **Remaining today: 1***
+  — the Oct 31 allowance had rolled by 00:16, the earliest edge of the historical 00:00–mid-afternoon window. No
+  retry loop was needed.
+- Step 3 (`kernels status`): `KernelWorkerStatus.COMPLETE`. Nothing was pushed, run or edited, so `-v 12`'s
+  2026-10-29 17:54 UTC rehearsal log remains the current guard evidence.
+- Step 4/5: `-v 12` submitted in one try (no fallback to `-v 11` was needed and none was used) → **ref `57820948`,
+  2026-10-31 00:15:39.85 UTC, description "PACE arm v12: v11 + ARC3_PRIORITY_PACE=1, one value",
+  SubmissionStatus.PENDING**, no score at write time. The CLI printed *0 submissions remaining today.* after
+  accepting — that is the leftover count, and it agrees with a one-per-day allowance. A scored rerun is expected to
+  finalise ~10–11 h later, i.e. around 10:00–11:00 UTC today; today's 05:00 / 15:00 / 21:00 automations must stop
+  at step 1 on this row (PENDING or not) and submit nothing.
+
+Fresh full-board download (snapshot timestamp 2026-10-31T00:15:57Z): **4,998 rows, 4,995 ranked** →
+**bronze ≤ 499 = 31.36**, **silver ≤ 249 = 32.66**, **gold ≤ 19 = 39.69**; top of the board still 75.56
+(`Yi-Chia Chen @ Fields Model`, 46 subs). Our row is listed at **rank 536 = top 10.73 %** with the frozen 31.21
+(533 teams strictly above; the 31.21 tie now occupies ranks 534–537). Versus the 21:02 Oct 30 read: field
+4,990 → 4,995, **bronze 31.35 → 31.36**, silver held at 32.66, gold held at 39.69, and **our rank slid 534 → 536
+on an unchanged score** — five more teams over the top of us while we slept. Standing now: **0.15 under bronze,
+1.45 under silver, 37 places off the cutoff.** Yesterday's tie-structure note is confirmed by the read rather than
+inferred: the bronze line sits on **31.36** (rank 499, `Kochi Loki`, 110 subs) and 31.35 is *outside* at rank 500
+(`Kaijun Hao`, 2 subs), so a draw that prints exactly 31.35 still misses — the target for Nov 1–2 is **≥ 31.36**.
+
+Arm bookkeeping, stated before the score exists (step 6): this is the **first** draw of the PACE arm, so
+`57820948`'s score alone decides nothing about which arm Nov 1 re-rolls. v12's per-draw mean is estimated at
+27.8–33.5 from `jingshuifu`'s 33.22/6 maximum inverted at σ = 1.90/4.19; anything in that band, including a row
+below 30.0, is a normal draw and **not** a revert trigger. Nov 1's plan stands as written yesterday — re-roll
+whichever of v11/v12 has the higher public row — and `-v 9` returns only below ~21 or on a genuine guard failure.
 
 **2026-10-30 21:00 UTC — evening guard: slot already spent on the new team best, and six places slid off us while the score sat still.**
 
