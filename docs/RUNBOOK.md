@@ -1052,16 +1052,21 @@ offline artifact, never a leaderboard candidate). For `-v 11`, which is what Nov
 now the *weakest* form of the evidence: v11 has produced a real scored run at 31.21, so its guard is satisfied by
 observation rather than by code path.
 
-One platform wrinkle from tonight's re-pull, worth knowing before the Nov 1 guard leans on step 3:
-`kaggle kernels output … -p …\Temp\armcheck` returned the same 2026-10-29 session bundle (25 `*_p0_requests.jsonl`,
-`benchmark.json`, `serve.log`, `diagnostics.html`, 97 MB) but **did not include the `<slug>.log` execution log this
-time**, even though the identical pull on Oct 29 did. Criteria (i) and (iii) — the `SOLVED_LEVEL_MEMORY_PATCH on` line
-and the absence of tracebacks — therefore could not be re-read tonight and stand on this file's Oct 29 17:54 UTC
-record. Criterion (ii) re-verified itself out of `benchmark.json` with no log at all: `game_runs` = 25, every one
-`state=gave_up`, **13 levels completed across 11 games**, `final_score` mean **2.0459** — the logged `mean score:
-2.05` — and the window `2026-10-29T17:37:44 → 17:52:55`, which independently confirms no newer session exists. So the
-PACE-execution evidence survives a missing log, and because `-v 11`'s guard is now a completed **scored** run at 31.21
-rather than a rehearsal, the gap costs nothing tomorrow.
+One procedural finding from tonight's re-pull, corrected the second time because my first reading of it was wrong:
+`kaggle kernels output … -p …\Temp\armcheck` is a **97 MB, multi-minute** download and it does not write files in
+alphabetical order — `serve.log`, `diagnostics.html`, `benchmark.json` and the 25 `*_p0_requests.jsonl` arrived first,
+so an `ls` taken two minutes in showed no `<slug>.log` and I wrote that Kaggle had stopped returning it. It had not:
+the job finished afterwards and did produce **`arc3-milestone2-flashnext-duck.log` at 942 lines**, i.e. the same Oct 29
+session this file recorded at 943 lines (the one-line difference is a trailing-newline count, not a different file).
+**How to apply:** never grep a `kernels output` pull before the command reports completion, or the step-3 guard will be
+judged on a partial bundle — and if a pull is backgrounded because it exceeds the tool timeout, read the task's own
+final output, which is where the 942-line count came from. What I actually verified tonight is therefore the bundle's
+provenance rather than its text: `benchmark.json` re-confirms criterion (ii) independently of any log (`game_runs` =
+25, every one `state=gave_up`, **13 levels completed across 11 games**, `final_score` mean **2.0459** — the logged
+`mean score: 2.05`) over the window `2026-10-29T17:37:44 → 17:52:55`, which also proves no newer session exists.
+Criteria (i) and (iii) stand on this file's Oct 29 17:54 UTC record: the log was in hand but deleted with the temp dir
+before I re-grepped it, so tonight adds a line count, not a re-read of the `SOLVED_LEVEL_MEMORY_PATCH on` line. That
+costs tomorrow nothing, because `-v 11`'s guard is now a completed **scored** run at 31.21 rather than a rehearsal.
 
 Two slots left, one per day. **Nov 1 = `-v 11`**, fired at the front of the roll (both early fires so far landed at
 00:15–00:21 and finalised ~10–11 h later, well inside the day). **Nov 2 = `-v 11` again, but only via the 05:00
