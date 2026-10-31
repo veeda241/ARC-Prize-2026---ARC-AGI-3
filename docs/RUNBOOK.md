@@ -1045,12 +1045,23 @@ certain-clear threshold, not against the headline line.
 
 Step 3, read-only and with no submit following it: `kernels status` = `KernelWorkerStatus.COMPLETE`, and
 `kernels list -v` still shows the duck kernel's newest run at **2026-10-29 17:23:34** — the two scored reruns
-(`57786789`, `57820948`) ran on Kaggle's evaluation pool and did not create a session, confirming what this file
-already says about the GPU quota not moving during scored reruns. The Oct 29 17:54 UTC PACE rehearsal therefore
-remains the newest log and the current guard evidence for `-v 12` (all three criteria, incl. `mean score: 2.05` — an
+(`57786789`, `57820948`) created no session on the kernel, which is consistent with this file's standing observation
+that scored reruns execute on Kaggle's evaluation pool (quota was not re-read tonight, so that stays provisional). The Oct 29 17:54 UTC PACE rehearsal therefore
+remains the newest session and the current guard evidence for `-v 12` (all three criteria recorded here on Oct 29, incl. `mean score: 2.05` — an
 offline artifact, never a leaderboard candidate). For `-v 11`, which is what Nov 1 draws, the rehearsal criteria are
 now the *weakest* form of the evidence: v11 has produced a real scored run at 31.21, so its guard is satisfied by
 observation rather than by code path.
+
+One platform wrinkle from tonight's re-pull, worth knowing before the Nov 1 guard leans on step 3:
+`kaggle kernels output … -p …\Temp\armcheck` returned the same 2026-10-29 session bundle (25 `*_p0_requests.jsonl`,
+`benchmark.json`, `serve.log`, `diagnostics.html`, 97 MB) but **did not include the `<slug>.log` execution log this
+time**, even though the identical pull on Oct 29 did. Criteria (i) and (iii) — the `SOLVED_LEVEL_MEMORY_PATCH on` line
+and the absence of tracebacks — therefore could not be re-read tonight and stand on this file's Oct 29 17:54 UTC
+record. Criterion (ii) re-verified itself out of `benchmark.json` with no log at all: `game_runs` = 25, every one
+`state=gave_up`, **13 levels completed across 11 games**, `final_score` mean **2.0459** — the logged `mean score:
+2.05` — and the window `2026-10-29T17:37:44 → 17:52:55`, which independently confirms no newer session exists. So the
+PACE-execution evidence survives a missing log, and because `-v 11`'s guard is now a completed **scored** run at 31.21
+rather than a rehearsal, the gap costs nothing tomorrow.
 
 Two slots left, one per day. **Nov 1 = `-v 11`**, fired at the front of the roll (both early fires so far landed at
 00:15–00:21 and finalised ~10–11 h later, well inside the day). **Nov 2 = `-v 11` again, but only via the 05:00
