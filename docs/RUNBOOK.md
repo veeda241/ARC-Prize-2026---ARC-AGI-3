@@ -1060,13 +1060,18 @@ the job finished afterwards and did produce **`arc3-milestone2-flashnext-duck.lo
 session this file recorded at 943 lines (the one-line difference is a trailing-newline count, not a different file).
 **How to apply:** never grep a `kernels output` pull before the command reports completion, or the step-3 guard will be
 judged on a partial bundle — and if a pull is backgrounded because it exceeds the tool timeout, read the task's own
-final output, which is where the 942-line count came from. What I actually verified tonight is therefore the bundle's
-provenance rather than its text: `benchmark.json` re-confirms criterion (ii) independently of any log (`game_runs` =
-25, every one `state=gave_up`, **13 levels completed across 11 games**, `final_score` mean **2.0459** — the logged
-`mean score: 2.05`) over the window `2026-10-29T17:37:44 → 17:52:55`, which also proves no newer session exists.
-Criteria (i) and (iii) stand on this file's Oct 29 17:54 UTC record: the log was in hand but deleted with the temp dir
-before I re-grepped it, so tonight adds a line count, not a re-read of the `SOLVED_LEVEL_MEMORY_PATCH on` line. That
-costs tomorrow nothing, because `-v 11`'s guard is now a completed **scored** run at 31.21 rather than a rehearsal.
+final output. The CLI also kept writing after my first `rm -rf` and re-created the temp directory, which is a blessing:
+the log survived and could be read properly, so tonight's evidence is a fresh re-read and not a transcription. The
+newest session log is **91,731 bytes / 942 `wc -l` lines** — the same size this file recorded on Oct 29 at "943 lines",
+the one-line difference being a missing trailing newline, not a different file — and all three `-v 12` criteria appear
+in it at the places quoted here since then: **(i)** `SOLVED_LEVEL_MEMORY_PATCH on` at `time: 847.430226283` (line 738),
+**(ii)** `mean score: 2.05` at `time: 1761.921059094` (line 895, intermediate `1.86` at 1451.894457465), **(iii)** zero
+matches for `Traceback` / `FileNotFoundError` / `RuntimeError` / `Kernel ended with error`. `benchmark.json` agrees
+from the other side with no log involved: `game_runs` = 25, every one `state=gave_up`, **13 levels completed across 11
+games**, `final_score` mean **2.0459** — the logged 2.05 — over `2026-10-29T17:37:44 → 17:52:55`, which independently
+proves no newer session exists. That 2.05 stays an offline artifact of the demo branch's 300 s/game cap, never a
+leaderboard number. So both arms' guards are re-verified on the platform tonight, though for `-v 11` — what Nov 1
+actually draws — the strongest evidence remains its own completed **scored** run at 31.21 rather than any rehearsal.
 
 Two slots left, one per day. **Nov 1 = `-v 11`**, fired at the front of the roll (both early fires so far landed at
 00:15–00:21 and finalised ~10–11 h later, well inside the day). **Nov 2 = `-v 11` again, but only via the 05:00
