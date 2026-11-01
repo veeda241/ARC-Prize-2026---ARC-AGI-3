@@ -972,7 +972,7 @@ leaderboard keeps the maximum, the downside of any individual draw is zero.
 
 ### Rank chase log
 
-**CRON-TEXT OVERRIDE (updated 2026-10-31 22:58 UTC) — read this before acting on anything in an automation prompt.** Every
+**CRON-TEXT OVERRIDE (updated 2026-11-01 15:05 UTC) — read this before acting on anything in an automation prompt.** Every
 draw automation (05:00 / 15:00 / 21:00 UTC) is told to read this area first and obey it over its own prompt, so this
 block is where corrections live. Three corrections are outstanding and all are load-bearing:
 
@@ -981,26 +981,36 @@ block is where corrections live. Three corrections are outstanding and all are l
    not rewritten. Reason: v11/v12's implied per-draw mean is 27.8–33.5, so a 25–29 row is a *normal* draw from that
    arm, not evidence the mean did not move. **`-v 9` returns only if a draw lands below ~21 (a stack failure, not a
    lottery) or step 3's guard fails outright** — and on a guard failure, name which criterion failed.
+   **Nov 1 exercised this rule:** v11's second draw came back **30.48**, under the best v9 row (30.55) yet **3.36 above
+   the mean of the seven v9 draws (27.12)** — so a sub-30.5 row out of v11 is that arm's own spread, not evidence to
+   revert.
 2. **The board numbers quoted inside those prompts are stale** (`4,969 ranked / silver 32.54 / bronze 31.22 / rank
-   676`, read 2026-10-29 17:28 UTC). Current values, read **22:55:58 UTC on 2026-10-31**: **5,013 ranked, bronze
-   ≤ 501 = 31.44, silver ≤ 250 = 32.73, gold ≤ 20 = 39.94, our held 31.21 at rank 558 (top 11.09 %)** — **0.23 under
-   bronze, 1.52 under silver, 57 teams between us and the line**, and the rank has slid 552 → 558 in eight hours on a
-   frozen score. The field is over 5,000, so **the gold bracket is top 20** and its line is 39.94. Always re-download
-   rather than quoting either set.
-3. **Judge a draw against the score that *certainly* clears, not against the headline line.** Three consecutive reads
-   have put the published cutoff score on a straddling tie: 31.35 (Oct 30), 31.41 (Oct 31 midday), **31.44 tonight,
-   which occupies ranks 499–502 while the cutoff is 501** — three of those four teams get bronze and `gheware` at 502
-   does not. So on tonight's board **≥ 31.45 certainly clears bronze** (31.44 is a 3-in-4 tie-order bet, ≤ 31.43 is
-   out), and the same shape holds at silver: **≥ 32.74 certainly clears** (32.73 spans 249–252 against a cutoff of
-   250). Medal lines are also *rising* ~0.03 per eight hours, so re-measure on the day and state which side of the tie
-   the score lands.
+   676`, read 2026-10-29 17:28 UTC). Current values, read **15:05 UTC on 2026-11-01**: **5,026 ranked, bronze
+   ≤ 502 = 31.52, silver ≤ 251 = 32.77, gold ≤ 20 = 40.75, our held 31.21 at Rank 580 (top 11.54 %)** — **0.31 under the
+   headline bronze line, 0.32 under the 31.53 that certainly clears, 1.56 under the headline silver line**, and **77
+   teams now sit in the band between our 31.21 and 31.52**. Always re-download rather than quoting either set. Two
+   movements worth noting: **the gold line has left 39.94 — rank 20 is now 40.75 and 39.94 has fallen to rank 22, so the
+   top-20 bracket costs 0.81 more than it did yesterday**; and our rank slid 561 → 580 in ten hours while the field grew
+   only 5,020 → 5,026, i.e. **19 teams moved above a score of ours that has not changed** — the pre-deadline surge is
+   real, so cost a medal by today's lines, not yesterday's.
+3. **Judge a draw against the score that *certainly* clears, not against the headline line.** Every read since Oct 30
+   has put the published cutoff score on or against a tie band. At 15:05 UTC on Nov 1:
+   **31.52 occupies ranks 501–502 against a cutoff of 502** — the bracket is exactly full at that score, so a *new*
+   31.52 lands at 503 and misses ⇒ **≥ 31.53 certainly clears bronze**; silver is the worse case — **32.77 spans ranks
+   251–254 against a cutoff of 251**, so only one of those four teams is inside ⇒ **≥ 32.78 certainly clears silver**;
+   and **40.75 is held by exactly one team at rank 20** ⇒ **≥ 40.76 certainly clears gold**. Medal lines are also *rising*, and unevenly — the bronze headline sat
+   at 31.44 from Oct 31 22:55 through today's 05:17 read and then jumped to 31.52 by 15:05 (+0.08 in ten hours against
+   the ~0.03/8 h it had been running) — so re-measure on the day and state which side of the tie the score lands.
 
-Also current: **Nov 1's slot is already spent — `57861189` (`-v 11`, SLM) drawn at 05:17:23 UTC after all three
-step-3 guard criteria passed; PENDING as of 05:20, expected ~15:20 UTC. The two automations later today stop at
-step 1, submit nothing, and fill the score into today's chase-log row.** Read the fresh 05:17:49 board before
-judging it: bronze ≤ 502 = 31.44 but the tie band is 502–505, so **≥ 31.45 certainly clears**, and silver ≤ 251 =
-32.73 with band 251–254, so **≥ 32.74 certainly clears**; our held 31.21 is rank 561 (top 11.18 %) — 0.24 under
-certain bronze.
+Also current: **Nov 1's slot is spent and it produced no improvement — `57861189` (`-v 11`, SLM), drawn at
+05:17:23 UTC after all three step-3 guard criteria passed, came back `SubmissionStatus.COMPLETE` at public
+30.48.** That is 0.73 below the v11 row of Oct 30, so **the team best stays 31.21 (`57786789`)** and v11 still owns the
+schedule (31.21 > 28.65 from v12). At the 15:05 read *Submissions today: 1, Lifetime: 17, Remaining today: 0*, so the
+21:00 attempt must stop at step 1 and submit nothing. **Nov 2 repeats `-v 11` via the 05:00 attempt only** (a ~10 h
+rerun must finalise before ~23:00 UTC; as the midday task, submit nothing if the day's row is still PENDING) — that is
+the team's **last** slot. **Nov 2's selection is browser-only**: the two highest public rows are `57786789` (31.21) and
+`57402922` (30.55), with today's 30.48 third — a fourth row that finalises after the 05:00 draw could displace 30.55, so
+re-read `submissions -v` before choosing.
 
 **Carried over from Oct 31, and now executed:** `57820948` (`-v 12`, PACE) went **COMPLETE at 28.65**, i.e. 2.56
 *below* the `-v 11` row, so **the team's best row stays 31.21 (`57786789`, `-v 11`)** and Oct 31 produced no
@@ -1023,7 +1033,7 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 678 |
 | 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 534 |
 | 2026-10-31 00:15 | `57820948` | **v12 PACE arm** — first draw of PACE, fired 15 min after the Oct 31 roll | **28.65** | 31.21 | 558 |
-| 2026-11-01 05:17 | `57861189` | **v11 SLM re-roll** — Nov 1 arm per the 17:54 UTC schedule (v11 31.21 > v12 28.65) | PENDING | 31.21 | 561 |
+| 2026-11-01 05:17 | `57861189` | **v11 SLM re-roll** — Nov 1 arm per the 17:54 UTC schedule (v11 31.21 > v12 28.65) | **30.48** | 31.21 | 580 |
 
 **2026-11-01 05:17 UTC — the last-but-one slot spent on `-v 11`, and what step 3 actually showed.**
 Step 1: no row dated today (newest `57820948`, Oct 31, COMPLETE 28.65). Step 2: *Submissions today: 0, Lifetime:
@@ -1056,6 +1066,46 @@ winner slot. Top of board: 75.56 Yi-Chia Chen @ Fields Model (48 subs), 70.02 Tu
 `xiaoz259`'s "faster machine is all you need" in 14 submissions** — the low-draw outlier recorded on Oct 30, now at
 14. **Nov 2 draws `-v 11` again, and only via the 05:00 attempt** (~10 h rerun must finalise before ~23:00 UTC);
 if that day's row is still PENDING late, submit nothing and go straight to the two-row browser selection.
+
+**2026-11-01 15:05 UTC — midday attempt: nothing submitted (step 1 ended it), today's `-v 11` draw scored 30.48, and the bronze line jumped 0.08 while we held still.**
+
+Step 1 on `kaggle competitions submissions ... -v`: **a row is dated today** — `57861189`, `2026-11-01 05:17:23`,
+"Solved-level-memory arm v11: reproduced lalalia9 35.79 config", `SubmissionStatus.COMPLETE`, public **30.48**. Per the
+prompt that is a stop, and step 2 agrees: *Submissions today: 1, Lifetime submissions: 17, Remaining today: 0* — which
+matches the board's `SubmissionCount 17`. **Nothing was submitted, no kernel was pushed, run or touched, and step 3's
+guard was not re-run** because the guard exists to protect a slot about to be spent, and this attempt spent none.
+Today's chase-log row is updated from `PENDING` to the measured **30.48** — no second row appended.
+
+Plainly, with no spin: **today produced no improvement.** 30.48 is 0.73 below the v11 row of Oct 30 and also under the
+best v9-family row (30.55, `57402922`), so **the team best stays 31.21 (`57786789`)**. What the two v11 draws do
+establish — stated as draws, never as an offline mean dressed up as a leaderboard score — is a range of 30.48–31.21
+against seven v9-family rows of 24.29 / 25.51 / 26.74 / 26.94 / 27.65 / 28.18 / 30.55: both v11 rows beat six of those
+seven, and the v9 mean is 27.12. That is direction from a two-draw sample, not proof, and it is why Nov 2 draws v11 —
+the decision rule is "higher public row on the platform today", and v11 holds it 31.21 vs v12's 28.65. The prompt's
+"both arms below 30.0 ⇒ revert to `-v 9`" clause was **not** executed and remains a standing error in the cron text
+(correction 1 above).
+
+Fresh full-board download at **15:05 UTC**, into a temp dir outside the repo, BOM'd CSV, `Rank ≥ 1` only: 5,029 rows,
+**5,026 ranked**. Brackets on a 5,026 field: **bronze ≤ 502, silver ≤ 251, gold ≤ 20**. Headline lines **31.52 / 32.77
+/ 40.75**; certain-clear marks **≥ 31.53 / ≥ 32.78 / ≥ 40.76** (the 31.52 pair fills 501–502 exactly, and 32.77 spans
+251–254 against a cutoff of 251 — see correction 3). Our row: the board's own `Hendric Nazarius` line reads **31.21 at
+Rank 580**, top **11.54 %**, with **577 teams strictly above** — the four-way tie at 31.21 now occupies ranks 578–581.
+Today's 30.48 taken on its own would sit at **rank 792** (top 15.76 %) and v12's 28.65 at 1,344. The two movements that
+matter for the last slot: the bronze headline **rose 0.08 in ten hours** (31.44 → 31.52) and **19 more teams moved above
+our 31.21 while the field grew by only 6**, so our own rank slid 561 → 580 on a frozen score — consistent with a
+pre-deadline surge, and the reason the 21:00 attempt must re-read rather than quote this block.
+
+Against the lines measured today: **0.31 under headline bronze, 0.32 under certain bronze (31.53), 1.56 under headline
+silver, 1.57 under certain silver.** Top of board, re-read at 15:05: **75.56 Yi-Chia Chen @ Fields Model** (48 subs),
+**70.24 Tufa Labs** (178 — 70.02/177 at the 05:17 read, so the leaders are still moving), 58.59 "faster machine is all
+you need" in 14, 56.15 NVARC3 (79). The gold line itself is now 40.75 — `Lord Han Solo`'s 39.94, which was rank 20
+yesterday, has slipped to rank 22.
+
+Nov 2 is the **last** slot: `-v 11`, **only** via the 05:00 attempt so a ~10 h rerun can finalise before the close, and
+if that row is still PENDING the midday task submits nothing. The selection itself is browser-only and judged on the
+private half over **at most two SELECTED rows**: at this read the two highest public rows are `57786789` (31.21) and
+`57402922` (30.55), with today's `57861189` (30.48) third — a Nov 2 draw above 30.55 would take the second slot, so
+re-read `submissions -v` before choosing. Temp dir deleted; `git status --short` clean.
 
 **2026-10-31 22:55 UTC — evening guard: both arms have now drawn, `-v 11` stays the best row at 31.21, and the bronze line has risen to 31.44.**
 
