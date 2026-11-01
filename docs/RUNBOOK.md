@@ -995,11 +995,18 @@ block is where corrections live. Three corrections are outstanding and all are l
    250). Medal lines are also *rising* ~0.03 per eight hours, so re-measure on the day and state which side of the tie
    the score lands.
 
-Also current: **Oct 31's slot is spent and the arm question is answered for now** — `57820948` (`-v 12`, PACE) went
-**COMPLETE at 28.65**, i.e. 2.56 *below* yesterday's `-v 11` row, so **the team's best row stays 31.21 (`57786789`,
-`-v 11`) and today produced no improvement.** Consequence for the two slots left: **Nov 1 draws `-v 11`**, because the
-schedule says take whichever of v11/v12 has the higher public row and v11 holds it 31.21 vs 28.65; **Nov 2 repeats
-`-v 11` via the 05:00 attempt only** (a ~10 h rerun must finalise before ~23:00 UTC). Do **not** read 28.65 as proof
+Also current: **Nov 1's slot is already spent — `57861189` (`-v 11`, SLM) drawn at 05:17:23 UTC after all three
+step-3 guard criteria passed; PENDING as of 05:20, expected ~15:20 UTC. The two automations later today stop at
+step 1, submit nothing, and fill the score into today's chase-log row.** Read the fresh 05:17:49 board before
+judging it: bronze ≤ 502 = 31.44 but the tie band is 502–505, so **≥ 31.45 certainly clears**, and silver ≤ 251 =
+32.73 with band 251–254, so **≥ 32.74 certainly clears**; our held 31.21 is rank 561 (top 11.18 %) — 0.24 under
+certain bronze.
+
+**Carried over from Oct 31, and now executed:** `57820948` (`-v 12`, PACE) went **COMPLETE at 28.65**, i.e. 2.56
+*below* the `-v 11` row, so **the team's best row stays 31.21 (`57786789`, `-v 11`)** and Oct 31 produced no
+improvement. Consequence: **Nov 1 drew `-v 11`**, because the schedule takes whichever of v11/v12 has the higher
+public row and v11 holds it 31.21 vs 28.65; **Nov 2 repeats `-v 11` via the 05:00 attempt only** (a ~10 h rerun must
+finalise before ~23:00 UTC) — that is the team's **last** slot. Do **not** read 28.65 as proof
 PACE is harmful — one draw against one draw sits inside this arm family's 2–4 point spread — but equally there is no
 measured reason to spend a slot re-testing the untested SLM+PACE interaction when the decision rule already points at
 v11. `-v 9` is not coming back: 28.65 is far above the ~21 stack-failure threshold in correction 1.
@@ -1016,6 +1023,39 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-29 05:00 | `57759315` | v9 proven config, 05:00 draw (slot used, no race this time) | **27.65** | 30.55 | 678 |
 | 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 534 |
 | 2026-10-31 00:15 | `57820948` | **v12 PACE arm** — first draw of PACE, fired 15 min after the Oct 31 roll | **28.65** | 31.21 | 558 |
+| 2026-11-01 05:17 | `57861189` | **v11 SLM re-roll** — Nov 1 arm per the 17:54 UTC schedule (v11 31.21 > v12 28.65) | PENDING | 31.21 | 561 |
+
+**2026-11-01 05:17 UTC — the last-but-one slot spent on `-v 11`, and what step 3 actually showed.**
+Step 1: no row dated today (newest `57820948`, Oct 31, COMPLETE 28.65). Step 2: *Submissions today: 0, Lifetime:
+16, Remaining today: 1*. Step 3 before burning anything: `kaggle kernels status` = `KernelWorkerStatus.COMPLETE`,
+then the output pulled into a temp dir outside the repo and the 91,731-byte kernel `.log` read directly —
+**(i)** `SOLVED_LEVEL_MEMORY_PATCH on` at t = 847.43 s; **(ii)** `mean score: 1.86` (t = 1451.9 s) and
+`mean score: 2.05` (t = 1761.9 s), both strictly > 0, so level transitions ran and therefore the
+`priority_pace_reference.json` path executed rather than sitting idle; **(iii)** zero matches in the whole log for
+`Traceback`, `FileNotFoundError` or `Kernel ended with error`, and the tail ends on the notebook/html export
+steps, not on a failure. `git_status.txt` in the same output confirms the run was the dirty SLM tree, not a stale
+one. All three criteria pass, so the schedule's Nov 1 arm (`-v 11`, the higher public row 31.21 vs 28.65) was
+drawn with its mandated description → **`57861189`**, PENDING at 05:17:23, *Submissions today: 1, Lifetime: 17,
+Remaining today: 0*. Score expected ~15:20 UTC, so the 15:00 attempt will probably still see PENDING and the 21:00
+one fills it in. **`-v 9` was not considered** — nothing landed below the ~21 stack-failure threshold.
+
+Fresh full-board download at **05:17:49 UTC**: 5,023 score rows, **5,020** with `Rank` ≥ 1. Cutoffs: **bronze
+rank ≤ 502, silver ≤ 251, gold ≤ 20** (the 5,000+ field means the gold bracket is top 20 + 0.2 % ⇒ 20). The
+headline line scores did **not** rise since 22:55 UTC — still **31.44 / 32.73 / 39.94** — but the tie bands moved,
+and that changes what a draw has to beat: **31.44 now occupies ranks 502–505 against a cutoff of 502** (one of
+those four teams is inside), and **32.73 occupies 251–254 against 251**. So applying correction 3, the numbers to
+judge a row against are **≥ 31.45 certainly-bronze** and **≥ 32.74 certainly-silver**; 31.44/32.73 are 1-in-4
+tie-order bets, and ≤ 31.43 / ≤ 32.72 are out.
+
+Our held row: the board's `Hendric Nazarius` line reads **31.21 at Rank 561**, `SubmissionCount` 16, with **558
+teams strictly above 31.21** and a four-way tie at 31.21 occupying ranks 559–562 — i.e. **top 11.14–11.18 %**
+depending on which of those two rank conventions is used. Against today's certain-clear marks that is **0.24 under
+bronze and 1.53 under silver**, with **57 teams between 31.21 and 31.44**. We have been inside the top 11.2 % of a
+5,020-team field since yesterday's v11 row, and one more draw of the same arm is all that is left before the Nov 2
+winner slot. Top of board: 75.56 Yi-Chia Chen @ Fields Model (48 subs), 70.02 Tufa Labs (177), **58.59
+`xiaoz259`'s "faster machine is all you need" in 14 submissions** — the low-draw outlier recorded on Oct 30, now at
+14. **Nov 2 draws `-v 11` again, and only via the 05:00 attempt** (~10 h rerun must finalise before ~23:00 UTC);
+if that day's row is still PENDING late, submit nothing and go straight to the two-row browser selection.
 
 **2026-10-31 22:55 UTC — evening guard: both arms have now drawn, `-v 11` stays the best row at 31.21, and the bronze line has risen to 31.44.**
 
