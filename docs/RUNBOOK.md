@@ -1281,6 +1281,22 @@ grinders. Plan unchanged and already staged by the override block: **`-v 12` at 
 `submission-limits` reads ≥ 1** (its guard passed 17:54 UTC Oct 29; an early fire is free), Nov 1 re-rolls whichever
 of v11/v12 has the higher public row, Nov 2 takes that winner only if it can finalise by ~23:00 UTC.
 
+**2026-11-02 10:50 UTC — the user asked to push everything and clear the project locally. Both halves came back with corrections, and the clear is deliberately deferred until after tonight's deadline.**
+
+1. **There is no local model to push.** The 499 MB working copy is `.venv312/` (160 MB Windows venv), `artifacts/` (234 MB
+   of proxy-run metric JSONL + `intermediate_states.pkl` search states) and `data/` (47 MB, mostly cp312 wheels). The
+   Qwen3.8-Flash-Next weights and drafter were *never* on this machine — the stack pulls them at runtime on Kaggle.
+   Nothing was ever trained locally, so no checkpoint exists anywhere in the repo.
+2. **"Push everything" was already true.** `git status` is clean and HEAD is on
+   `github.com/veeda241/ARC-Prize-2026---ARC-AGI-3` with 175 tracked files (both notebook arms, scripts, docs, this
+   RUNBOOK). The only unpushed content is the gitignored set, and the user chose **not** to force `artifacts/` +
+   `upstream/` (other teams' pulled kernels) into the public repo.
+3. **Archive taken before any deletion, as a reversible step:** `C:\Users\Vyas S\Documents\arc3-local-archive-2026-11-02.zip`,
+   65,169,016 bytes, 1,442 entries (artifacts 1,331, upstream 109, docs, `submission.parquet`), opened and verified.
+4. **The local wipe is deferred until after 23:59:59 UTC tonight** — the deadline is live and this file is the only
+   readable record of what to select. It happens on the user's next request: **every automation was deleted at
+   00:52 UTC, so nothing is scheduled to do it.**
+
 **2026-11-02 10:43 UTC — the last draw came in LOW: `57889542` finalised COMPLETE at 23.06. The selection is now settled arithmetic, not a judgment call, and it is still only a browser click.**
 
 `kaggle competitions submissions -v` reads `57889542,SubmissionStatus.COMPLETE,23.06` — it landed at ~10:30 UTC,
