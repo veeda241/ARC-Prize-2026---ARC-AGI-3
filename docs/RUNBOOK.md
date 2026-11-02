@@ -1034,7 +1034,7 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 534 |
 | 2026-10-31 00:15 | `57820948` | **v12 PACE arm** — first draw of PACE, fired 15 min after the Oct 31 roll | **28.65** | 31.21 | 558 |
 | 2026-11-01 05:17 | `57861189` | **v11 SLM re-roll** — Nov 1 arm per the 17:54 UTC schedule (v11 31.21 > v12 28.65) | **30.48** | 31.21 | 580 |
-| 2026-11-02 00:44 | `57889542` | **v11 SLM — the LAST slot of the competition**, fired by hand 4 h before the 05:00 automation so the score lands ~11:00 and leaves the afternoon for the browser selection | PENDING | 31.21 | 591 |
+| 2026-11-02 00:44 | `57889542` | **v11 SLM — the LAST slot of the competition**, fired by hand 4 h before the 05:00 automation so the score landed ~11:00 and left the afternoon for the browser selection | **23.06** — no improvement | 31.21 | 607 |
 
 **2026-11-01 05:17 UTC — the last-but-one slot spent on `-v 11`, and what step 3 actually showed.**
 Step 1: no row dated today (newest `57820948`, Oct 31, COMPLETE 28.65). Step 2: *Submissions today: 0, Lifetime:
@@ -1280,6 +1280,35 @@ below it). Context for the remaining three slots: rank
 grinders. Plan unchanged and already staged by the override block: **`-v 12` at the Oct 31 roll as soon as
 `submission-limits` reads ≥ 1** (its guard passed 17:54 UTC Oct 29; an early fire is free), Nov 1 re-rolls whichever
 of v11/v12 has the higher public row, Nov 2 takes that winner only if it can finalise by ~23:00 UTC.
+
+**2026-11-02 10:43 UTC — the last draw came in LOW: `57889542` finalised COMPLETE at 23.06. The selection is now settled arithmetic, not a judgment call, and it is still only a browser click.**
+
+`kaggle competitions submissions -v` reads `57889542,SubmissionStatus.COMPLETE,23.06` — it landed at ~10:30 UTC,
+inside the predicted 10–11 h window. **23.06 is below all three prior v11 draws (31.21 / 30.48 / 28.65-v12) and below
+the v9 field too**, so: the team's best row stays **31.21** (`57786789`), the last slot produced nothing, and —
+because it is *under* 30.48 — the replacement rule from the 00:44 block does not trigger. **The two rows to tick are
+`57786789` (31.21, v11) and `57861189` (30.48, v11), exactly as computed this morning.** Nothing about that choice
+changes with any later score, because no later score can exist: `submission-limits` reads Remaining today 0 and the
+competition closes **23:59:59 UTC tonight**, ~13 h from this line.
+
+One draw of a v11 arm whose other three draws are 31.21 / 30.48 / 28.65 is a **23.06 outlier, not a verdict** — see
+the maxima-vs-means rule. At σ ∈ [1.22, 4.19] it is roughly a 1.5–2σ low draw, which is what a lottery looks like when
+you finally lose one. It is also the *public* half of one scored rerun; the judged quantity is the private half of the
+two rows the human selects.
+
+**Lines read 10:41:38 UTC** — **5,043 ranked** teams (brackets bronze ≤ 504, silver ≤ 252, gold ≤ 20):
+**bronze 31.61, with 31.61 itself spanning ranks 503–505 against a 504 cutoff — so ≥ 31.62 certainly clears** (31.62
+sits safely at 500–502). **Silver 32.91 at rank 252, so ≥ 32.92 certainly clears.** **Gold 41.73.** Our 31.21 is
+listed at **rank 607** inside a four-way tie for 605–608, with 604 rows strictly above: **0.40 under bronze, 1.70
+under silver.** The line has climbed 31.22 → 31.27 → 31.44 → 31.52 → 31.55 → 31.61 across six days while our best row
+never moved — the whole 0.35 gap opened after 00:44 this morning was field growth, not a change in our code.
+
+**Final state of the arm ledger** (four draws of the SLM patch: 31.21, 30.48, 23.06, plus v12's 28.65): directly
+measured v11 mean over its three own-arm draws = **28.25**, against the implied 32.16 from lalalia9's maximum and our
+measured v9 mean 27.12 over seven draws. **How to apply:** when the deadline passes, the honest summary is that the
+SLM arm drew above our entire v9 range twice and then produced the worst row of the project — n = 3 on a σ that is
+only known to a factor of ~3 cannot separate the arm from the baseline, and the 8.9 : 1 likelihood ratio logged on
+Oct 30 was one draw's evidence, not a measurement.
 
 **2026-11-02 00:50 UTC — DEADLINE DAY. The last slot was fired at 00:44:04 instead of 05:00, and the browser selection is now the only step an automation cannot do.**
 
