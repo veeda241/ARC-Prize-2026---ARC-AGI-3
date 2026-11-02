@@ -1034,6 +1034,7 @@ automations look at this file daily (05:00, 15:00, 21:00 UTC) and the day's slot
 | 2026-10-30 00:21 | `57786789` | **v11 SLM arm** — first draw of the new arm, taken early by hand | **31.21** | **31.21** | 534 |
 | 2026-10-31 00:15 | `57820948` | **v12 PACE arm** — first draw of PACE, fired 15 min after the Oct 31 roll | **28.65** | 31.21 | 558 |
 | 2026-11-01 05:17 | `57861189` | **v11 SLM re-roll** — Nov 1 arm per the 17:54 UTC schedule (v11 31.21 > v12 28.65) | **30.48** | 31.21 | 580 |
+| 2026-11-02 00:44 | `57889542` | **v11 SLM — the LAST slot of the competition**, fired by hand 4 h before the 05:00 automation so the score lands ~11:00 and leaves the afternoon for the browser selection | PENDING | 31.21 | 591 |
 
 **2026-11-01 05:17 UTC — the last-but-one slot spent on `-v 11`, and what step 3 actually showed.**
 Step 1: no row dated today (newest `57820948`, Oct 31, COMPLETE 28.65). Step 2: *Submissions today: 0, Lifetime:
@@ -1279,6 +1280,65 @@ below it). Context for the remaining three slots: rank
 grinders. Plan unchanged and already staged by the override block: **`-v 12` at the Oct 31 roll as soon as
 `submission-limits` reads ≥ 1** (its guard passed 17:54 UTC Oct 29; an early fire is free), Nov 1 re-rolls whichever
 of v11/v12 has the higher public row, Nov 2 takes that winner only if it can finalise by ~23:00 UTC.
+
+**2026-11-02 00:50 UTC — DEADLINE DAY. The last slot was fired at 00:44:04 instead of 05:00, and the browser selection is now the only step an automation cannot do.**
+
+`date -u` = Mon 2 Nov 00:43 UTC. `submission-limits` read **Submissions today: 0 / Remaining today: 1** — the last
+daily slot of the competition was still unspent four hours before the 05:00 automation would have taken it, so it was
+fired by hand as `-v 11` and confirmed:
+
+```
+57889542,submission.parquet,2026-11-02 00:44:04.253000,Solved-level-memory arm v11: reproduced lalalia9 35.79 config,SubmissionStatus.PENDING,,
+```
+
+A scored rerun needs ~10–11 h, so it should finalise **~11:00–12:00 UTC**, which leaves the whole afternoon for the
+selection step instead of the ~6 h the old 18:00 automation would have allowed. That automation (job
+`61b457f2-606f-43eb-aa51-68933b4b21f7`) has been **moved to 12:00 UTC today** and its arm means updated to the three
+v11 draws now on the board. Lifetime submissions: 18. Nothing more can be submitted today (Remaining: 0), so the
+result of this draw is final whether or not it is good.
+
+**Today's lines, read 00:44:23 UTC** — 5,035 ranked teams (brackets bronze ≤ 503, silver ≤ 251, gold ≤ 20):
+**bronze 31.55 with four teams tied on it, silver 32.79 with three tied, gold 40.75.** Because ties at the cut row are
+broken by fewer submissions, the number that *certainly* clears a line is one tick above the tie, so:
+
+| goal | score needed today | our position |
+|---|---|---|
+| bronze | **> 31.55**, i.e. ≥ 31.56 | 31.21 → rank 591, **0.35 short** |
+| silver | **> 32.79**, i.e. ≥ 32.80 | 1.59 short |
+| gold | > 40.75 (rank ≤ 20) | 9.5 short — not a target, stated plainly |
+
+The bronze line has run 31.22 → 31.55 in four days (+0.08/day), so 31.21 — which was 0.12 under on Oct 30 — is now
+0.35 under. Repeating our own best is no longer enough; the field outran a frozen score while we slid 525 → 580 → 593.
+
+**Odds on the last draw** (one draw, `-v 11`, no re-rolls left). For silver ≥ 32.80: **0.15** at our own measured v11
+mean 30.85 with σ = 1.90, **0.37** at the implied mean 32.16 with σ = 1.90, **0.32 / 0.44** at the same two means with
+σ = 4.19. For bronze ≥ 31.56: **0.35 / 0.62 / 0.43 / 0.56**. So call silver roughly a one-in-three chance and bronze
+roughly one-in-two — and all four of those are public-half proxies, because medals are judged on the private half,
+which never becomes visible. Anyone who quotes a precise probability for a medal here is guessing.
+
+**The selection decision, computed rather than left to the 12:00 run.** Candidate rows: `57786789` v11 **31.21**,
+`57402922` v9 **30.55**, `57861189` v11 **30.48**. Ranking them by the blend `λ·x + (1−λ)·m_arm`
+(m₁₁ = 32.16, m₉ = 27.12):
+
+| λ | v11 31.21 | v9 30.55 | v11 30.48 | order |
+|---|---|---|---|---|
+| 0.3 | 31.87 | 28.15 | 31.66 | A **C** B |
+| 0.5 | 31.68 | 28.84 | 31.32 | A **C** B |
+| 0.7 | 31.49 | 29.52 | 30.98 | A **C** B |
+| 0.9 | 31.30 | 30.21 | 30.65 | A **C** B |
+| 1.0 | 31.21 | 30.55 | 30.48 | A **B** C |
+
+**Select `57786789` and `57861189` — the two highest-scoring v11 rows.** Both are the same program, so the ordering is
+λ-free except at exactly λ = 1, where taking 30.48 instead of 30.55 costs **0.07**; if λ is anywhere below 1 the same
+choice gains 0.44 → 3.51. That is the whole asymmetry, and it is why the v9 row is not one of the two judged rows.
+**If `57889542` finalises above 30.48, it replaces the lower v11 row** — the rule stays "the two best v11 rows", and
+if it beats 31.21 it becomes the first pick.
+
+**Browser-only, by 23:59:59 UTC tonight, and it is the human's step.** Kaggle → competition `arc-prize-2026-arc-agi-3`
+→ **My Submissions** → tick the checkbox on the two rows above (the CLI has no select/final verb — verified against
+`kaggle competitions --help`). Not doing it is bounded, not fatal: the auto-selection is reported (forum-sourced, not
+documentation) to be the two best **public** rows, which would mean 31.21 + 30.55 and cost at most 0.07. But it is a
+two-minute click on the last day, so do it deliberately.
 
 **2026-10-30 ~14:20 UTC — the "find a better arm" sweep came back empty, and converting its maxima properly shows why: we are already on the reproducible frontier.**
 
