@@ -1292,10 +1292,14 @@ fired by hand as `-v 11` and confirmed:
 ```
 
 A scored rerun needs ~10–11 h, so it should finalise **~11:00–12:00 UTC**, which leaves the whole afternoon for the
-selection step instead of the ~6 h the old 18:00 automation would have allowed. That automation (job
-`61b457f2-606f-43eb-aa51-68933b4b21f7`) has been **moved to 12:00 UTC today** and its arm means updated to the three
-v11 draws now on the board. Lifetime submissions: 18. Nothing more can be submitted today (Remaining: 0), so the
-result of this draw is final whether or not it is good.
+selection step instead of the ~6 h the old 18:00 automation would have allowed. Lifetime submissions: 18. Nothing
+more can be submitted today (Remaining: 0), so the result of this draw is final whether or not it is good.
+
+**00:52 UTC — every automation is now deleted** (the user asked for it; the Automations list reads empty). Gone are
+the 05:00 / 15:00 / 21:00 daily draw jobs, the Oct 31 one-shot, and job
+`61b457f2-606f-43eb-aa51-68933b4b21f7` — which had been moved to 12:00 UTC today to compute the Final Submission refs.
+**Nothing will re-read the board, fill `57889542`'s score into the table, or re-state the selection: this block is the
+last word, and the browser step below is entirely on the human.**
 
 **Today's lines, read 00:44:23 UTC** — 5,035 ranked teams (brackets bronze ≤ 503, silver ≤ 251, gold ≤ 20):
 **bronze 31.55 with four teams tied on it, silver 32.79 with three tied, gold 40.75.** Because ties at the cut row are
@@ -1316,7 +1320,7 @@ mean 30.85 with σ = 1.90, **0.37** at the implied mean 32.16 with σ = 1.90, **
 roughly one-in-two — and all four of those are public-half proxies, because medals are judged on the private half,
 which never becomes visible. Anyone who quotes a precise probability for a medal here is guessing.
 
-**The selection decision, computed rather than left to the 12:00 run.** Candidate rows: `57786789` v11 **31.21**,
+**The selection decision, computed here rather than left to a run that no longer exists.** Candidate rows: `57786789` v11 **31.21**,
 `57402922` v9 **30.55**, `57861189` v11 **30.48**. Ranking them by the blend `λ·x + (1−λ)·m_arm`
 (m₁₁ = 32.16, m₉ = 27.12):
 
